@@ -9,4 +9,7 @@ public class HrmApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(HrmApplication.class, args);
 	}
+    public static void main(String[] args) {
+        SpringApplication.run(HrmApplication.class, args);
+    }
 }
