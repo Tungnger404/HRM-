@@ -7,8 +7,8 @@ import com.example.hrm.service.RecruitmentRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +22,6 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
 
     @Override
     public void createRecruitmentRequest(RecruitmentRequestCreateDTO dto) {
-
         Department department = departmentRepository.findById(dto.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
@@ -39,12 +38,18 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         request.setReason(dto.getReason());
         request.setDeadline(dto.getDeadline().atStartOfDay());
 
-
-        // ✅ logic đúng ATS
-        request.setStatus("SUBMITTED");
+        request.setStatus(RecruitmentRequestStatus.SUBMITTED);
         request.setCreatedBy(creator);
         request.setCreatedAt(LocalDateTime.now());
 
         recruitmentRequestRepository.save(request);
     }
+
+    @Override
+    public List<RecruitmentRequest> getRequestsForHR() {
+        return recruitmentRequestRepository.findForHR(
+                RecruitmentRequestStatus.DRAFT
+        );
+    }
+
 }

@@ -72,9 +72,9 @@
     <label>Reason</label>
     <textarea name="reason" rows="4"></textarea>
 
-    <button type="submit">Create Request</button>
+    <button type="submit">Submit Request</button>
     <c:if test="${param.success eq 'true'}">
-        <div id="toast-success">✅ Create request successfully</div>
+        <div id="toast-success">✅ Submit Request successfully</div>
     </c:if>
 </form>
 
