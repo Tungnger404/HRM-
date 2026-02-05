@@ -18,7 +18,6 @@ public class EmployeeController {
         this.service = service;
     }
 
-    // LIST
     @GetMapping
     public String list(@RequestParam(value = "q", required = false) String q, Model model) {
         model.addAttribute("q", q);
@@ -26,14 +25,14 @@ public class EmployeeController {
         return "employees/employee_list";
     }
 
-    // SHOW CREATE FORM
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("form", new EmployeeAdd());
+        EmployeeAdd f = new EmployeeAdd();
+        f.setStatus("PROBATION");
+        model.addAttribute("form", f);
         return "employees/employee_add";
     }
 
-    // CREATE
     @PostMapping("/create")
     public String create(@ModelAttribute("form") EmployeeAdd form, RedirectAttributes ra) {
         try {
@@ -46,16 +45,14 @@ public class EmployeeController {
         }
     }
 
-    // DETAIL (VIEW + EDIT)
     @GetMapping("/{id}")
     public String detail(@PathVariable("id") Integer id, Model model) {
         Employee e = service.getById(id);
         model.addAttribute("employee", e);
-        model.addAttribute("form", service.toForm(e)); // nếu bạn muốn bind theo form
+        model.addAttribute("form", service.toForm(e));
         return "employees/employee_detail";
     }
 
-    // UPDATE
     @PostMapping("/save")
     public String save(@ModelAttribute("form") EmployeeAdd form, RedirectAttributes ra) {
         try {
@@ -64,12 +61,10 @@ public class EmployeeController {
             return "redirect:/employees/" + form.getEmpId();
         } catch (Exception ex) {
             ra.addFlashAttribute("err", ex.getMessage());
-            // nếu empId null thì quay về list
             return "redirect:/employees";
         }
     }
 
-    // DELETE
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable("id") Integer id, RedirectAttributes ra) {
         try {
