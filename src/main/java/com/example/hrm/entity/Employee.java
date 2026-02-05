@@ -1,6 +1,7 @@
 package com.example.hrm.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 
 @Entity
@@ -27,28 +28,64 @@ public class Employee {
     @Column(name = "hire_date")
     private LocalDate hireDate;
 
-    @Column(name = "employment_status", nullable = false, length = 30)
-    private String employmentStatus; // Active/On Leave/Resigned
+    @Column(name = "status")
+    private String status;
+
 
     // ===== getters/setters =====
-    public Integer getEmpId() { return empId; }
-    public void setEmpId(Integer empId) { this.empId = empId; }
+    public Integer getEmpId() {
+        return empId;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setEmpId(Integer empId) {
+        this.empId = empId;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getFullName() {
+        return fullName;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-    public LocalDate getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getEmail() {
+        return email;
+    }
 
-    public LocalDate getHireDate() { return hireDate; }
-    public void setHireDate(LocalDate hireDate) { this.hireDate = hireDate; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public String getEmploymentStatus() { return employmentStatus; }
-    public void setEmploymentStatus(String employmentStatus) { this.employmentStatus = employmentStatus; }
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public LocalDate getHireDate() {
+        return hireDate;
+    }
+
+    public void setHireDate(LocalDate hireDate) {
+        this.hireDate = hireDate;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }
