@@ -13,7 +13,6 @@
         .title{font-size:20px;font-weight:800}
         .actions{display:flex;gap:10px;flex-wrap:wrap}
         input[type="text"]{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
-        input[type="text"]:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
         .btn{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-weight:700}
         .btn-primary{background:#f5b400;border-color:#f5b400}
         .table{width:100%;border-collapse:collapse;margin-top:12px}
@@ -55,8 +54,10 @@
             <tr>
                 <th>Emp ID</th>
                 <th>Full Name</th>
-                <th>Email</th>
                 <th>Phone</th>
+                <th>Gender</th>
+                <th>Dept</th>
+                <th>Job</th>
                 <th>Status</th>
                 <th style="width:180px">Action</th>
             </tr>
@@ -66,9 +67,11 @@
                 <tr>
                     <td>${e.empId}</td>
                     <td>${e.fullName}</td>
-                    <td><c:out value="${e.email}"/></td>
                     <td><c:out value="${e.phone}"/></td>
-                    <td><span class="badge">${e.employmentStatus}</span></td>
+                    <td><c:out value="${e.gender}"/></td>
+                    <td><c:out value="${e.deptId}"/></td>
+                    <td><c:out value="${e.jobId}"/></td>
+                    <td><span class="badge">${e.status}</span></td>
                     <td>
                         <button class="btn" type="button"
                                 onclick="location.href='${pageContext.request.contextPath}/employees/${e.empId}'">
@@ -80,7 +83,7 @@
 
             <c:if test="${empty employees}">
                 <tr>
-                    <td colspan="6" style="color:#6b7280;padding:14px;">No employees found.</td>
+                    <td colspan="8" style="color:#6b7280;padding:14px;">No employees found.</td>
                 </tr>
             </c:if>
             </tbody>

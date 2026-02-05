@@ -17,7 +17,6 @@
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
         .field label{display:block;font-size:13px;font-weight:800;color:#6b7280;margin-bottom:6px}
         .field input,.field select{width:100%;height:40px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
-        .field input:focus,.field select:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
         .row-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
         .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
         .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
@@ -40,29 +39,48 @@
             <div class="msg msg-err">${err}</div>
         </c:if>
 
-        <!-- UPDATE FORM (bind theo EmployeeAdd) -->
         <form method="post" action="${pageContext.request.contextPath}/employees/save">
-            <!-- DTO field: empId -->
             <input type="hidden" name="empId" value="${employee.empId}"/>
 
             <div class="grid">
                 <div class="field">
-                    <label>Full Name</label>
+                    <label>Full Name *</label>
                     <input name="fullName" value="${employee.fullName}" required>
                 </div>
 
                 <div class="field">
-                    <label>Employment Status</label>
-                    <select name="employmentStatus">
-                        <option value="Active" ${employee.employmentStatus=='Active'?'selected':''}>Active</option>
-                        <option value="On Leave" ${employee.employmentStatus=='On Leave'?'selected':''}>On Leave</option>
-                        <option value="Resigned" ${employee.employmentStatus=='Resigned'?'selected':''}>Resigned</option>
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="PROBATION" ${employee.status=='PROBATION'?'selected':''}>PROBATION</option>
+                        <option value="OFFICIAL" ${employee.status=='OFFICIAL'?'selected':''}>OFFICIAL</option>
+                        <option value="RESIGNED" ${employee.status=='RESIGNED'?'selected':''}>RESIGNED</option>
+                        <option value="TERMINATED" ${employee.status=='TERMINATED'?'selected':''}>TERMINATED</option>
                     </select>
                 </div>
 
                 <div class="field">
-                    <label>Email</label>
-                    <input name="email" type="email" value="${employee.email}">
+                    <label>User ID</label>
+                    <input name="userId" type="number" value="${employee.userId}">
+                </div>
+
+                <div class="field">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option value="" ${empty employee.gender?'selected':''}>-- Select --</option>
+                        <option value="MALE" ${employee.gender=='MALE'?'selected':''}>MALE</option>
+                        <option value="FEMALE" ${employee.gender=='FEMALE'?'selected':''}>FEMALE</option>
+                        <option value="OTHER" ${employee.gender=='OTHER'?'selected':''}>OTHER</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>DOB</label>
+                    <input name="dob" type="date" value="${employee.dob}">
+                </div>
+
+                <div class="field">
+                    <label>Join Date</label>
+                    <input name="joinDate" type="date" value="${employee.joinDate}">
                 </div>
 
                 <div class="field">
@@ -71,20 +89,39 @@
                 </div>
 
                 <div class="field">
-                    <label>Date of Birth</label>
-                    <input name="dateOfBirth" type="date" value="${employee.dateOfBirth}">
+                    <label>Address</label>
+                    <input name="address" value="${employee.address}">
                 </div>
 
                 <div class="field">
-                    <label>Hire Date</label>
-                    <input name="hireDate" type="date" value="${employee.hireDate}">
+                    <label>Identity Card</label>
+                    <input name="identityCard" value="${employee.identityCard}">
+                </div>
+
+                <div class="field">
+                    <label>Tax Code</label>
+                    <input name="taxCode" value="${employee.taxCode}">
+                </div>
+
+                <div class="field">
+                    <label>Dept ID</label>
+                    <input name="deptId" type="number" value="${employee.deptId}">
+                </div>
+
+                <div class="field">
+                    <label>Job ID</label>
+                    <input name="jobId" type="number" value="${employee.jobId}">
+                </div>
+
+                <div class="field">
+                    <label>Direct Manager ID</label>
+                    <input name="directManagerId" type="number" value="${employee.directManagerId}">
                 </div>
             </div>
 
             <div class="row-actions">
                 <button class="btn btn-primary" type="submit">Save changes</button>
 
-                <!-- Delete không lồng form -->
                 <button class="btn btn-danger" type="button"
                         onclick="if(confirm('Delete this employee?')) document.getElementById('delForm').submit();">
                     Delete

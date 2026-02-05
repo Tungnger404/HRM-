@@ -16,10 +16,8 @@
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
         .field label{display:block;font-size:13px;font-weight:800;color:#6b7280;margin-bottom:6px}
         .field input,.field select{width:100%;height:40px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
-        .field input:focus,.field select:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
         .row-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-        .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
-        .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
+        .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
         @media(max-width:720px){.grid{grid-template-columns:1fr}}
     </style>
 </head>
@@ -33,29 +31,49 @@
         </div>
 
         <c:if test="${not empty err}">
-            <div class="msg msg-err">${err}</div>
+            <div class="msg">${err}</div>
         </c:if>
 
-        <!-- CREATE FORM (bind theo EmployeeAdd) -->
         <form method="post" action="${pageContext.request.contextPath}/employees/create">
             <div class="grid">
                 <div class="field">
-                    <label>Full Name</label>
+                    <label>Full Name *</label>
                     <input name="fullName" placeholder="Nguyễn Văn A" required>
                 </div>
 
                 <div class="field">
-                    <label>Employment Status</label>
-                    <select name="employmentStatus">
-                        <option value="Active" selected>Active</option>
-                        <option value="On Leave">On Leave</option>
-                        <option value="Resigned">Resigned</option>
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="PROBATION" selected>PROBATION</option>
+                        <option value="OFFICIAL">OFFICIAL</option>
+                        <option value="RESIGNED">RESIGNED</option>
+                        <option value="TERMINATED">TERMINATED</option>
                     </select>
                 </div>
 
                 <div class="field">
-                    <label>Email</label>
-                    <input name="email" type="email" placeholder="a@gmail.com">
+                    <label>User ID (optional)</label>
+                    <input name="userId" type="number" placeholder="users.user_id">
+                </div>
+
+                <div class="field">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option value="" selected>-- Select --</option>
+                        <option value="MALE">MALE</option>
+                        <option value="FEMALE">FEMALE</option>
+                        <option value="OTHER">OTHER</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>DOB</label>
+                    <input name="dob" type="date">
+                </div>
+
+                <div class="field">
+                    <label>Join Date</label>
+                    <input name="joinDate" type="date">
                 </div>
 
                 <div class="field">
@@ -64,13 +82,33 @@
                 </div>
 
                 <div class="field">
-                    <label>Date of Birth</label>
-                    <input name="dateOfBirth" type="date">
+                    <label>Address</label>
+                    <input name="address" placeholder="Địa chỉ...">
                 </div>
 
                 <div class="field">
-                    <label>Hire Date</label>
-                    <input name="hireDate" type="date">
+                    <label>Identity Card</label>
+                    <input name="identityCard" placeholder="CCCD/CMND">
+                </div>
+
+                <div class="field">
+                    <label>Tax Code</label>
+                    <input name="taxCode" placeholder="MST">
+                </div>
+
+                <div class="field">
+                    <label>Dept ID</label>
+                    <input name="deptId" type="number" placeholder="departments.dept_id">
+                </div>
+
+                <div class="field">
+                    <label>Job ID</label>
+                    <input name="jobId" type="number" placeholder="job_positions.job_id">
+                </div>
+
+                <div class="field">
+                    <label>Direct Manager ID</label>
+                    <input name="directManagerId" type="number" placeholder="employees.emp_id">
                 </div>
             </div>
 

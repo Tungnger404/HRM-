@@ -38,10 +38,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee e = new Employee();
         applyForm(e, form);
 
-        if (e.getEmploymentStatus() == null || e.getEmploymentStatus().isBlank()) {
-            e.setEmploymentStatus("Active");
+        if (e.getStatus() == null || e.getStatus().isBlank()) {
+            e.setStatus("PROBATION");
         }
-
         return repo.save(e);
     }
 
@@ -53,10 +52,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee e = getById(form.getEmpId());
         applyForm(e, form);
 
-        if (e.getEmploymentStatus() == null || e.getEmploymentStatus().isBlank()) {
-            e.setEmploymentStatus("Active");
+        if (e.getStatus() == null || e.getStatus().isBlank()) {
+            e.setStatus("PROBATION");
         }
-
         return repo.save(e);
     }
 
@@ -66,6 +64,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (!repo.existsById(id)) {
             throw new IllegalArgumentException("Employee not found: " + id);
         }
+        // Lưu ý: nếu employee đang được tham chiếu (direct_manager_id, dept.manager_id, ...), DB sẽ chặn delete.
         repo.deleteById(id);
     }
 
@@ -73,22 +72,36 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeAdd toForm(Employee e) {
         EmployeeAdd f = new EmployeeAdd();
         f.setEmpId(e.getEmpId());
+        f.setUserId(e.getUserId());
         f.setFullName(e.getFullName());
-        f.setEmail(e.getEmail());
+        f.setGender(e.getGender());
+        f.setDob(e.getDob());
         f.setPhone(e.getPhone());
-        f.setDateOfBirth(e.getDateOfBirth());
-        f.setHireDate(e.getHireDate());
-        f.setEmploymentStatus(e.getEmploymentStatus());
+        f.setAddress(e.getAddress());
+        f.setIdentityCard(e.getIdentityCard());
+        f.setTaxCode(e.getTaxCode());
+        f.setDeptId(e.getDeptId());
+        f.setJobId(e.getJobId());
+        f.setDirectManagerId(e.getDirectManagerId());
+        f.setStatus(e.getStatus());
+        f.setJoinDate(e.getJoinDate());
         return f;
     }
 
     private void applyForm(Employee e, EmployeeAdd f) {
+        e.setUserId(f.getUserId());
         e.setFullName(f.getFullName());
-        e.setEmail(f.getEmail());
+        e.setGender(f.getGender());
+        e.setDob(f.getDob());
         e.setPhone(f.getPhone());
-        e.setDateOfBirth(f.getDateOfBirth());
-        e.setHireDate(f.getHireDate());
-        e.setEmploymentStatus(f.getEmploymentStatus());
+        e.setAddress(f.getAddress());
+        e.setIdentityCard(f.getIdentityCard());
+        e.setTaxCode(f.getTaxCode());
+        e.setDeptId(f.getDeptId());
+        e.setJobId(f.getJobId());
+        e.setDirectManagerId(f.getDirectManagerId());
+        e.setStatus(f.getStatus());
+        e.setJoinDate(f.getJoinDate());
     }
 
     private void validate(EmployeeAdd f, boolean requireId) {
@@ -97,6 +110,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         if (f.getFullName() == null || f.getFullName().trim().isEmpty()) {
             throw new IllegalArgumentException("Full name is required");
+        }
+        // chặn tự làm manager của chính mình
+        if (f.getEmpId() != null && f.getDirectManagerId() != null && f.getEmpId().equals(f.getDirectManagerId())) {
+            throw new IllegalArgumentException("directManagerId cannot be itself");
         }
     }
 }
