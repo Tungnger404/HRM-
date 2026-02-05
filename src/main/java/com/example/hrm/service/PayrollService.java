@@ -39,6 +39,94 @@ public class PayrollService {
     // =========================
 
     @Transactional(readOnly = true)
+    public List<PayrollRowDTO> listPayrollRowsForManager(Integer managerEmpId, String q, String status) {
+
+        Integer empId = null;
+        if (q != null) {
+            String t = q.trim();
+            if (t.matches("\\d+")) {
+                try {
+                    empId = Integer.parseInt(t);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        List<Object[]> rows = payslipRepo.findPayrollRowsRaw(managerEmpId, status, q, empId);
+
+        return rows.stream().map(r -> {
+            int payslipId = toInt(r[0]);
+            int batchId = toInt(r[1]);
+            int eId = toInt(r[2]);
+            String fullName = (String) r[3];
+
+            int month = toInt(r[4]);
+            int year = toInt(r[5]);
+
+            LocalDate start = toLocalDate(r[6]);
+            LocalDate end = toLocalDate(r[7]);
+
+            BigDecimal net = (r[8] instanceof BigDecimal bd) ? bd : (r[8] == null ? BigDecimal.ZERO : new BigDecimal(r[8].toString()));
+            String batchStatus = (String) r[9];
+
+            String empCode = "NV" + eId;
+            String label = statusLabel(batchStatus);
+
+            return PayrollRowDTO.builder()
+                    .payslipId(payslipId)
+                    .batchId(batchId)
+                    .empId(eId)
+                    .empCode(empCode)
+                    .fullName(fullName)
+                    .month(month)
+                    .year(year)
+                    .startDate(start)
+                    .endDate(end)
+                    .netSalary(net == null ? BigDecimal.ZERO : net)
+                    .statusLabel(label)
+                    .batchStatus(batchStatus)
+                    .build();
+        }).toList();
+    }
+
+    private int toInt(Object v) {
+        if (v == null)
+            return 0;
+        if (v instanceof Number n)
+            return n.intValue();     // Integer/Long/BigInteger...
+        return Integer.parseInt(v.toString());
+    }
+
+    private LocalDate toLocalDate(Object v) {
+        if (v == null)
+            return null;
+        if (v instanceof LocalDate ld)
+            return ld;
+        if (v instanceof java.sql.Date d)
+            return d.toLocalDate();
+        if (v instanceof java.sql.Timestamp ts)
+            return ts.toLocalDateTime().toLocalDate();
+        if (v instanceof java.util.Date ud)
+            return new java.sql.Date(ud.getTime()).toLocalDate();
+        // fallback
+        return LocalDate.parse(v.toString());
+    }
+
+
+    private String statusLabel(String batchStatus) {
+        if (batchStatus == null)
+            return "";
+        return switch (batchStatus) {
+            case "DRAFT" -> "Draft";
+            case "PENDING_APPROVAL" -> "Pending";
+            case "APPROVED" -> "Approved";
+            case "PAID" -> "Completed";
+            default -> batchStatus;
+        };
+    }
+
+
+    @Transactional(readOnly = true)
     public List<PayrollPeriodSummaryDTO> listPayrollPeriods() {
         return periodRepo.findAllByOrderByYearDescMonthDesc()
                 .stream()

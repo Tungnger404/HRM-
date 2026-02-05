@@ -3,10 +3,42 @@ package com.example.hrm.repository;
 import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.Payslip;
 import org.springframework.data.jpa.repository.JpaRepository;
-
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface PayslipRepository extends JpaRepository<Payslip, Integer> {
     List<Payslip> findByEmployeeOrderByIdDesc(Employee employee);
+
     List<Payslip> findByBatch_IdOrderByIdAsc(Integer batchId);
+
+    @Query("""
+                select
+                    s.id,
+                    b.id,
+                    e.id,
+                    e.fullName,
+                    per.month,
+                    per.year,
+                    per.startDate,
+                    per.endDate,
+                    s.netSalary,
+                    b.status
+                from Payslip s
+                join s.batch b
+                join b.period per
+                join s.employee e
+                where (:managerEmpId is null or e.directManagerId = :managerEmpId)
+                  and (:status is null or :status = '' or b.status = :status)
+                  and (
+                        :kw is null or :kw = ''
+                        or lower(e.fullName) like lower(concat('%', :kw, '%'))
+                        or (:empId is not null and e.id = :empId)
+                  )
+                order by per.year desc, per.month desc, e.id asc, s.id desc
+            """)
+    List<Object[]> findPayrollRowsRaw(@Param("managerEmpId") Integer managerEmpId,
+                                      @Param("status") String status,
+                                      @Param("kw") String kw,
+                                      @Param("empId") Integer empId);
 }

@@ -33,15 +33,12 @@ public class SecurityConfig {
             ) throws IOException, ServletException {
 
                 String auths = authentication.getAuthorities().toString();
+                String ctx = request.getContextPath();
 
-                if (auths.contains("ROLE_MANAGER")) {
-                    response.sendRedirect(request.getContextPath() + "/manager/payroll/periods");
-                } else if (auths.contains("ROLE_EMPLOYEE")) {
-                    response.sendRedirect(request.getContextPath() + "/employee/payslips");
-                } else if (auths.contains("ROLE_HR") || auths.contains("ROLE_ADMIN")) {
-                    response.sendRedirect(request.getContextPath() + "/manager/payroll/periods");
+                if (auths.contains("ROLE_MANAGER") || auths.contains("ROLE_HR") || auths.contains("ROLE_ADMIN")) {
+                    response.sendRedirect(ctx + "/manager/payroll/payslips");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/login");
+                    response.sendRedirect(ctx + "/employee/payslips");
                 }
             }
         };
@@ -53,8 +50,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/login", "/logout",
-                                "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                        .requestMatchers("/login", "/logout", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .requestMatchers("/employee/**").hasRole("EMPLOYEE")
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
                         .anyRequest().authenticated()
@@ -74,6 +70,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
-
 }

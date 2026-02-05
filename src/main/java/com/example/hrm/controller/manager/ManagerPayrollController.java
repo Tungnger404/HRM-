@@ -7,6 +7,10 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.*;
 
 import java.security.Principal;
 
@@ -19,7 +23,9 @@ public class ManagerPayrollController {
     private final CurrentEmployeeService currentEmployeeService; // ✅ THÊM DÒNG NÀY
 
     // DEMO: bạn thay bằng current manager empId từ Security sau
-    private Integer demoManagerEmpId() { return 2; }
+    private Integer demoManagerEmpId() {
+        return 2;
+    }
 
     @GetMapping("/periods")
     public String periods(Model model) {
@@ -81,4 +87,75 @@ public class ManagerPayrollController {
         model.addAttribute("p", payrollService.getPayslipDetailForManager(managerEmpId, payslipId));
         return "manager/payslip-detail";
     }
+
+    @GetMapping("/payslips")
+    public String payrollList(@RequestParam(value = "q", required = false) String q,
+                              @RequestParam(value = "status", required = false) String status,
+                              Model model,
+                              Principal principal,
+                              Authentication authentication) {
+
+        // Manager thường chỉ thấy nhân viên mình quản lý
+        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
+
+        // Nếu HR/ADMIN muốn thấy tất cả thì bật đoạn này:
+        boolean isAdminOrHr = authentication.getAuthorities().stream().anyMatch(a ->
+                a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR")
+        );
+        if (isAdminOrHr)
+            managerEmpId = null;
+
+        model.addAttribute("rows", payrollService.listPayrollRowsForManager(managerEmpId, q, status));
+        model.addAttribute("q", q);
+        model.addAttribute("status", status);
+        model.addAttribute("statusOptions", List.of("", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PAID"));
+
+        return "manager/payroll-list"; // -> /WEB-INF/views/manager/payroll-list.jsp
+    }
+
+    @PostMapping("/payslips/bulk")
+    public String bulk(@RequestParam("action") String action,
+                       @RequestParam(value = "batchIds", required = false) List<Integer> batchIds,
+                       Principal principal,
+                       RedirectAttributes ra) {
+
+        if (batchIds == null || batchIds.isEmpty()) {
+            ra.addFlashAttribute("msg", "Bạn chưa chọn dòng nào.");
+            return "redirect:/manager/payroll/payslips";
+        }
+
+        Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
+
+        // distinct batch ids
+        List<Integer> ids = batchIds.stream().distinct().toList();
+
+        int ok = 0, fail = 0;
+
+        for (Integer batchId : ids) {
+            try {
+                if ("approve".equalsIgnoreCase(action)) {
+                    // nếu đang DRAFT thì submit rồi approve (để demo chạy mượt)
+                    try {
+                        payrollService.approveBatch(batchId, approverEmpId);
+                    } catch (IllegalStateException ex) {
+                        payrollService.submitBatchForApproval(batchId);
+                        payrollService.approveBatch(batchId, approverEmpId);
+                    }
+                    ok++;
+                } else if ("reject".equalsIgnoreCase(action)) {
+                    payrollService.rejectBatch(batchId);
+                    ok++;
+                } else {
+                    fail++;
+                }
+            } catch (Exception e) {
+                fail++;
+            }
+        }
+
+        ra.addFlashAttribute("msg", "Done: ok=" + ok + ", fail=" + fail);
+        return "redirect:/manager/payroll/payslips";
+    }
+
+
 }
