@@ -1,36 +1,22 @@
-package com.example.hrm.entity;
+package com.example.hrm.dto;
 
-import jakarta.persistence.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "employees")
-public class Employee {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "emp_id")
+public class EmployeeAdd {
     private Integer empId;
-
-    @Column(name = "full_name", nullable = false, length = 120)
     private String fullName;
-
-    @Column(name = "email", length = 120)
     private String email;
-
-    @Column(name = "phone", length = 30)
     private String phone;
 
-    @Column(name = "date_of_birth")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dateOfBirth;
 
-    @Column(name = "hire_date")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate hireDate;
 
-    @Column(name = "employment_status", nullable = false, length = 30)
-    private String employmentStatus; // Active/On Leave/Resigned
+    private String employmentStatus;
 
-    // ===== getters/setters =====
     public Integer getEmpId() { return empId; }
     public void setEmpId(Integer empId) { this.empId = empId; }
 

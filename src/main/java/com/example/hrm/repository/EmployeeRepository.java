@@ -3,6 +3,8 @@ package com.example.hrm.repository;
 import com.example.hrm.entity.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface EmployeeRepository
-        extends JpaRepository<Employee, Integer> {
+import java.util.List;
+
+public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
+    List<Employee> findByFullNameContainingIgnoreCase(String keyword);
 }
