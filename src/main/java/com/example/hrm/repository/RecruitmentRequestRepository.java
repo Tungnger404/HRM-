@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface    RecruitmentRequestRepository
         extends JpaRepository<RecruitmentRequest, Integer> {
@@ -23,4 +24,5 @@ public interface    RecruitmentRequestRepository
     List<RecruitmentRequest> findForHR(
             @Param("status") RecruitmentRequestStatus status
     );
+    Optional<RecruitmentRequest> findByReqId(Integer reqId);
 }
