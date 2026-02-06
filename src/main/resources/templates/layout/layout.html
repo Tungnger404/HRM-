@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+    <meta charset="UTF-8">
+    <title>HRM System</title>
+
+    <!-- CoreUI CSS -->
+    <link th:href="@{/vendors/simplebar/css/simplebar.css}" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link th:href="@{/css/examples.css}" rel="stylesheet">
+
+    <!-- CoreUI JS config -->
+    <script th:src="@{/js/config.js}"></script>
+    <script th:src="@{/js/color-modes.js}"></script>
+
+</head>
+
+<body>
+
+<!-- ======================== SIDEBAR ======================== -->
+<div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
+
+    <div class="sidebar-header border-bottom">
+        <div class="sidebar-brand">
+            <svg class="sidebar-brand-full" width="88" height="32">
+                <use xlink:href="/assets/brand/coreui.svg#full"></use>
+            </svg>
+            <svg class="sidebar-brand-narrow" width="32" height="32">
+                <use xlink:href="/assets/brand/coreui.svg#signet"></use>
+            </svg>
+        </div>
+        <button class="btn-close d-lg-none" type="button"
+                onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"></button>
+    </div>
+
+    <!-- ========== SIDEBAR MENU ========== -->
+    <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use>
+                </svg>
+                Dashboard
+            </a>
+        </li>
+
+        <li class="nav-title">Recruitment</li>
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/recruitment-request/create}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user-follow"></use>
+                </svg>
+                Create Request
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/recruitment-request/my-requests}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+                </svg>
+                My Requests
+            </a>
+        </li>
+
+        <li class="nav-divider"></li>
+        <li class="nav-title">System</li>
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/logout}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>
+                </svg>
+                Logout
+            </a>
+        </li>
+
+    </ul>
+
+    <div class="sidebar-footer border-top d-none d-md-flex">
+        <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
+    </div>
+
+</div>
+
+<!-- ======================== MAIN WRAPPER ======================== -->
+<div class="wrapper d-flex flex-column min-vh-100">
+
+    <!-- ======================== NAVBAR ======================== -->
+    <header class="header header-sticky p-0 mb-4">
+        <div class="container-fluid border-bottom px-4">
+
+            <button class="header-toggler" type="button"
+                    onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
+                <svg class="icon icon-lg">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-menu"></use>
+                </svg>
+            </button>
+
+            <ul class="header-nav ms-auto">
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown" role="button">
+                        <div class="avatar avatar-md">
+                            <img class="avatar-img" th:src="@{/assets/img/avatars/8.jpg}" alt="avatar">
+                        </div>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end pt-0">
+                        <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">
+                            Account
+                        </div>
+                        <a class="dropdown-item" href="#">
+                            <svg class="icon me-2">
+                                <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+                            </svg> Profile
+                        </a>
+                        <a class="dropdown-item" th:href="@{/logout}">
+                            <svg class="icon me-2">
+                                <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>
+                            </svg> Logout
+                        </a>
+                    </div>
+                </li>
+
+            </ul>
+
+        </div>
+    </header>
+
+    <!-- ======================== CONTENT AREA ======================== -->
+    <!-- ⭐⭐ TRANG CON SẼ CHÈN VÀO ĐÂY ⭐⭐ -->
+    <main class="body flex-grow-1 px-4 py-3" layout:fragment="content">
+        <!-- Nội dung trang con -->
+    </main>
+
+    <!-- ======================== FOOTER ======================== -->
+    <footer class="footer px-4">
+        <div>HRM System © 2025</div>
+        <div class="ms-auto">Powered by CoreUI</div>
+    </footer>
+
+</div>
+
+<!-- ======================== COREUI JS ======================== -->
+<script th:src="@{/vendors/@coreui/coreui/js/coreui.bundle.min.js}"></script>
+<script th:src="@{/vendors/simplebar/js/simplebar.min.js}"></script>
+
+</body>
+</html>
