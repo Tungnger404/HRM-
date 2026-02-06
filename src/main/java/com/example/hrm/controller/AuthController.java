@@ -16,7 +16,7 @@ public class AuthController {
     public String registerPage() {
         return "login_register/register";
     }
-
+//hjjh
     @GetMapping("/change-password")
     public String changePasswordPage() {
         return "login_register/change_password";
