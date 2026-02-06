@@ -6,7 +6,6 @@ import org.springframework.web.servlet.config.annotation.*;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    // Static resources (Spring Boot chuẩn)
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/css/**")
@@ -15,6 +14,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/static/js/");
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("classpath:/static/images/");
+
+        // ✅ CoreUI
+        registry.addResourceHandler("/vendors/**")
+                .addResourceLocations("classpath:/static/vendors/");
+        registry.addResourceHandler("/assets/**")
+                .addResourceLocations("classpath:/static/assets/");
+
         registry.addResourceHandler("/webjars/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/");
     }

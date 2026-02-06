@@ -1,22 +1,24 @@
 package com.example.hrm.repository;
 
-import com.example.hrm.entity.Request;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import com.example.hrm.entity.LeaveOrOtRequest;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 
-public interface RequestRepository extends JpaRepository<Request, Integer> {
+public interface RequestRepository extends JpaRepository<LeaveOrOtRequest, Integer> {
 
-    @Query("""
-                select coalesce(sum(timestampdiff(minute, r.startTime, r.endTime)), 0)
-                from Request r
-                where r.employee.id = :empId
-                  and r.requestType = 'OVERTIME'
-                  and r.status = 'APPROVED'
-                  and r.startTime >= :start
-                  and r.endTime <= :end
-            """)
-    long sumApprovedOvertimeMinutes(Integer empId, LocalDateTime start, LocalDateTime end);
-
+    // SQL Server dùng DATEDIFF
+    @Query(value = """
+        select coalesce(sum(datediff(minute, start_time, end_time)), 0)
+        from requests
+        where emp_id = :empId
+          and request_type = 'OVERTIME'
+          and status = 'APPROVED'
+          and start_time >= :start
+          and end_time <= :end
+    """, nativeQuery = true)
+    long sumApprovedOvertimeMinutes(@Param("empId") Integer empId,
+                                    @Param("start") LocalDateTime start,
+                                    @Param("end") LocalDateTime end);
 }

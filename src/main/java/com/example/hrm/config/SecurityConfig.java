@@ -4,10 +4,9 @@ import jakarta.servlet.DispatcherType;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -50,7 +49,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/login", "/logout", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                        .requestMatchers(
+                                "/login", "/logout",
+                                "/css/**", "/js/**", "/images/**",
+                                "/vendors/**", "/assets/**",  // ✅ thêm cho CoreUI
+                                "/webjars/**"
+                        ).permitAll()
                         .requestMatchers("/employee/**").hasRole("EMPLOYEE")
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
                         .anyRequest().authenticated()

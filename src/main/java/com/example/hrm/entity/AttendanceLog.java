@@ -11,14 +11,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "attendance_logs",
-        uniqueConstraints = @UniqueConstraint(name = "uq_emp_date", columnNames = {"emp_id", "work_date"}))
+@Table(
+        name = "attendance_logs",
+        uniqueConstraints = @UniqueConstraint(name = "uq_emp_date", columnNames = {"emp_id", "work_date"})
+)
 public class AttendanceLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
-    private Long id;
+    private Long logId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emp_id", nullable = false)
@@ -33,6 +35,6 @@ public class AttendanceLog {
     @Column(name = "check_out")
     private LocalDateTime checkOut;
 
-    @Column(name = "status")
+    @Column(name = "status", length = 20)
     private String status; // ON_TIME/LATE/ABSENT/EARLY_LEAVE
 }
