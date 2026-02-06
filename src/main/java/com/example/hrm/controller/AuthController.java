@@ -19,15 +19,16 @@ public class AuthController {
         this.authService = authService;
     }
 
+    // ================= LOGIN =================
     @GetMapping("/login")
     public String loginPage(Model model) {
         model.addAttribute("loginRequest", new LoginRequest());
-        return "login/login";
+        return "login/login"; // Thymeleaf: templates/login/login.html
     }
 
     @PostMapping("/login")
     public String doLogin(
-            @Valid @ModelAttribute LoginRequest loginRequest,
+            @Valid @ModelAttribute("loginRequest") LoginRequest loginRequest,
             BindingResult br,
             HttpSession session,
             Model model
@@ -36,22 +37,27 @@ public class AuthController {
 
         try {
             authService.login(loginRequest, session);
+
+            // TODO: sau này redirect theo role:
+            // return "redirect:/hr/dashboard" ... tuỳ ROLE_NAME trong session
             return "redirect:/employees";
+
         } catch (RuntimeException ex) {
             model.addAttribute("error", ex.getMessage());
             return "login/login";
         }
     }
 
+    // ================= REGISTER =================
     @GetMapping("/register")
     public String registerPage(Model model) {
         model.addAttribute("registerRequest", new RegisterRequest());
-        return "login/register";
+        return "login/register"; // Thymeleaf: templates/login/register.html
     }
 
     @PostMapping("/register")
     public String doRegister(
-            @Valid @ModelAttribute RegisterRequest registerRequest,
+            @Valid @ModelAttribute("registerRequest") RegisterRequest registerRequest,
             BindingResult br,
             Model model
     ) {
@@ -66,9 +72,16 @@ public class AuthController {
         }
     }
 
+    // ================= LOGOUT =================
     @GetMapping("/logout")
     public String logout(HttpSession session) {
-        session.invalidate();
+        if (session != null) session.invalidate();
         return "redirect:/login?logout=1";
+    }
+
+    // ================= CHANGE PASSWORD (UI) =================
+    @GetMapping("/change-password")
+    public String changePasswordPage() {
+        return "login_register/change_password";
     }
 }
