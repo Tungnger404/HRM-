@@ -9,12 +9,16 @@ public class EmployeeAdd {
 
     private Integer userId;
     private String fullName;
+    private String email;
+    private String phone;
+//hehegit s
     private String gender;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate dateOfBirth;
     private LocalDate dob;
 
-    private String phone;
+
     private String address;
     private String identityCard;
     private String taxCode;
@@ -26,6 +30,9 @@ public class EmployeeAdd {
     private String status;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate hireDate;
+
+    private String employmentStatus;
     private LocalDate joinDate;
 
     public Integer getEmpId() { return empId; }
@@ -37,6 +44,8 @@ public class EmployeeAdd {
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
 
@@ -46,15 +55,19 @@ public class EmployeeAdd {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
 
     public String getIdentityCard() { return identityCard; }
     public void setIdentityCard(String identityCard) { this.identityCard = identityCard; }
 
+    public LocalDate getHireDate() { return hireDate; }
+    public void setHireDate(LocalDate hireDate) { this.hireDate = hireDate; }
     public String getTaxCode() { return taxCode; }
     public void setTaxCode(String taxCode) { this.taxCode = taxCode; }
 
+    public void setEmploymentStatus(String employmentStatus) { this.employmentStatus = employmentStatus; }
     public Integer getDeptId() { return deptId; }
     public void setDeptId(Integer deptId) { this.deptId = deptId; }
 
