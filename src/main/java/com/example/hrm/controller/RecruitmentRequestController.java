@@ -1,13 +1,18 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.dto.RecruitmentRequestCreateDTO;
+import com.example.hrm.entity.Employee;
+import com.example.hrm.entity.RecruitmentRequest;
 import com.example.hrm.repository.DepartmentRepository;
 import com.example.hrm.repository.JobPositionRepository;
 import com.example.hrm.service.RecruitmentRequestService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/recruitment-request")
@@ -34,5 +39,24 @@ public class RecruitmentRequestController {
         return "redirect:/recruitment-request/create?success=true";
 
     }
+    @GetMapping("/my-requests")
+    public String myRequests(HttpSession session, Model model) {
+
+        Employee employee =
+                (Employee) session.getAttribute("LOGIN_EMPLOYEE");
+
+        if (employee == null) {
+            return "redirect:/login";
+        }
+
+        List<RecruitmentRequest> requests =
+                recruitmentRequestService.getRequestsByEmployee(employee.getEmpId());
+
+        model.addAttribute("requests", requests);
+
+        // dùng lại màn create + tab
+        return "recruitment-request-create";
+    }
+
 
 }

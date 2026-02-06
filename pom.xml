@@ -1,73 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<!-- ✅ Maven model version -->
 	<modelVersion>4.0.0</modelVersion>
 
-	<!-- ✅ Spring Boot Parent: quản lý version dependency tự động -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.2.2</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 
-	<!-- ✅ Thông tin dự án -->
 	<groupId>com.example</groupId>
 	<artifactId>hrm</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<!-- ✅ WAR để deploy lên Tomcat ngoài -->
+	<!-- Deploy WAR lên Tomcat ngoài -->
 	<packaging>war</packaging>
 
 	<name>hrm</name>
-	<description>Demo project for Spring Boot</description>
 
-	<!-- (Các thẻ metadata này không bắt buộc cho bài) -->
-	<url/>
-	<licenses><license/></licenses>
-	<developers><developer/></developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
-
-	<!-- ✅ Properties -->
 	<properties>
-		<!-- Java version dùng cho project -->
 		<java.version>21</java.version>
 	</properties>
 
 	<dependencies>
 
-		<!-- 🌐 Web / Spring MVC (Controller, RequestMapping, REST API) -->
+		<!-- Web -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<!-- 🗄️ JPA / Hibernate (Entity, Repository, ORM) -->
+		<!-- JPA -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
-		<!-- ✅ Validation (Bean Validation: @NotNull, @Size, ...) -->
+		<!-- Validation -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
-		<!-- 🔐 Security (Login, Role, Authorization) -->
+		<!-- Security -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
-		<!-- 🧰 DevTools (tự restart nhanh khi dev) -->
+		<!-- Thymeleaf (THAY JSP) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
+		<!-- DevTools -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
@@ -75,69 +65,48 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- 🧩 Lombok (giảm boilerplate getter/setter/constructor) -->
+		<!-- Lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
 
-		<!-- 🗃️ SQL Server JDBC Driver (kết nối DB SQL Server) -->
+		<!-- SQL Server -->
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- 🚀 Tomcat (Provided) - deploy WAR lên Tomcat ngoài -->
+		<!-- Tomcat ngoài -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- 🧪 Testing (JUnit5, Mockito, Spring Test, ...) -->
+		<!-- Testing -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 
-		<!-- 🧪 Security Test (test login/role với Spring Security) -->
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 
-		<!-- 🖥️ JSP Engine (Jasper) - để chạy JSP trong Spring Boot -->
-		<dependency>
-			<groupId>org.apache.tomcat.embed</groupId>
-			<artifactId>tomcat-embed-jasper</artifactId>
-		</dependency>
-
-		<!-- JSTL API -->
-		<dependency>
-			<groupId>jakarta.servlet.jsp.jstl</groupId>
-			<artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
-			<version>3.0.0</version>
-		</dependency>
-
-		<!-- JSTL Implementation -->
-		<dependency>
-			<groupId>org.glassfish.web</groupId>
-			<artifactId>jakarta.servlet.jsp.jstl</artifactId>
-			<version>3.0.1</version>
-		</dependency>
-
-		<!-- Excel export -->
+		<!-- Excel -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.2.5</version>
 		</dependency>
 
-		<!-- PDF generate (simple) -->
+		<!-- PDF -->
 		<dependency>
 			<groupId>com.github.librepdf</groupId>
 			<artifactId>openpdf</artifactId>
@@ -148,8 +117,6 @@
 
 	<build>
 		<plugins>
-
-			<!-- ⚙️ Compiler Plugin: cấu hình annotation processor cho Lombok -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -163,12 +130,10 @@
 				</configuration>
 			</plugin>
 
-			<!-- 🔧 Spring Boot Maven Plugin: build/run package -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<!-- loại Lombok khỏi artifact runtime -->
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
