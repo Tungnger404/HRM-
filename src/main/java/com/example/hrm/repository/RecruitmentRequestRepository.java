@@ -24,5 +24,9 @@ public interface    RecruitmentRequestRepository
     List<RecruitmentRequest> findForHR(
             @Param("status") RecruitmentRequestStatus status
     );
+
     Optional<RecruitmentRequest> findByReqId(Integer reqId);
+
+    List<RecruitmentRequest> findByCreatedBy_EmpId(Integer empId);
+    List<RecruitmentRequest> findByStatus(RecruitmentRequestStatus status);
 }

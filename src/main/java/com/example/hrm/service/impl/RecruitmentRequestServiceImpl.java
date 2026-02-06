@@ -41,7 +41,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         request.setReason(dto.getReason());
         request.setDeadline(dto.getDeadline().atStartOfDay());
 
-        request.setStatus(RecruitmentRequestStatus.SUBMITTED);
+        request.setStatus(RecruitmentRequestStatus.PENDING);
         request.setCreatedBy(creator);
         request.setCreatedAt(LocalDateTime.now());
 
@@ -76,4 +76,10 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         request.setReason(reason);
         repository.save(request);
     }
+    @Override
+    public List<RecruitmentRequest> getRequestsByEmployee(Integer empId) {
+        return recruitmentRequestRepository
+                .findByCreatedBy_EmpId(empId);
+    }
+
 }

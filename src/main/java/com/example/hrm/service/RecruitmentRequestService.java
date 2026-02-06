@@ -16,4 +16,7 @@ public interface RecruitmentRequestService {
     void approveRequest(Integer id);
 
     void rejectRequest(Integer id, String reason);
+
+    List<RecruitmentRequest> getRequestsByEmployee(Integer empId);
+
 }

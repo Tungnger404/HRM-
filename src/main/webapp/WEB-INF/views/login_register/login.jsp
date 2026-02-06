@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SkillUp - Đăng nhập</title>
+    <title>Software House HRM System - Đăng nhập</title>
 
     <style>
         :root{
