@@ -1,0 +1,40 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payroll Periods</title>
+</head>
+<body>
+
+<h2>Payroll Periods</h2>
+
+<table border="1" cellpadding="6">
+    <tr>
+        <th>Period</th>
+        <th>Status</th>
+        <th>Locked</th>
+        <th>Action</th>
+    </tr>
+
+    <tr th:each="p : ${periods}">
+        <td><span th:text="${p.month}"></span>/<span th:text="${p.year}"></span></td>
+        <td th:text="${p.status}"></td>
+        <td th:text="${p.locked}"></td>
+        <td>
+            <a th:href="@{/manager/payroll/periods/{id}/batches(id=${p.id})}">View Batches</a>
+
+            <span th:if="${!p.locked}">
+        &nbsp;|&nbsp;
+        <form method="post" th:action="@{/manager/payroll/periods/{id}/generate(id=${p.id})}" style="display:inline;">
+          <div th:if="${_csrf != null}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          </div>
+          <button type="submit">Generate Draft</button>
+        </form>
+      </span>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

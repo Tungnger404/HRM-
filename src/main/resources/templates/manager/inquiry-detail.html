@@ -1,0 +1,40 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Inquiry Detail</title>
+</head>
+<body>
+
+<h2>Inquiry Detail</h2>
+
+<p><b>ID:</b> <span th:text="${inq.id}"></span></p>
+<p><b>Payslip:</b> <span th:text="${inq.payslipId}"></span></p>
+<p><b>Employee:</b> <span th:text="${inq.empId}"></span></p>
+<p><b>Status:</b> <span th:text="${inq.status}"></span></p>
+
+<h3>Question</h3>
+<p th:text="${inq.question}"></p>
+
+<h3>Answer</h3>
+<div th:if="${inq.status == 'RESOLVED'}">
+    <p th:text="${inq.answer}"></p>
+</div>
+
+<div th:if="${inq.status != 'RESOLVED'}">
+    <form method="post" th:action="@{/manager/inquiries/{id}/resolve(id=${inq.id})}">
+        <textarea name="answer" rows="4" cols="80" placeholder="Enter answer..."></textarea><br/>
+
+        <div th:if="${_csrf != null}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        </div>
+
+        <button type="submit">Resolve</button>
+    </form>
+</div>
+
+<p>
+    <a th:href="@{/manager/inquiries}">Back</a>
+</p>
+</body>
+</html>
