@@ -110,18 +110,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- 🖥️ JSP Engine (Jasper) - để chạy JSP trong Spring Boot -->
-		<dependency>
-			<groupId>org.apache.tomcat.embed</groupId>
-			<artifactId>tomcat-embed-jasper</artifactId>
-		</dependency>
-
-		<!-- 🏷️ JSTL Jakarta (Boot 3 / Tomcat 10+) - dùng <c:forEach>, <c:if>... -->
-		<dependency>
-			<groupId>org.glassfish.web</groupId>
-			<artifactId>jakarta.servlet.jsp.jstl</artifactId>
-		</dependency>
-
 		<!-- Excel export -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
@@ -142,16 +130,16 @@
 			<version>2.0.30</version>
 		</dependency>
 
-		<!-- JSTL (Jakarta) for Tomcat 10 / Spring Boot 3 -->
+		<!-- Thymeleaf -->
 		<dependency>
-			<groupId>jakarta.servlet.jsp.jstl</groupId>
-			<artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
-			<version>3.0.1</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
+
+		<!-- Nếu muốn dùng securit	y tag trong thymeleaf (optional nhưng nên có) -->
 		<dependency>
-			<groupId>org.glassfish.web</groupId>
-			<artifactId>jakarta.servlet.jsp.jstl</artifactId>
-			<version>3.0.1</version>
+			<groupId>org.thymeleaf.extras</groupId>
+			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
 
 	</dependencies>
