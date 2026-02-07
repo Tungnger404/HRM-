@@ -1,0 +1,39 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Payslips</title>
+</head>
+<body>
+
+<h2>My Payslips</h2>
+
+<table border="1" cellpadding="6">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Total Income</th>
+        <th>Total Deduction</th>
+        <th>Net</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${payslips}">
+        <td th:text="${p.payslipId}"></td>
+        <td th:text="${p.totalIncome}"></td>
+        <td th:text="${p.totalDeduction}"></td>
+        <td th:text="${p.netSalary}"></td>
+        <td>
+            <a th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">View</a>
+        </td>
+    </tr>
+
+    <tr th:if="${#lists.isEmpty(payslips)}">
+        <td colspan="5" style="text-align:center;color:#888;">No data</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

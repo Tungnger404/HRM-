@@ -26,7 +26,18 @@ public class RecruitmentRequest {
 
     private LocalDateTime deadline;
 
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RecruitmentRequestStatus status;
+
+    public RecruitmentRequestStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RecruitmentRequestStatus status) {
+        this.status = status;
+    }
 
     @ManyToOne
     @JoinColumn(name = "created_by")
@@ -80,14 +91,6 @@ public class RecruitmentRequest {
 
     public void setDeadline(LocalDateTime deadline) {
         this.deadline = deadline;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public Employee getCreatedBy() {
