@@ -177,6 +177,13 @@
 			<version>3.2.1</version>
 		</dependency>
 
+		<!-- 📚 Swagger/OpenAPI 3 (API Documentation & Testing) -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

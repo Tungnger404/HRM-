@@ -55,6 +55,13 @@ public interface TrainingService {
 
     TrainingProgress updateProgressScore(Integer progressId, BigDecimal finalScore, BigDecimal attendanceRate);
 
+    /**
+     * Nhân viên báo đã hoàn thành khóa học
+     * Status: IN_PROGRESS -> AWAITING_EVIDENCE
+     * Hệ thống sẽ yêu cầu upload chứng chỉ
+     */
+    TrainingProgress markTrainingAsComplete(Integer progressId);
+
     List<TrainingProgress> getProgressByEmployee(Integer empId);
 
     List<TrainingProgress> getProgressByProgram(Integer programId);

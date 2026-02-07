@@ -180,6 +180,22 @@ public class TrainingController {
         }
     }
 
+    /**
+     * PUT /api/training/progress/{progressId}/complete
+     * Nhân viên báo đã hoàn thành khóa học
+     * Status: IN_PROGRESS -> AWAITING_EVIDENCE
+     * Hệ thống yêu cầu upload chứng chỉ
+     */
+    @PutMapping("/progress/{progressId}/complete")
+    public ResponseEntity<TrainingProgress> markTrainingAsComplete(@PathVariable Integer progressId) {
+        try {
+            TrainingProgress progress = trainingService.markTrainingAsComplete(progressId);
+            return ResponseEntity.ok(progress);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
     // GET /api/training/progress/employee/{empId}
     @GetMapping("/progress/employee/{empId}")
     public ResponseEntity<List<TrainingProgress>> getProgressByEmployee(@PathVariable Integer empId) {

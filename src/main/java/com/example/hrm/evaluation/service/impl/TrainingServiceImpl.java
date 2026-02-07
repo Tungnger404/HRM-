@@ -216,6 +216,27 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
+    @Transactional
+    public TrainingProgress markTrainingAsComplete(Integer progressId) {
+        TrainingProgress progress = trainingProgressRepository.findById(progressId)
+                .orElseThrow(() -> new RuntimeException("Training progress not found"));
+
+        if (progress.getStatus() != ProgressStatus.IN_PROGRESS) {
+            throw new RuntimeException("Training must be IN_PROGRESS to mark as complete");
+        }
+
+        // Change status to AWAITING_EVIDENCE
+        progress.setStatus(ProgressStatus.AWAITING_EVIDENCE);
+        progress.setCompletionPercentage(new BigDecimal(100));
+        progress.setUpdatedAt(LocalDateTime.now());
+
+        // TODO: Send notification to employee: "Vui lòng upload chứng chỉ hoàn thành"
+        // TODO: Send notification to manager: "Nhân viên X đã hoàn thành khóa học, đang chờ upload chứng chỉ"
+
+        return trainingProgressRepository.save(progress);
+    }
+
+    @Override
     public List<TrainingProgress> getProgressByEmployee(Integer empId) {
         return trainingProgressRepository.findByEmpId(empId);
     }

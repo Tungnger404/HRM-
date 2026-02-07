@@ -23,6 +23,8 @@ public interface EvaluationRepository extends JpaRepository<Evaluation, Integer>
 
     List<Evaluation> findByCycleId(Integer cycleId);
 
+    List<Evaluation> findByCycleIdAndStatus(Integer cycleId, EvaluationStatus status);
+
     List<Evaluation> findByEmpIdAndStatus(Integer empId, EvaluationStatus status);
 
     List<Evaluation> findByEmpIdOrderByEvalIdDesc(Integer empId);

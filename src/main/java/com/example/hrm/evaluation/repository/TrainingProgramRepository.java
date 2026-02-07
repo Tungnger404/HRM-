@@ -17,5 +17,7 @@ public interface TrainingProgramRepository extends JpaRepository<TrainingProgram
 
     List<TrainingProgram> findBySkillCategory(String skillCategory);
 
+    List<TrainingProgram> findBySkillCategoryContaining(String keyword);
+
     List<TrainingProgram> findByLevel(String level);
 }

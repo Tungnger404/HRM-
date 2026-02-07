@@ -53,7 +53,11 @@ public class SecurityConfig {
                                 "/login", "/logout",
                                 "/css/**", "/js/**", "/images/**",
                                 "/vendors/**", "/assets/**",  // ✅ thêm cho CoreUI
-                                "/webjars/**"
+                                "/webjars/**",
+                                // ✅ Swagger/OpenAPI endpoints
+                                "/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs/**", "/v3/api-docs.yaml",
+                                "/api/**"  // ✅ Cho phép test API qua Swagger
                         ).permitAll()
                         .requestMatchers("/employee/**").hasRole("EMPLOYEE")
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
