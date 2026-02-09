@@ -10,8 +10,13 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "payslips",
-        uniqueConstraints = @UniqueConstraint(name = "uq_slip_batch_emp", columnNames = {"batch_id", "emp_id"}))
+@Table(
+        name = "payslips",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_slip_batch_emp",
+                columnNames = {"batch_id", "emp_id"}
+        )
+)
 public class Payslip {
 
     @Id
@@ -27,25 +32,25 @@ public class Payslip {
     @JoinColumn(name = "emp_id", nullable = false)
     private Employee employee;
 
-    @Column(name = "base_salary")
+    @Column(name = "base_salary", precision = 20, scale = 2)
     private BigDecimal baseSalary;
 
-    @Column(name = "standard_work_days")
+    @Column(name = "standard_work_days", precision = 20, scale = 2)
     private BigDecimal standardWorkDays;
 
-    @Column(name = "actual_work_days")
+    @Column(name = "actual_work_days", precision = 20, scale = 2)
     private BigDecimal actualWorkDays;
 
-    @Column(name = "ot_hours")
+    @Column(name = "ot_hours", precision = 20, scale = 2)
     private BigDecimal otHours;
 
-    @Column(name = "total_income")
+    @Column(name = "total_income", precision = 20, scale = 2)
     private BigDecimal totalIncome;
 
-    @Column(name = "total_deduction")
+    @Column(name = "total_deduction", precision = 20, scale = 2)
     private BigDecimal totalDeduction;
 
-    @Column(name = "net_salary")
+    @Column(name = "net_salary", precision = 20, scale = 2)
     private BigDecimal netSalary;
 
     @Column(name = "is_sent_to_employee")

@@ -25,18 +25,20 @@ public class PayrollBatch {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "total_gross")
-    private BigDecimal totalGross;
+    @Column(name = "total_gross", precision = 20, scale = 2)
+    @Builder.Default
+    private BigDecimal totalGross = BigDecimal.ZERO;
 
-    @Column(name = "total_net")
-    private BigDecimal totalNet;
+    @Column(name = "total_net", precision = 20, scale = 2)
+    @Builder.Default
+    private BigDecimal totalNet = BigDecimal.ZERO;
 
     @Column(name = "status")
-    private String status; // DRAFT/PENDING_APPROVAL/APPROVED/PAID
+    private String status;
 
     @Column(name = "created_by")
-    private Integer createdBy;   // emp_id
+    private Integer createdBy;
 
     @Column(name = "approved_by")
-    private Integer approvedBy;  // emp_id
+    private Integer approvedBy;
 }

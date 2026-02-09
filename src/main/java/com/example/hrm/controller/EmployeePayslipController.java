@@ -1,4 +1,4 @@
-package com.example.hrm.controller.employee;
+package com.example.hrm.controller;
 
 import com.example.hrm.dto.PayrollInquiryCreateDTO;
 import com.example.hrm.service.CurrentEmployeeService;

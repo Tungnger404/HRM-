@@ -28,7 +28,7 @@ public class PayslipItem {
     @Column(name = "item_name")
     private String itemName;
 
-    @Column(name = "amount", nullable = false)
+    @Column(name = "amount", precision = 20, scale = 2, nullable = false)
     private BigDecimal amount;
 
     @Column(name = "item_type")
