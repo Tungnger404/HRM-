@@ -1,0 +1,32 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payroll Batches</title>
+</head>
+<body>
+
+<h2>Payroll Batches (Period <span th:text="${periodId}"></span>)</h2>
+
+<table border="1" cellpadding="6">
+    <tr>
+        <th>Batch</th>
+        <th>Status</th>
+        <th>Total Gross</th>
+        <th>Total Net</th>
+        <th>Action</th>
+    </tr>
+
+    <tr th:each="b : ${batches}">
+        <td th:text="${b.name}"></td>
+        <td th:text="${b.status}"></td>
+        <td th:text="${b.totalGross}"></td>
+        <td th:text="${b.totalNet}"></td>
+        <td>
+            <a th:href="@{/manager/payroll/batches/{id}(id=${b.id})}">View</a>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

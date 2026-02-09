@@ -1,0 +1,46 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip Detail</title>
+</head>
+<body>
+
+<h2>Payslip Detail</h2>
+
+<div>
+    <p><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
+    <p><b>Net Salary:</b> <span th:text="${p.netSalary}"></span></p>
+
+    <p>
+        <a th:href="@{/employee/payslips/{id}/download(id=${p.payslipId})}">Download PDF</a>
+    </p>
+</div>
+
+<h3>Items</h3>
+<table border="1" cellpadding="6">
+    <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Amount</th>
+    </tr>
+    <tr th:each="it : ${p.items}">
+        <td th:text="${it.type}"></td>
+        <td th:text="${it.name}"></td>
+        <td th:text="${it.amount}"></td>
+    </tr>
+</table>
+
+<h3>Submit Payroll Inquiry</h3>
+<form method="post" th:action="@{/employee/payslips/{id}/inquiry(id=${p.payslipId})}">
+    <textarea name="question" rows="4" cols="60" placeholder="Enter your question..."></textarea><br/>
+
+    <div th:if="${_csrf != null}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    </div>
+
+    <button type="submit">Submit</button>
+</form>
+
+</body>
+</html>

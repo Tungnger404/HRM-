@@ -1,0 +1,68 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payroll Batch Detail</title>
+</head>
+<body>
+
+<h2>Payroll Batch Detail</h2>
+
+<p><b>Batch:</b> <span th:text="${b.batchName}"></span></p>
+<p><b>Status:</b> <span th:text="${b.status}"></span></p>
+<p><b>Total Gross:</b> <span th:text="${b.totalGross}"></span></p>
+<p><b>Total Net:</b> <span th:text="${b.totalNet}"></span></p>
+
+<p>
+    <a th:href="@{/manager/payroll/batches/{id}/export(id=${b.batchId})}">Export Excel</a>
+</p>
+
+<div th:if="${b.status == 'DRAFT'}">
+    <form method="post" th:action="@{/manager/payroll/batches/{id}/submit(id=${b.batchId})}">
+        <div th:if="${_csrf != null}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        </div>
+        <button type="submit">Submit For Approval</button>
+    </form>
+</div>
+
+<div th:if="${b.status == 'PENDING_APPROVAL'}">
+    <form method="post" th:action="@{/manager/payroll/batches/{id}/approve(id=${b.batchId})}" style="display:inline;">
+        <div th:if="${_csrf != null}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        </div>
+        <button type="submit">Approve</button>
+    </form>
+
+    <form method="post" th:action="@{/manager/payroll/batches/{id}/reject(id=${b.batchId})}" style="display:inline;">
+        <div th:if="${_csrf != null}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        </div>
+        <button type="submit">Reject</button>
+    </form>
+</div>
+
+<h3>Payslips</h3>
+<table border="1" cellpadding="6">
+    <tr>
+        <th>PayslipId</th>
+        <th>Employee</th>
+        <th>Total Income</th>
+        <th>Total Deduction</th>
+        <th>Net</th>
+    </tr>
+
+    <tr th:each="p : ${b.payslips}">
+        <td>
+            <a th:href="@{/manager/payroll/payslips/{id}(id=${p.payslipId})}"
+               th:text="${p.payslipId}"></a>
+        </td>
+        <td th:text="${p.employeeName}"></td>
+        <td th:text="${p.totalIncome}"></td>
+        <td th:text="${p.totalDeduction}"></td>
+        <td th:text="${p.netSalary}"></td>
+    </tr>
+</table>
+
+</body>
+</html>

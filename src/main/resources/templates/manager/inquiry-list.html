@@ -1,0 +1,38 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payroll Inquiries</title>
+</head>
+<body>
+
+<h2>Payroll Inquiries</h2>
+
+<p>
+    Filter:
+    <a th:href="@{/manager/inquiries}">All</a> |
+    <a th:href="@{/manager/inquiries(status='OPEN')}">OPEN</a> |
+    <a th:href="@{/manager/inquiries(status='RESOLVED')}">RESOLVED</a>
+</p>
+
+<table border="1" cellpadding="6">
+    <tr>
+        <th>ID</th>
+        <th>Payslip</th>
+        <th>EmpId</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Action</th>
+    </tr>
+    <tr th:each="i : ${inquiries}">
+        <td th:text="${i.id}"></td>
+        <td th:text="${i.payslipId}"></td>
+        <td th:text="${i.empId}"></td>
+        <td th:text="${i.status}"></td>
+        <td th:text="${i.createdAt}"></td>
+        <td><a th:href="@{/manager/inquiries/{id}(id=${i.id})}">View</a></td>
+    </tr>
+</table>
+
+</body>
+</html>
