@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+    <title>Create Recruitment Request</title>
+</head>
+
+<body>
+
+<main layout:fragment="content">
+
+    <div class="container-fluid">
+
+        <div class="row mb-3">
+            <div class="col">
+                <h2>Create Recruitment Request</h2>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <strong>Recruitment Request Form</strong>
+            </div>
+
+            <div class="card-body">
+
+                <form th:action="@{/recruitment-request/create}"
+                      th:object="${dto}"
+                      method="post"
+                      class="row g-3">
+
+                    <!-- Department -->
+                    <div class="col-md-6">
+                        <label class="form-label">Department</label>
+                        <select class="form-select"
+                                th:field="*{departmentId}"
+                                required>
+                            <option value="">-- Select department --</option>
+                            <option th:each="d : ${departments}"
+                                    th:value="${d.deptId}"
+                                    th:text="${d.deptName}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Job -->
+                    <div class="col-md-6">
+                        <label class="form-label">Job Position</label>
+                        <select class="form-select"
+                                th:field="*{jobId}"
+                                required>
+                            <option value="">-- Select job --</option>
+                            <option th:each="j : ${jobs}"
+                                    th:value="${j.jobId}"
+                                    th:text="${j.title}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="col-md-4">
+                        <label class="form-label">Quantity</label>
+                        <input type="number"
+                               class="form-control"
+                               th:field="*{quantity}"
+                               min="1"
+                               required>
+                    </div>
+
+                    <!-- Deadline -->
+                    <div class="col-md-4">
+                        <label class="form-label">Deadline</label>
+                        <input type="date"
+                               class="form-control"
+                               th:field="*{deadline}"
+                               required>
+                    </div>
+
+                    <!-- Reason -->
+                    <div class="col-12">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control"
+                                  th:field="*{reason}"
+                                  rows="4"></textarea>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="col-12">
+                        <button class="btn btn-primary" type="submit">
+                            Submit Request
+                        </button>
+                    </div>
+
+                    <!-- Success message -->
+                    <div class="col-12" th:if="${param.success}">
+                        <div class="alert alert-success mt-2">
+                            ✔ Submit request successfully!
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</main>
+
+</body>
+</html>
