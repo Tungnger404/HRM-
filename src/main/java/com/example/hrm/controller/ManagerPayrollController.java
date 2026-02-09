@@ -1,4 +1,4 @@
-package com.example.hrm.controller.manager;
+package com.example.hrm.controller;
 
 import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.PayrollService;
