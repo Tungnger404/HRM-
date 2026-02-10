@@ -11,11 +11,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-public class AuthController {
+public class LoginController {
 
     private final AuthService authService;
 
-    public AuthController(AuthService authService) {
+    public LoginController(AuthService authService) {
         this.authService = authService;
     }
 

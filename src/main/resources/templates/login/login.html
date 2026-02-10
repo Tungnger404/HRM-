@@ -57,13 +57,17 @@
                             <div class="alert alert-info" th:if="${param.logout}">
                                 Bạn đã đăng xuất.
                             </div>
-                            <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
-                            <!-- FORM: POST /login -->
-                            <form th:action="@{/login}" method="post" th:object="${loginRequest}">
+                            <!-- ✅ Spring Security error -->
+                            <div class="alert alert-danger" th:if="${param.error}">
+                                Sai tài khoản hoặc mật khẩu.
+                            </div>
 
-                                <!-- Username / Email -->
-                                <div class="input-group mb-2">
+                            <!-- ✅ FORM: POST /login (Spring Security) -->
+                            <form th:action="@{/login}" method="post">
+
+                                <!-- Username / Email (Spring Security needs name="username") -->
+                                <div class="input-group mb-3">
                   <span class="input-group-text">
                     <svg class="icon">
                       <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-user"></use>
@@ -71,15 +75,13 @@
                   </span>
                                     <input class="form-control"
                                            type="text"
+                                           name="username"
                                            placeholder="Username or Email"
-                                           th:field="*{usernameOrEmail}">
+                                           required>
                                 </div>
-                                <div class="text-danger small mb-3"
-                                     th:if="${#fields.hasErrors('usernameOrEmail')}"
-                                     th:errors="*{usernameOrEmail}"></div>
 
-                                <!-- Password -->
-                                <div class="input-group mb-2">
+                                <!-- Password (Spring Security needs name="password") -->
+                                <div class="input-group mb-4">
                   <span class="input-group-text">
                     <svg class="icon">
                       <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
@@ -87,20 +89,18 @@
                   </span>
                                     <input class="form-control"
                                            type="password"
+                                           name="password"
                                            placeholder="Password"
-                                           th:field="*{password}">
+                                           required>
                                 </div>
-                                <div class="text-danger small mb-3"
-                                     th:if="${#fields.hasErrors('password')}"
-                                     th:errors="*{password}"></div>
 
                                 <div class="row">
                                     <div class="col-6">
                                         <button class="btn btn-primary px-4" type="submit">Login</button>
                                     </div>
                                     <div class="col-6 text-end">
-                                        <!-- chưa làm forgot password thì để link tạm về login -->
-                                        <a class="btn btn-link px-0" href="#" onclick="alert('Chức năng Forgot Password chưa triển khai'); return false;">
+                                        <a class="btn btn-link px-0" href="#"
+                                           onclick="alert('Chức năng Forgot Password chưa triển khai'); return false;">
                                             Forgot password?
                                         </a>
                                     </div>

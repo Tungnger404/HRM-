@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+    <title>Employee Dashboard</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="mb-3">
+        <h3 class="mb-1">Employee Dashboard</h3>
+        <div class="text-body-secondary">Self-service: payslips & profile</div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-body-secondary">Payroll</div>
+                    <div class="fs-4 fw-semibold">My Payslips</div>
+                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/employee/payslips}">Open</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-body-secondary">Account</div>
+                    <div class="fs-4 fw-semibold">Logout</div>
+                    <a class="btn btn-sm btn-danger mt-2" th:href="@{/logout}">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header fw-semibold">Tips</div>
+        <div class="card-body">
+            <ul class="mb-0">
+                <li>Check payslip details monthly</li>
+                <li>Submit inquiry if there is any discrepancy</li>
+            </ul>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>
