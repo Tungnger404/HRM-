@@ -1,4 +1,4 @@
-package com.example.hrm.evaluation.service.impl;
+package com.example.hrm.service.impl;
 
 import com.example.hrm.entity.KpiTemplate;
 import com.example.hrm.entity.KpiAssignment;  // ✅ THÊM IMPORT NÀY
