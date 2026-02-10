@@ -89,7 +89,8 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
                                 "/v3/api-docs/**", "/v3/api-docs.yaml",
-                                "/api/**"
+                                "/api/**",
+                                "/evaluation/**", "/training/**"
                         ).permitAll()
 
                         // DASHBOARD ROUTING
