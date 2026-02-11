@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HR - Employee Detail</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:0;background:#f6f7fb;color:#111}
+    .wrap{max-width:950px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .title{font-size:20px;font-weight:800}
+    .btn{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center}
+    .btn-primary{background:#f5b400;border-color:#f5b400}
+    .btn-danger{background:#fee2e2;border-color:#fecaca}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    .field label{display:block;font-size:13px;font-weight:800;color:#6b7280;margin-bottom:6px}
+    .field input,.field select{width:100%;height:40px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
+    .field input:focus,.field select:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
+    .row-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+    .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
+    .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <div class="title">Employee General Information #<span th:text="${e.empId}"></span></div>
+      <a class="btn" th:href="@{/hr/employees}">← Back</a>
+    </div>
+
+    <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
+    <div class="msg msg-err" th:if="${err != null and err != ''}" th:text="${err}"></div>
+
+    <!-- UPDATE -->
+    <form method="post" th:action="@{/hr/employees/save}">
+      <input type="hidden" name="empId" th:value="${e.empId}">
+
+      <div class="grid">
+        <div class="field">
+          <label>Full Name</label>
+          <input name="fullName" th:value="${e.fullName}" required>
+        </div>
+
+        <div class="field">
+          <label>Status</label>
+          <select name="status">
+            <option value="PROBATION" th:selected="${e.status=='PROBATION'}">PROBATION</option>
+            <option value="ACTIVE" th:selected="${e.status=='ACTIVE'}">ACTIVE</option>
+            <option value="ON_LEAVE" th:selected="${e.status=='ON_LEAVE'}">ON_LEAVE</option>
+            <option value="RESIGNED" th:selected="${e.status=='RESIGNED'}">RESIGNED</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Gender</label>
+          <select name="gender">
+            <option value="" th:selected="${e.gender==null}">--</option>
+            <option value="MALE" th:selected="${e.gender=='MALE'}">MALE</option>
+            <option value="FEMALE" th:selected="${e.gender=='FEMALE'}">FEMALE</option>
+            <option value="OTHER" th:selected="${e.gender=='OTHER'}">OTHER</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Date of Birth</label>
+          <input name="dob" type="date" th:value="${e.dob}">
+        </div>
+
+        <div class="field">
+          <label>Phone</label>
+          <input name="phone" th:value="${e.phone}">
+        </div>
+
+        <div class="field">
+          <label>Address</label>
+          <input name="address" th:value="${e.address}">
+        </div>
+
+        <div class="field">
+          <label>Identity Card</label>
+          <input name="identityCard" th:value="${e.identityCard}">
+        </div>
+
+        <div class="field">
+          <label>Tax Code</label>
+          <input name="taxCode" th:value="${e.taxCode}">
+        </div>
+
+        <div class="field">
+          <label>Dept ID</label>
+          <input name="deptId" th:value="${e.deptId}">
+        </div>
+
+        <div class="field">
+          <label>Job ID</label>
+          <input name="jobId" th:value="${e.jobId}">
+        </div>
+
+        <div class="field">
+          <label>Direct Manager ID</label>
+          <input name="directManagerId" th:value="${e.directManagerId}">
+        </div>
+
+        <div class="field">
+          <label>Join Date</label>
+          <input name="joinDate" type="date" th:value="${e.joinDate}">
+        </div>
+
+        <div class="field">
+          <label>User ID</label>
+          <input name="userId" th:value="${e.userId}">
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn btn-primary" type="submit">Save</button>
+
+        <button class="btn btn-danger" type="button"
+                th:attr="data-id=${e.empId}"
+                onclick="if(confirm('Delete this employee?')) document.getElementById('delForm').submit();">
+          Delete
+        </button>
+      </div>
+    </form>
+
+    <!-- DELETE -->
+    <form id="delForm" method="post" th:action="@{'/hr/employees/' + ${e.empId} + '/delete'}"></form>
+
+  </div>
+</div>
+</body>
+</html>

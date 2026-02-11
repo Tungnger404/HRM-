@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HR - Employee List</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:0;background:#f6f7fb;color:#111}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .title{font-size:20px;font-weight:800}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    input,select{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
+    input:focus,select:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
+    .btn{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-weight:700}
+    .btn-primary{background:#f5b400;border-color:#f5b400}
+    .table{width:100%;border-collapse:collapse;margin-top:12px}
+    .table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:14px}
+    .table th{color:#6b7280;font-weight:800}
+    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;border:1px solid #e5e7eb;background:#f9fafb}
+    .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
+    .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
+    a{color:#111;text-decoration:none}
+    a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <div class="title">HR - Employee Management</div>
+
+      <div class="actions">
+        <form method="get" th:action="@{/hr/employees}" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <input type="text" name="q" placeholder="Search name..." th:value="${q}">
+          <select name="status">
+            <option value="" th:selected="${status == null or status == ''}">All status</option>
+            <option value="PROBATION" th:selected="${status == 'PROBATION'}">PROBATION</option>
+            <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">ACTIVE</option>
+            <option value="ON_LEAVE" th:selected="${status == 'ON_LEAVE'}">ON_LEAVE</option>
+            <option value="RESIGNED" th:selected="${status == 'RESIGNED'}">RESIGNED</option>
+          </select>
+          <button class="btn" type="submit">Filter</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
+    <div class="msg msg-err" th:if="${err != null and err != ''}" th:text="${err}"></div>
+
+    <table class="table">
+      <thead>
+      <tr>
+        <th>Emp ID</th>
+        <th>Full Name</th>
+        <th>Phone</th>
+        <th>Dept</th>
+        <th>Job</th>
+        <th>Status</th>
+        <th style="width:160px">Action</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:if="${#lists.isEmpty(employees)}">
+        <td colspan="7" style="color:#6b7280;padding:14px;">No employees found.</td>
+      </tr>
+
+      <tr th:each="e : ${employees}">
+        <td th:text="${e.empId}"></td>
+        <td th:text="${e.fullName}"></td>
+        <td th:text="${e.phone}"></td>
+        <td th:text="${e.deptId}"></td>
+        <td th:text="${e.jobId}"></td>
+        <td><span class="badge" th:text="${e.status}"></span></td>
+        <td>
+          <a class="btn" th:href="@{'/hr/employees/' + ${e.empId}}">View / Edit</a>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>
