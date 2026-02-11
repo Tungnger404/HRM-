@@ -16,6 +16,8 @@ public class PayslipDetailDTO {
     private Integer empId;
     private String employeeName;
 
+    private String period;
+
     private BigDecimal baseSalary;
     private BigDecimal standardWorkDays;
     private BigDecimal actualWorkDays;

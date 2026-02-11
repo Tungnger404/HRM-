@@ -12,43 +12,44 @@
     <h1 class="mb-4">My Payslips</h1>
 
     <div class="card">
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle mb-0">
-                <thead>
-                <tr>
-                    <th style="width:90px;">ID</th>
-                    <th>Employee</th>
-                    <th>Total Income</th>
-                    <th>Total Deduction</th>
-                    <th>Net</th>
-                    <th style="width:130px;">Action</th>
-                </tr>
-                </thead>
+        <div class="card-body">
 
-                <tbody>
-                <tr th:each="p : ${payslips}">
-                    <td th:text="${p.payslipId}"></td>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Period</th>
+                        <th class="text-end">Total Income</th>
+                        <th class="text-end">Total Deduction</th>
+                        <th class="text-end">Net</th>
+                        <th style="width:120px;">Action</th>
+                    </tr>
+                    </thead>
 
-                    <!-- ✅ TÊN NHÂN VIÊN -->
-                    <td th:text="${p.employeeName}"></td>
+                    <tbody>
+                    <tr th:each="p : ${payslips}">
+                        <td th:text="${p.employeeName}"></td>
+                        <td th:text="${p.period}"></td>
+                        <td class="text-end" th:text="${p.totalIncome}"></td>
+                        <td class="text-end" th:text="${p.totalDeduction}"></td>
+                        <td class="text-end" th:text="${p.netSalary}"></td>
 
-                    <td th:text="${p.totalIncome}"></td>
-                    <td th:text="${p.totalDeduction}"></td>
-                    <td th:text="${p.netSalary}"></td>
+                        <td>
+                            <a class="btn btn-primary btn-sm"
+                               th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">
+                                View
+                            </a>
+                        </td>
+                    </tr>
 
-                    <td>
-                        <a class="btn btn-primary btn-sm"
-                           th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">
-                            View
-                        </a>
-                    </td>
-                </tr>
+                    <tr th:if="${#lists.isEmpty(payslips)}">
+                        <td colspan="6" class="text-center text-muted">No data</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <tr th:if="${#lists.isEmpty(payslips)}">
-                    <td colspan="6" class="text-center text-muted">No data</td>
-                </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 
