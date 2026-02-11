@@ -32,3 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 .DS_Store
+
+### Local config (do not commit) ###
+application-local.properties
+
+### Junk files ###
+*oft Corporation*
+*tash branch*

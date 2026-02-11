@@ -114,11 +114,14 @@
                         <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">
                             Account
                         </div>
-                        <a class="dropdown-item" href="#">
+
+                        <!-- ✅ FIX: Link Profile -->
+                        <a class="dropdown-item" th:href="@{/hr/profile}">
                             <svg class="icon me-2">
                                 <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
                             </svg> Profile
                         </a>
+
                         <a class="dropdown-item" th:href="@{/logout}">
                             <svg class="icon me-2">
                                 <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>

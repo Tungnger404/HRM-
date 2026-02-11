@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Payslip Detail</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Payslip Detail</h2>
+        <a class="btn btn-secondary btn-sm" th:href="@{/employee/payslips}">Back</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="mb-1"><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
+            <p class="mb-1"><b>Payslip ID:</b> <span th:text="${p.payslipId}"></span></p>
+            <p class="mb-1"><b>Period:</b> <span th:text="${p.period}"></span></p>
+            <p class="mb-1"><b>Net Salary:</b> <span th:text="${p.netSalary}"></span></p>
+
+            <a class="btn btn-outline-primary btn-sm mt-2"
+               th:href="@{/employee/payslips/{id}/download(id=${p.payslipId})}">
+                Download PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><b>Items</b></div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th style="width:140px;">Type</th>
+                    <th>Name</th>
+                    <th class="text-end" style="width:200px;">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="it : ${p.items}">
+                    <td th:text="${it.type}"></td>
+                    <td th:text="${it.name}"></td>
+                    <td class="text-end" th:text="${it.amount}"></td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(p.items)}">
+                    <td colspan="3" class="text-center text-body-secondary py-4">
+                        No items
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><b>Submit Payroll Inquiry</b></div>
+        <div class="card-body">
+            <form method="post"
+                  th:action="@{/employee/payslips/{id}/inquiry(id=${p.payslipId})}">
+
+                <textarea class="form-control" name="question" rows="4"
+                          placeholder="Enter your question..."></textarea>
+
+                <div th:if="${_csrf != null}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                </div>
+
+                <button class="btn btn-primary mt-2" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

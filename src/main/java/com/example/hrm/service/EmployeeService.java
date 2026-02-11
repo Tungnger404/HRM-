@@ -6,7 +6,7 @@ import com.example.hrm.entity.Employee;
 import java.util.List;
 
 public interface EmployeeService {
-    List<Employee> list(String q);
+    List<Employee> list(String q, String status);
     Employee getById(Integer id);
 
     Employee create(EmployeeAdd form);

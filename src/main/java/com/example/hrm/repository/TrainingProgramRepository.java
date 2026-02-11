@@ -1,0 +1,23 @@
+package com.example.hrm.repository;
+
+import com.example.hrm.entity.TrainingProgram;
+import com.example.hrm.entity.TrainingProgram.TrainingStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface TrainingProgramRepository extends JpaRepository<TrainingProgram, Integer> {
+
+    Optional<TrainingProgram> findByProgramCode(String programCode);
+
+    List<TrainingProgram> findByStatus(TrainingStatus status);
+
+    List<TrainingProgram> findBySkillCategory(String skillCategory);
+
+    List<TrainingProgram> findBySkillCategoryContaining(String keyword);
+
+    List<TrainingProgram> findByLevel(String level);
+}

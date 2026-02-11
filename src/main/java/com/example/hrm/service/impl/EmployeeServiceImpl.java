@@ -18,10 +18,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         this.repo = repo;
     }
 
+    // ✅ HR list: search + filter status
     @Override
-    public List<Employee> list(String q) {
-        if (q == null || q.trim().isEmpty()) return repo.findAll();
-        return repo.findByFullNameContainingIgnoreCase(q.trim());
+    public List<Employee> list(String q, String status) {
+        String qq = (q == null) ? "" : q.trim();
+        String st = (status == null) ? "" : status.trim();
+
+        // Nếu repo có method search(q,status) (mình đã sửa repo cho bạn)
+        return repo.search(qq, st);
     }
 
     @Override
@@ -41,6 +45,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (e.getStatus() == null || e.getStatus().isBlank()) {
             e.setStatus("PROBATION");
         }
+
+        // Nếu joinDate null thì set mặc định hôm nay (tuỳ bạn muốn)
+        // if (e.getJoinDate() == null) e.setJoinDate(java.time.LocalDate.now());
+
         return repo.save(e);
     }
 
@@ -55,6 +63,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (e.getStatus() == null || e.getStatus().isBlank()) {
             e.setStatus("PROBATION");
         }
+
         return repo.save(e);
     }
 
@@ -64,7 +73,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (!repo.existsById(id)) {
             throw new IllegalArgumentException("Employee not found: " + id);
         }
-        // Lưu ý: nếu employee đang được tham chiếu (direct_manager_id, dept.manager_id, ...), DB sẽ chặn delete.
+        // Nếu employee đang được tham chiếu (direct_manager_id, dept.manager_id, ...), DB sẽ chặn delete.
         repo.deleteById(id);
     }
 

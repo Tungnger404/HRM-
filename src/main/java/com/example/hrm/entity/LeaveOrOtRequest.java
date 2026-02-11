@@ -1,8 +1,14 @@
 package com.example.hrm.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "requests")
 public class LeaveOrOtRequest {
@@ -16,7 +22,7 @@ public class LeaveOrOtRequest {
     private Integer empId;
 
     @Column(name = "request_type", length = 20)
-    private String requestType;
+    private String requestType; // LEAVE / OVERTIME
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
@@ -28,7 +34,7 @@ public class LeaveOrOtRequest {
     private String reason;
 
     @Column(length = 20)
-    private String status = "PENDING"; // Giá trị mặc định
+    private String status; // PENDING / APPROVED / REJECTED
 
     @Column(name = "approver_id")
     private Integer approverId;
@@ -37,36 +43,11 @@ public class LeaveOrOtRequest {
     private String approverNote;
 
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    // Getters and Setters
-    public Integer getRequestId() { return requestId; }
-    public void setRequestId(Integer requestId) { this.requestId = requestId; }
-
-    public Integer getEmpId() { return empId; }
-    public void setEmpId(Integer empId) { this.empId = empId; }
-
-    public String getRequestType() { return requestType; }
-    public void setRequestType(String requestType) { this.requestType = requestType; }
-
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
-
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-
-    public String getReason() { return reason; }
-    public void setReason(String reason) { this.reason = reason; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public Integer getApproverId() { return approverId; }
-    public void setApproverId(Integer approverId) { this.approverId = approverId; }
-
-    public String getApproverNote() { return approverNote; }
-    public void setApproverNote(String approverNote) { this.approverNote = approverNote; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) this.createdAt = LocalDateTime.now();
+        if (this.status == null) this.status = "PENDING";
+    }
 }

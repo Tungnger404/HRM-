@@ -1,3 +1,4 @@
+package com.example.hrm.service;
 import com.example.hrm.entity.AttendanceLog;
 import com.example.hrm.repository.AttendanceLogRepository;
 import jakarta.transaction.Transactional;

@@ -19,11 +19,17 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public String list(@RequestParam(value = "q", required = false) String q, Model model) {
+    public String list(@RequestParam(value = "q", required = false) String q,
+                       @RequestParam(value = "status", required = false) String status,
+                       Model model) {
+
         model.addAttribute("q", q);
-        model.addAttribute("employees", service.list(q));
-        return "employees/employee_list";
+        model.addAttribute("status", status);
+        model.addAttribute("employees", service.list(q, status));
+
+        return "hr/employee_list"; // hoặc "employee/employee_list" tùy folder templates bạn đang dùng
     }
+
 
     @GetMapping("/new")
     public String newForm(Model model) {

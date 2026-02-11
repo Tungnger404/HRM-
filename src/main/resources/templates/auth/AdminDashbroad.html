@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+    <title>Admin Dashboard</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="mb-3">
+        <h3 class="mb-1">Admin Dashboard</h3>
+        <div class="text-body-secondary">System overview & administration</div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-body-secondary">Users & Roles</div>
+                    <div class="fs-4 fw-semibold">Manage</div>
+                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/employees}">Go to Employees</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-body-secondary">Org Structure</div>
+                    <div class="fs-4 fw-semibold">Departments</div>
+                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/employees}">View</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-body-secondary">Payroll</div>
+                    <div class="fs-4 fw-semibold">Manager View</div>
+                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/manager/payroll/payslips}">Open</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-body-secondary">Recruitment</div>
+                    <div class="fs-4 fw-semibold">Requests</div>
+                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/recruitment-request/my-requests}">Open</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header fw-semibold">Quick actions</div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-outline-secondary" th:href="@{/recruitment-request/create}">Create Recruitment Request</a>
+                <a class="btn btn-outline-secondary" th:href="@{/manager/payroll/periods}">Payroll Periods</a>
+                <a class="btn btn-outline-danger ms-auto" th:href="@{/logout}">Logout</a>
+            </div>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>
