@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Self Evaluation - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Self Evaluation Form</strong>
+                        <span class="badge bg-info ms-2">Employee Self-Review</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="selfEvaluationForm">
+                            <!-- Evaluation Cycle Selection -->
+                            <div class="mb-3">
+                                <label for="cycleSelect" class="form-label">Evaluation Cycle <span class="text-danger">*</span></label>
+                                <select class="form-select" id="cycleSelect" required>
+                                    <option value="">-- Select Evaluation Cycle --</option>
+                                    <option value="1">Q1 2024</option>
+                                    <option value="2">Q2 2024</option>
+                                </select>
+                            </div>
+
+                            <!-- Self Review Text -->
+                            <div class="mb-3">
+                                <label for="selfReview" class="form-label">Self Review Summary <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="selfReview" rows="5" 
+                                          placeholder="Describe your achievements, challenges, and overall performance during this period..."
+                                          required></textarea>
+                                <div class="form-text">Provide a comprehensive summary of your performance.</div>
+                            </div>
+
+                            <!-- Self Score -->
+                            <div class="mb-3">
+                                <label for="selfScore" class="form-label">Overall Self Score (0-100) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="selfScore" min="0" max="100" required>
+                                <div class="form-text">Rate your overall performance from 0 to 100.</div>
+                            </div>
+
+                            <hr>
+
+                            <!-- KPI Scores Section -->
+                            <h5 class="mb-3">KPI Self-Assessment</h5>
+                            <div id="kpiScoresContainer">
+                                <!-- KPI items will be loaded dynamically here -->
+                                <div class="alert alert-info">
+                                    <i class="fa fa-info-circle"></i> Please select an evaluation cycle first to load KPI items.
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-paper-plane"></i> Submit Self Evaluation
+                                </button>
+                                <button type="button" class="btn btn-secondary ms-2" onclick="window.history.back()">
+                                    <i class="fa fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script>
+        // Load KPI items when cycle is selected
+        document.getElementById('cycleSelect').addEventListener('change', function() {
+            const cycleId = this.value;
+            if (cycleId) {
+                loadKPIItems(cycleId);
+            } else {
+                document.getElementById('kpiScoresContainer').innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> Please select an evaluation cycle first to load KPI items.
+                    </div>
+                `;
+            }
+        });
+
+        function loadKPIItems(cycleId) {
+            // TODO: Replace with actual API call
+            const mockKPIItems = [
+                { id: 1, name: 'Code Quality', weight: 30, measurementCriteria: 'Code review score >= 8/10' },
+                { id: 2, name: 'Task Completion', weight: 40, measurementCriteria: 'Task completion rate >= 90%' },
+                { id: 3, name: 'Team Collaboration', weight: 30, measurementCriteria: 'Peer review score >= 8/10' }
+            ];
+
+            let html = '';
+            mockKPIItems.forEach((kpi, index) => {
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                ${kpi.name}
+                                <span class="badge bg-secondary float-end">Weight: ${kpi.weight}%</span>
+                            </h6>
+                            <p class="text-muted small">${kpi.measurementCriteria}</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Score (0-10)</label>
+                                    <input type="number" class="form-control" name="kpiScore_${kpi.id}" 
+                                           min="0" max="10" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Comment</label>
+                                    <textarea class="form-control" name="kpiComment_${kpi.id}" 
+                                              rows="2" placeholder="Brief explanation..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('kpiScoresContainer').innerHTML = html;
+        }
+
+        // Form submission
+        document.getElementById('selfEvaluationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                employeeId: 1, // TODO: Get from session
+                cycleId: parseInt(document.getElementById('cycleSelect').value),
+                selfReview: document.getElementById('selfReview').value,
+                selfScore: parseInt(document.getElementById('selfScore').value),
+                status: 'PENDING_MANAGER_REVIEW',
+                kpiScores: []
+            };
+
+            // Collect KPI scores
+            const kpiInputs = document.querySelectorAll('[name^="kpiScore_"]');
+            kpiInputs.forEach(input => {
+                const kpiId = input.name.split('_')[1];
+                const score = parseInt(input.value);
+                const comment = document.querySelector(`[name="kpiComment_${kpiId}"]`).value;
+                
+                formData.kpiScores.push({
+                    kpiItemId: parseInt(kpiId),
+                    selfScore: score,
+                    selfComment: comment
+                });
+            });
+
+            // Submit to API
+            fetch('/api/evaluation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Self evaluation submitted successfully!');
+                window.location.href = '/evaluation/history';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to submit evaluation. Please try again.');
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>
