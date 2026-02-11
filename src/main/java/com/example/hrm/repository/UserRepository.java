@@ -1,6 +1,6 @@
 package com.example.hrm.repository;
 
-import com.example.hrm.entity.User;
+import  com.example.hrm.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

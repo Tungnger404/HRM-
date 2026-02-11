@@ -170,7 +170,7 @@ public class PayrollService {
                         .payslipId(s.getId())
                         .batchId(batchId)
                         .empId(s.getEmployee().getId())
-                        .employeeName(s.getEmployee().getFullName())
+                        .employeeName(empName(s.getEmployee()))   // ✅ FIX
                         .totalIncome(nz(s.getTotalIncome()))
                         .totalDeduction(nz(s.getTotalDeduction()))
                         .netSalary(nz(s.getNetSalary()))
@@ -187,6 +187,7 @@ public class PayrollService {
                 .payslips(slips)
                 .build();
     }
+
 
     @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForManager(Integer managerEmpId, Integer payslipId) {
@@ -214,7 +215,7 @@ public class PayrollService {
                 .payslipId(p.getId())
                 .batchId(p.getBatch().getId())
                 .empId(p.getEmployee().getId())
-                .employeeName(p.getEmployee().getFullName())
+                .employeeName(empName(p.getEmployee()))        // ✅ FIX
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
                 .actualWorkDays(nz(p.getActualWorkDays()))
@@ -225,7 +226,6 @@ public class PayrollService {
                 .items(items)
                 .build();
     }
-
 
     /**
      * Generate Payroll Draft (System logic) - bạn có thể gọi từ Manager button
@@ -468,7 +468,7 @@ public class PayrollService {
                 .payslipId(p.getId())
                 .batchId(p.getBatch().getId())
                 .empId(p.getEmployee().getId())
-                .employeeName(p.getEmployee().getFullName())
+                .employeeName(empName(p.getEmployee()))        // ✅ FIX
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
                 .actualWorkDays(nz(p.getActualWorkDays()))
@@ -492,14 +492,13 @@ public class PayrollService {
                         .payslipId(p.getId())
                         .batchId(p.getBatch().getId())
                         .empId(empId)
-                        .employeeName(emp.getFullName())
+                        .employeeName(empName(emp))              // ✅ FIX
                         .totalIncome(nz(p.getTotalIncome()))
                         .totalDeduction(nz(p.getTotalDeduction()))
                         .netSalary(nz(p.getNetSalary()))
                         .build())
                 .toList();
     }
-
 
     @Transactional
     public PayrollInquiryDTO submitInquiry(Integer empId, PayrollInquiryCreateDTO req) {
@@ -632,5 +631,14 @@ public class PayrollService {
         i.setAnswer(answer);
         i.setStatus("RESOLVED");
         inquiryRepo.save(i);
+    }
+
+    private String empName(Employee e) {
+        if (e == null)
+            return "";
+        String n = e.getFullName();
+        if (n != null && !n.trim().isEmpty())
+            return n.trim();
+        return "NV" + e.getId(); // fallback nếu fullName null
     }
 }
