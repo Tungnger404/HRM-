@@ -33,7 +33,8 @@ public class RecruitmentRequestController {
         model.addAttribute("dto", new RecruitmentRequestCreateDTO());
         model.addAttribute("departments", departmentRepository.findAll());
         model.addAttribute("jobs", jobPositionRepository.findAll());
-        return "recruitment-request-create";
+        return "recruitment-request/create";
+
     }
 
     @PostMapping("/create")
@@ -66,6 +67,7 @@ public class RecruitmentRequestController {
                 recruitmentRequestService.getRequestsByEmployee(employee.getEmpId());
 
         model.addAttribute("requests", requests);
-        return "recruitment-request-create";
+        return "recruitment-request/my-request";
+
     }
 }

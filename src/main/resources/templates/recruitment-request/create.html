@@ -2,7 +2,8 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/layout}">
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
 
 <head>
     <title>Create Recruitment Request</title>
@@ -94,7 +95,7 @@
                         </button>
                     </div>
 
-                    <!-- Success message -->
+                    <!-- Success -->
                     <div class="col-12" th:if="${param.success}">
                         <div class="alert alert-success mt-2">
                             ✔ Submit request successfully!

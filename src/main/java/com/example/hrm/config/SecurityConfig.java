@@ -83,7 +83,7 @@ public class SecurityConfig {
 
                         // PUBLIC
                         .requestMatchers(
-                                "/login", "/logout",
+                                "/login", "/logout", "/register", "/register/**",
                                 "/css/**", "/js/**", "/images/**",
                                 "/vendors/**", "/assets/**",
                                 "/webjars/**",
@@ -92,6 +92,7 @@ public class SecurityConfig {
                                 "/api/**",
                                 "/evaluation/**", "/training/**"
                         ).permitAll()
+
 
                         // DASHBOARD ROUTING
                         .requestMatchers("/dashboard").authenticated()

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
+
+<head>
+    <title>Recruitment Requests (HR)</title>
+</head>
+
+<body>
+
+<div class="container-fluid px-4" layout:fragment="content">
+
+    <h2 class="mb-4 fw-bold">Recruitment Requests (HR)</h2>
+
+    <!-- TABLE WRAPPER -->
+    <div class="table-responsive shadow-sm rounded-3" style="background: #1e1e2f; padding: 20px;">
+
+        <table class="table table-hover align-middle table-bordered table-dark" style="border-color: #2c2c3c;">
+            <thead class="table-light text-dark">
+            <tr>
+                <th style="width: 60px;">ID</th>
+                <th style="width: 150px;">Department</th>
+                <th style="width: 180px;">Job Position</th>
+                <th style="width: 100px;">Quantity</th>
+                <th style="width: 150px;">Deadline</th>
+                <th style="width: 120px;">Status</th>
+                <th style="width: 100px;">Action</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <!-- LOOP REQUEST -->
+            <tr th:each="req : ${requests}">
+                <td th:text="${req.reqId}"></td>
+
+                <td th:text="${req.department.deptName}"></td>
+
+                <td th:text="${req.jobPosition.title}"></td>
+
+                <td th:text="${req.quantity}"></td>
+
+                <td th:text="${#temporals.format(req.deadline, 'dd/MM/yyyy HH:mm')}"></td>
+
+                <td>
+                    <span class="badge rounded-pill px-3 py-2"
+                          th:classappend="${req.status.name() == 'APPROVED' ? 'bg-success' :
+                       req.status.name() == 'REJECTED' ? 'bg-danger' :
+                       req.status.name() == 'SUBMITTED' ? 'bg-warning text-dark' :
+                       'bg-secondary'}"
+                          th:text="${req.status}">
+                    </span>
+                </td>
+
+                <td>
+                    <a class="btn btn-primary btn-sm"
+                       th:href="@{/hr/recruitment-request/{id}(id=${req.reqId})}">
+                        View
+                    </a>
+                </td>
+            </tr>
+
+            <!-- EMPTY -->
+            <tr th:if="${#lists.isEmpty(requests)}">
+                <td colspan="7" class="text-center py-4 text-muted">
+                    No recruitment requests found.
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -20,6 +20,6 @@ public class RecruitmentRequestHRController {
                 "requests",
                 recruitmentRequestService.getRequestsForHR()
         );
-        return "recruitment-request-list";
+        return "recruitment-request/hr-list";
     }
 }

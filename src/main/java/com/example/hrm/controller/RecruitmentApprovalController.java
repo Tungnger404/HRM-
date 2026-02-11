@@ -20,7 +20,8 @@ public class RecruitmentApprovalController {
     public String viewDetail(@PathVariable Integer id, Model model) {
         RecruitmentRequest request = service.getById(id);
         model.addAttribute("request", request);
-        return "recruitment-request-detail";
+        return "recruitment-request/detail";
+
     }
 
     // ================= APPROVE =================

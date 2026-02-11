@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
+
+<head>
+    <title>Recruitment Request Detail</title>
+</head>
+
+<body>
+
+<div layout:fragment="content" class="container mt-4">
+
+    <div class="card shadow-sm">
+
+        <!-- HEADER -->
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Recruitment Request Detail</h4>
+        </div>
+
+        <!-- BODY -->
+        <div class="card-body bg-dark text-white"
+             th:with="
+                isSubmitted=${request.status == T(com.example.hrm.entity.RecruitmentRequestStatus).SUBMITTED},
+                isApproved=${request.status == T(com.example.hrm.entity.RecruitmentRequestStatus).APPROVED},
+                isRejected=${request.status == T(com.example.hrm.entity.RecruitmentRequestStatus).REJECTED}
+             ">
+
+            <!-- INFORMATION -->
+            <table class="table table-borderless text-white mb-4">
+                <tbody>
+                <tr>
+                    <th style="width:25%">Request ID</th>
+                    <td th:text="${request.reqId}"></td>
+                </tr>
+                <tr>
+                    <th>Department</th>
+                    <td th:text="${request.department.deptName}"></td>
+                </tr>
+                <tr>
+                    <th>Job Position</th>
+                    <td th:text="${request.jobPosition.title}"></td>
+                </tr>
+                <tr>
+                    <th>Quantity</th>
+                    <td th:text="${request.quantity}"></td>
+                </tr>
+                <tr>
+                    <th>Deadline</th>
+                    <td th:text="${#temporals.format(request.deadline, 'dd/MM/yyyy HH:mm')}"></td>
+                </tr>
+                <tr>
+                    <th>Reason</th>
+                    <td th:text="${request.reason}"></td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td>
+                        <span class="badge rounded-pill px-3 py-2"
+                              th:classappend="${isSubmitted ? 'bg-warning text-dark' :
+                                                isApproved ? 'bg-success' :
+                                                isRejected ? 'bg-danger' :
+                                                'bg-secondary'}"
+                              th:text="${request.status}">
+                        </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- ACTION BUTTONS -->
+            <div class="mt-4" th:if="${isSubmitted}">
+
+                <!-- APPROVE -->
+                <form th:action="@{'/hr/recruitment-request/' + ${request.reqId} + '/approve'}"
+                      method="post"
+                      class="d-inline-block">
+                    <button type="submit"
+                            class="btn btn-success fw-bold px-4">
+                        Approve
+                    </button>
+                </form>
+
+                <!-- REJECT BUTTON -->
+                <button type="button"
+                        class="btn btn-danger fw-bold px-4 ms-3"
+                        onclick="document.getElementById('rejectForm').style.display='block'">
+                    Reject
+                </button>
+
+                <!-- REJECT FORM -->
+                <div id="rejectForm"
+                     style="display:none; max-width:500px;"
+                     class="mt-3">
+
+                    <form th:action="@{'/hr/recruitment-request/' + ${request.reqId} + '/reject'}"
+                          method="post">
+
+                        <div class="mb-2">
+                            <textarea name="reason"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Enter reject reason..."
+                                      required></textarea>
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-danger fw-bold px-4">
+                            Confirm Reject
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-secondary ms-2"
+                                onclick="document.getElementById('rejectForm').style.display='none'">
+                            Cancel
+                        </button>
+
+                    </form>
+                </div>
+
+            </div>
+
+            <!-- BACK -->
+            <div class="mt-4">
+                <a th:href="@{/hr/recruitment-request/list}"
+                   class="btn btn-info text-dark fw-bold px-4">
+                    Back to List
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
