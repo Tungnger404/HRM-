@@ -1,6 +1,5 @@
 <!doctype html>
-<html lang="en"
-      xmlns:th="http://www.thymeleaf.org"
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 <head>
@@ -10,50 +9,46 @@
 <body>
 <div layout:fragment="content">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">My Payslips</h2>
-    </div>
+    <h1 class="mb-4">My Payslips</h1>
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th style="width:90px;">ID</th>
+                    <th>Employee</th>
+                    <th>Total Income</th>
+                    <th>Total Deduction</th>
+                    <th>Net</th>
+                    <th style="width:130px;">Action</th>
+                </tr>
+                </thead>
 
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle mb-0">
-                    <thead>
-                    <tr>
-                        <th style="width:80px;">ID</th>
-                        <th>Total Income</th>
-                        <th>Total Deduction</th>
-                        <th>Net</th>
-                        <th style="width:120px;">Action</th>
-                    </tr>
-                    </thead>
+                <tbody>
+                <tr th:each="p : ${payslips}">
+                    <td th:text="${p.payslipId}"></td>
 
-                    <tbody>
-                    <tr th:each="ps : ${payslips}">
-                        <td th:text="${ps.payslipId}"></td>
+                    <!-- ✅ TÊN NHÂN VIÊN -->
+                    <td th:text="${p.employeeName}"></td>
 
-                        <td th:text="${ps.totalIncome}"></td>
-                        <td th:text="${ps.totalDeduction}"></td>
-                        <td th:text="${ps.netSalary}"></td>
+                    <td th:text="${p.totalIncome}"></td>
+                    <td th:text="${p.totalDeduction}"></td>
+                    <td th:text="${p.netSalary}"></td>
 
-                        <td>
-                            <a class="btn btn-sm btn-primary"
-                               th:href="@{/employee/payslips/{id}(id=${ps.payslipId})}">
-                                View
-                            </a>
-                        </td>
-                    </tr>
+                    <td>
+                        <a class="btn btn-primary btn-sm"
+                           th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">
+                            View
+                        </a>
+                    </td>
+                </tr>
 
-                    <tr th:if="${#lists.isEmpty(payslips)}">
-                        <td colspan="5" class="text-center text-body-secondary py-4">
-                            No data
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
+                <tr th:if="${#lists.isEmpty(payslips)}">
+                    <td colspan="6" class="text-center text-muted">No data</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
