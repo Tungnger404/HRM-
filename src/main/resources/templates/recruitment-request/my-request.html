@@ -2,7 +2,8 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/layout}">
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
 
 <head>
     <title>My Recruitment Requests</title>
@@ -46,19 +47,20 @@
                         <td th:text="${r.jobPosition.title}"></td>
                         <td th:text="${r.quantity}"></td>
 
+                        <!-- STATUS -->
                         <td>
-                            <span th:switch="${r.status}">
-                                <span th:case="'PENDING'" class="badge pending">Pending</span>
-                                <span th:case="'APPROVED'" class="badge approved">Approved</span>
-                                <span th:case="*" class="badge rejected">Rejected</span>
+                            <span th:switch="${r.status.name()}">
+                                  <span th:case="'DRAFT'" class="badge pending">Draft</span>
+                                  <span th:case="'SUBMITTED'" class="badge pending">Submitted</span>
+                                  <span th:case="'APPROVED'" class="badge approved">Approved</span>
+                                  <span th:case="'REJECTED'" class="badge rejected">Rejected</span>
                             </span>
                         </td>
 
-                        <td th:if="${r.status == 'REJECTED'}"
-                            th:text="${r.reason}">
-                        </td>
+                        <!-- HR RESPONSE -->
+                        <td th:text="${r.status.name() == 'REJECTED'} ? ${r.reason} : '—'"></td>
 
-                        <td th:if="${r.status != 'REJECTED'}">—</td>
+
                     </tr>
                     </tbody>
                 </table>

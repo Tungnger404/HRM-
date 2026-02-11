@@ -41,7 +41,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         request.setReason(dto.getReason());
         request.setDeadline(dto.getDeadline().atStartOfDay());
 
-        request.setStatus(RecruitmentRequestStatus.PENDING);
+        request.setStatus(RecruitmentRequestStatus.SUBMITTED);
         request.setCreatedBy(creator);
         request.setCreatedAt(LocalDateTime.now());
 

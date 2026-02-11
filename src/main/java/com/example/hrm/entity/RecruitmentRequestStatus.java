@@ -2,7 +2,8 @@ package com.example.hrm.entity;
 
 public enum RecruitmentRequestStatus {
     DRAFT,
-    PENDING,
+    SUBMITTED,
     APPROVED,
     REJECTED
 }
+
