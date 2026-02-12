@@ -18,8 +18,7 @@
 <body>
 
 <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
-    <div th:if="${sidebar != null}"
-         th:replace="${'layout/sidebar/' + sidebar} :: sidebar">
+    <div th:replace="~{layout/sidebar/__${sidebar != null ? sidebar : 'sidebar-default.html'}__ :: sidebar}">
     </div>
 
 </div>
@@ -46,10 +45,11 @@
                     <div class="dropdown-menu dropdown-menu-end pt-0">
                         <div class="dropdown-header bg-body-tertiary fw-semibold">Account</div>
 
-                        <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" th:href="@{/profile}">
                             <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use></svg>
                             Profile
                         </a>
+
 
                         <a class="dropdown-item" th:href="@{/logout}">
                             <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use></svg>

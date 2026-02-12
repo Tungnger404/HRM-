@@ -1,0 +1,37 @@
+<div th:fragment="sidebar">
+  <div class="sidebar-brand d-none d-md-flex">
+    <span class="fw-bold text-white px-3">HR</span>
+  </div>
+
+  <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+    <li class="nav-title">HR</li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/dashboard/hr}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use></svg>
+        Dashboard
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/hr/employees}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-contact"></use></svg>
+        Employee Profiles
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/hr/requests}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-task"></use></svg>
+        Change Requests
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/hr/documents}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-description"></use></svg>
+        Documents
+      </a>
+    </li>
+  </ul>
+</div>
