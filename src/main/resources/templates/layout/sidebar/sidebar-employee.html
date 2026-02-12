@@ -1,0 +1,37 @@
+<div th:fragment="sidebar">
+  <div class="sidebar-brand d-none d-md-flex">
+    <span class="fw-bold text-white px-3">EMPLOYEE</span>
+  </div>
+
+  <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+    <li class="nav-title">Employee</li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/dashboard/employee}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use></svg>
+        Dashboard
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/employee/profile}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use></svg>
+        My Profile
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/employee/request/new}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-pencil"></use></svg>
+        Request Change
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/employee/documents}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-folder-open"></use></svg>
+        My Documents
+      </a>
+    </li>
+  </ul>
+</div>

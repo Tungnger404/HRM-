@@ -4,7 +4,6 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 
-
 <head>
     <title>Employee Dashboard</title>
 </head>
@@ -18,8 +17,10 @@
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-6">
-            <div class="card">
+
+        <!-- Payslips -->
+        <div class="col-md-4">
+            <div class="card h-100">
                 <div class="card-body">
                     <div class="text-body-secondary">Payroll</div>
                     <div class="fs-4 fw-semibold">My Payslips</div>
@@ -28,8 +29,28 @@
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card">
+        <!-- Change Requests -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-body-secondary">Profile</div>
+                    <div class="fs-4 fw-semibold">Change Requests</div>
+
+                    <div class="d-flex gap-2 mt-2">
+                        <a class="btn btn-sm btn-primary" th:href="@{/employee/change-requests/new}">
+                            New Request
+                        </a>
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{/employee/change-requests/my}">
+                            My Requests
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logout -->
+        <div class="col-md-4">
+            <div class="card h-100">
                 <div class="card-body">
                     <div class="text-body-secondary">Account</div>
                     <div class="fs-4 fw-semibold">Logout</div>
@@ -37,6 +58,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <div class="card">
@@ -45,6 +67,7 @@
             <ul class="mb-0">
                 <li>Check payslip details monthly</li>
                 <li>Submit inquiry if there is any discrepancy</li>
+                <li>Use <b>Change Requests</b> to request profile updates (phone/address/ID/tax code)</li>
             </ul>
         </div>
     </div>
