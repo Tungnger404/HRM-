@@ -1,6 +1,7 @@
-package com.example.hrm.dto;
+package com.example.hrm.entity;
 
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -21,4 +22,8 @@ public class PayrollRowDTO {
     private BigDecimal netSalary;
     private String statusLabel;
     private String batchStatus;
+
+    private BigDecimal baseSalary;   // lương vị trí
+    private BigDecimal dailySalary;  // lương ngày
+    private String jobTitle;         // vị trí làm
 }

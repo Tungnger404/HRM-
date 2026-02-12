@@ -104,6 +104,7 @@ public class SecurityConfig {
                         // MODULE PERMISSION
                         .requestMatchers("/employee/**").hasRole("EMPLOYEE")
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
+                        .requestMatchers("/bank/**").hasAnyRole("MANAGER", "HR", "ADMIN")
 
                         // DEFAULT
                         .anyRequest().authenticated()

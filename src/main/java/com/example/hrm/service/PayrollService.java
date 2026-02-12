@@ -1,6 +1,7 @@
 package com.example.hrm.service;
 
 import com.example.hrm.dto.*;
+import com.example.hrm.repository.BankAccountRepository;
 import com.example.hrm.entity.*;
 import com.example.hrm.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,8 @@ public class PayrollService {
     private final AttendanceLogRepository attendanceRepo;
     private final RequestRepository requestRepo;
 
+    private final BankAccountRepository bankAccountRepo;
+
     // =========================
     // MANAGER SIDE
     // =========================
@@ -66,9 +69,18 @@ public class PayrollService {
             LocalDate start = toLocalDate(r[6]);
             LocalDate end = toLocalDate(r[7]);
 
-            BigDecimal net = (r[8] instanceof BigDecimal bd) ? bd
-                    : (r[8] == null ? BigDecimal.ZERO : new BigDecimal(r[8].toString()));
+            BigDecimal net = toBigDecimal(r[8]);
             String batchStatus = (String) r[9];
+
+            // ✅ ĐÚNG index theo query
+            BigDecimal baseSalary = toBigDecimal(r[10]);
+            BigDecimal standardDays = toBigDecimal(r[11]);
+            String jobTitle = (String) r[12];
+
+            BigDecimal dailySalary = BigDecimal.ZERO;
+            if (standardDays != null && standardDays.compareTo(BigDecimal.ZERO) > 0) {
+                dailySalary = baseSalary.divide(standardDays, 2, RoundingMode.HALF_UP);
+            }
 
             String empCode = "NV" + eId;
             String label = statusLabel(batchStatus);
@@ -83,12 +95,43 @@ public class PayrollService {
                     .year(year)
                     .startDate(start)
                     .endDate(end)
-                    .netSalary(net == null ? BigDecimal.ZERO : net)
+                    .netSalary(net)
                     .statusLabel(label)
                     .batchStatus(batchStatus)
+
+                    .jobTitle(jobTitle == null ? "" : jobTitle)
+                    .baseSalary(baseSalary)
+                    .dailySalary(dailySalary)
                     .build();
         }).toList();
     }
+
+
+    private BigDecimal toBd(Object v) {
+        if (v == null)
+            return BigDecimal.ZERO;
+        if (v instanceof BigDecimal bd)
+            return bd;
+        return new BigDecimal(v.toString());
+    }
+
+    /**
+     * ✅ helper: convert Object -> BigDecimal safe
+     */
+    private BigDecimal toBigDecimal(Object v) {
+        if (v == null)
+            return BigDecimal.ZERO;
+        if (v instanceof BigDecimal bd)
+            return bd;
+        if (v instanceof Number n)
+            return BigDecimal.valueOf(n.doubleValue());
+        try {
+            return new BigDecimal(v.toString());
+        } catch (Exception e) {
+            return BigDecimal.ZERO;
+        }
+    }
+
 
     private int toInt(Object v) {
         if (v == null)
@@ -295,7 +338,7 @@ public class PayrollService {
             BigDecimal hourly = (standardDays.compareTo(BigDecimal.ZERO) == 0)
                     ? BigDecimal.ZERO
                     : baseSalary.divide(standardDays, 2, RoundingMode.HALF_UP)
-                            .divide(BigDecimal.valueOf(8), 2, RoundingMode.HALF_UP);
+                    .divide(BigDecimal.valueOf(8), 2, RoundingMode.HALF_UP);
 
             BigDecimal overtimePay = hourly.multiply(otHours).multiply(BigDecimal.valueOf(1.5))
                     .setScale(2, RoundingMode.HALF_UP);
@@ -536,6 +579,68 @@ public class PayrollService {
                 .createdAt(inq.getCreatedAt())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public byte[] exportBankTransferExcel(List<Integer> batchIds) {
+
+        // Lấy payslips thuộc các batch
+        List<Payslip> slips = batchIds.stream()
+                .flatMap(id -> payslipRepo.findByBatch_IdOrderByIdAsc(id).stream())
+                .toList();
+
+        // group theo emp
+        Map<Integer, List<Payslip>> byEmp = slips.stream()
+                .collect(Collectors.groupingBy(s -> s.getEmployee().getId()));
+
+        List<Integer> empIds = byEmp.keySet().stream().toList();
+
+        // lấy bank account primary (nếu thiếu sẽ để trống)
+        Map<Integer, BankAccount> bankMap = bankAccountRepo.findByEmpIdInAndIsPrimaryTrue(empIds)
+                .stream()
+                .collect(Collectors.toMap(BankAccount::getEmpId, x -> x, (a, b) -> a));
+
+        try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("SalaryTransfer");
+
+            Row h = sheet.createRow(0);
+            h.createCell(0).setCellValue("EmpId");
+            h.createCell(1).setCellValue("Employee");
+            h.createCell(2).setCellValue("NetTotal");
+            h.createCell(3).setCellValue("BankName");
+            h.createCell(4).setCellValue("AccountNumber");
+            h.createCell(5).setCellValue("HolderName");
+            h.createCell(6).setCellValue("Note");
+
+            int r = 1;
+            for (var entry : byEmp.entrySet()) {
+                Integer empId = entry.getKey();
+                List<Payslip> list = entry.getValue();
+
+                BigDecimal net = list.stream()
+                        .map(Payslip::getNetSalary)
+                        .map(v -> v == null ? BigDecimal.ZERO : v)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                String empName = empName(list.get(0).getEmployee());
+                BankAccount ba = bankMap.get(empId);
+
+                Row row = sheet.createRow(r++);
+                row.createCell(0).setCellValue(empId);
+                row.createCell(1).setCellValue(empName);
+                row.createCell(2).setCellValue(net.doubleValue());
+                row.createCell(3).setCellValue(ba != null ? ba.getBankName() : "");
+                row.createCell(4).setCellValue(ba != null ? ba.getAccountNumber() : "");
+                row.createCell(5).setCellValue(ba != null ? ba.getAccountHolderName() : "");
+                row.createCell(6).setCellValue(ba == null ? "MISSING_BANK_ACCOUNT" : "");
+            }
+
+            wb.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Export bank transfer excel failed", e);
+        }
+    }
+
 
     // PDF download for payslip
     @Transactional(readOnly = true)

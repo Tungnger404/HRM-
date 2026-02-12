@@ -1,0 +1,91 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Bank Portal - Accounts</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <style>
+        .bank-wrap {
+            background: #f6f9ff;
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .bank-hero {
+            background: linear-gradient(135deg, #0b2a4a, #0b4ea2);
+            color: #fff;
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .bank-card {
+            background: #fff;
+            border: 1px solid #e7eefb;
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .bank-badge {
+            background: rgba(255, 255, 255, .15);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+    </style>
+
+    <div class="bank-wrap">
+        <div class="bank-hero d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <div class="fw-bold fs-4">PAYBANK</div>
+                <div class="opacity-75">Employee Bank Accounts</div>
+            </div>
+            <div class="bank-badge">BANK OPS</div>
+        </div>
+
+        <div class="d-flex gap-2 mb-3">
+            <a class="btn btn-outline-primary" th:href="@{/bank/portal}">Salary Transfer</a>
+            <a class="btn btn-primary" th:href="@{/bank/portal/accounts}">Employee Bank Accounts</a>
+        </div>
+
+        <div class="bank-card">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead>
+                    <tr>
+                        <th>AccountId</th>
+                        <th>EmpId</th>
+                        <th>Bank</th>
+                        <th>Branch</th>
+                        <th>Account No</th>
+                        <th>Holder</th>
+                        <th>Primary</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="a : ${accounts}">
+                        <td th:text="${a.accountId}"></td>
+                        <td th:text="${a.empId}"></td>
+                        <td th:text="${a.bankName}"></td>
+                        <td th:text="${a.branchName}"></td>
+                        <td th:text="${a.accountNumber}"></td>
+                        <td th:text="${a.accountHolderName}"></td>
+                        <td th:text="${a.isPrimary}"></td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(accounts)}">
+                        <td colspan="7" class="text-center text-muted">No bank accounts</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

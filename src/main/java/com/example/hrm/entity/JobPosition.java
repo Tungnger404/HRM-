@@ -11,6 +11,7 @@ public class JobPosition {
     @Column(name = "job_id")
     private Integer jobId;
 
+    @Column(name = "title")
     private String title;
 
     public Integer getJobId() {
