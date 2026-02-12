@@ -66,7 +66,8 @@ public class PayrollService {
             LocalDate start = toLocalDate(r[6]);
             LocalDate end = toLocalDate(r[7]);
 
-            BigDecimal net = (r[8] instanceof BigDecimal bd) ? bd : (r[8] == null ? BigDecimal.ZERO : new BigDecimal(r[8].toString()));
+            BigDecimal net = (r[8] instanceof BigDecimal bd) ? bd
+                    : (r[8] == null ? BigDecimal.ZERO : new BigDecimal(r[8].toString()));
             String batchStatus = (String) r[9];
 
             String empCode = "NV" + eId;
@@ -93,7 +94,7 @@ public class PayrollService {
         if (v == null)
             return 0;
         if (v instanceof Number n)
-            return n.intValue();     // Integer/Long/BigInteger...
+            return n.intValue(); // Integer/Long/BigInteger...
         return Integer.parseInt(v.toString());
     }
 
@@ -112,7 +113,6 @@ public class PayrollService {
         return LocalDate.parse(v.toString());
     }
 
-
     private String statusLabel(String batchStatus) {
         if (batchStatus == null)
             return "";
@@ -124,7 +124,6 @@ public class PayrollService {
             default -> batchStatus;
         };
     }
-
 
     @Transactional(readOnly = true)
     public List<PayrollPeriodSummaryDTO> listPayrollPeriods() {
@@ -170,7 +169,7 @@ public class PayrollService {
                         .payslipId(s.getId())
                         .batchId(batchId)
                         .empId(s.getEmployee().getId())
-                        .employeeName(empName(s.getEmployee()))   // ✅ FIX
+                        .employeeName(empName(s.getEmployee())) // ✅ FIX
                         .totalIncome(nz(s.getTotalIncome()))
                         .totalDeduction(nz(s.getTotalDeduction()))
                         .netSalary(nz(s.getNetSalary()))
@@ -188,16 +187,17 @@ public class PayrollService {
                 .build();
     }
 
-
     @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForManager(Integer managerEmpId, Integer payslipId) {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
 
-        // chỉ manager trực tiếp mới xem được
-        Integer direct = p.getEmployee().getDirectManagerId();
-        if (direct == null || !direct.equals(managerEmpId)) {
-            throw new SecurityException("Not allowed to view this payslip");
+        // chỉ manager trực tiếp mới xem được (nếu managerEmpId != null)
+        if (managerEmpId != null) {
+            Integer direct = p.getEmployee().getDirectManagerId();
+            if (direct == null || !direct.equals(managerEmpId)) {
+                throw new SecurityException("Not allowed to view this payslip");
+            }
         }
 
         List<PayslipItemDTO> items = itemRepo.findByPayslip_IdOrderByIdAsc(payslipId).stream()
@@ -283,8 +283,7 @@ public class PayrollService {
             long otMinutes = requestRepo.sumApprovedOvertimeMinutes(
                     emp.getId(),
                     start.atStartOfDay(),
-                    end.atTime(LocalTime.MAX)
-            );
+                    end.atTime(LocalTime.MAX));
             BigDecimal otHours = BigDecimal.valueOf(otMinutes).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
 
             // salary = base * actual/standard
@@ -296,7 +295,7 @@ public class PayrollService {
             BigDecimal hourly = (standardDays.compareTo(BigDecimal.ZERO) == 0)
                     ? BigDecimal.ZERO
                     : baseSalary.divide(standardDays, 2, RoundingMode.HALF_UP)
-                    .divide(BigDecimal.valueOf(8), 2, RoundingMode.HALF_UP);
+                            .divide(BigDecimal.valueOf(8), 2, RoundingMode.HALF_UP);
 
             BigDecimal overtimePay = hourly.multiply(otHours).multiply(BigDecimal.valueOf(1.5))
                     .setScale(2, RoundingMode.HALF_UP);
@@ -502,7 +501,6 @@ public class PayrollService {
                         .build())
                 .toList();
     }
-
 
     @Transactional
     public PayrollInquiryDTO submitInquiry(Integer empId, PayrollInquiryCreateDTO req) {
