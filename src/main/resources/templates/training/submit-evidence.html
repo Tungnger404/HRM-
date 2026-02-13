@@ -21,6 +21,9 @@
                         <span class="badge bg-warning text-dark ms-2">Awaiting Evidence</span>
                     </div>
                     <div class="card-body">
+                        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+                        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
                         <!-- Training Program Info -->
                         <div class="alert alert-info">
                             <h5 class="alert-heading">Advanced Java Programming</h5>
@@ -33,13 +36,17 @@
                         </div>
 
                         <!-- Evidence Submission Form -->
-                        <form id="evidenceForm" enctype="multipart/form-data">
+                        <form method="post" th:action="@{/training/submit-evidence/{id}/submit(id=${progressId})}" 
+                              enctype="multipart/form-data">
+                            <div th:if="${_csrf != null}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            </div>
                             <h6 class="mb-3">Certificate / Evidence Details</h6>
 
                             <!-- Certificate Type -->
                             <div class="mb-3">
                                 <label for="certificateType" class="form-label">Certificate Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="certificateType" required>
+                                <select class="form-select" id="certificateType" name="certificateType" required>
                                     <option value="">-- Select Certificate Type --</option>
                                     <option value="completion">Certificate of Completion</option>
                                     <option value="achievement">Certificate of Achievement</option>
@@ -51,20 +58,20 @@
                             <!-- Certificate Number -->
                             <div class="mb-3">
                                 <label for="certificateNumber" class="form-label">Certificate Number</label>
-                                <input type="text" class="form-control" id="certificateNumber" 
+                                <input type="text" class="form-control" id="certificateNumber" name="certificateNumber"
                                        placeholder="Enter certificate ID or number (if applicable)">
                             </div>
 
                             <!-- Issue Date -->
                             <div class="mb-3">
                                 <label for="issueDate" class="form-label">Issue Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="issueDate" required>
+                                <input type="date" class="form-control" id="issueDate" name="issueDate" required>
                             </div>
 
                             <!-- File Upload -->
                             <div class="mb-3">
                                 <label for="certificateFile" class="form-label">Upload Certificate/Evidence <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="certificateFile" 
+                                <input type="file" class="form-control" id="certificateFile" name="certificateFile"
                                        accept=".pdf,.jpg,.jpeg,.png" required>
                                 <div class="form-text">
                                     Accepted formats: PDF, JPG, PNG. Max size: 5MB
@@ -86,14 +93,14 @@
                             <!-- Additional Notes -->
                             <div class="mb-3">
                                 <label for="notes" class="form-label">Additional Notes</label>
-                                <textarea class="form-control" id="notes" rows="3" 
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
                                           placeholder="Any additional information about the training or certificate..."></textarea>
                             </div>
 
                             <!-- Key Learnings -->
                             <div class="mb-3">
                                 <label for="keyLearnings" class="form-label">Key Learnings <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="keyLearnings" rows="4" 
+                                <textarea class="form-control" id="keyLearnings" name="keyLearnings" rows="4" 
                                           placeholder="Summarize what you learned and how you plan to apply it in your work..."
                                           required></textarea>
                                 <div class="form-text">
@@ -110,9 +117,9 @@
 
                             <!-- Action Buttons -->
                             <div class="d-flex justify-content-between">
-                                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                                <a th:href="@{/training/my-progress}" class="btn btn-secondary">
                                     <i class="fa fa-times"></i> Cancel
-                                </button>
+                                </a>
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fa fa-paper-plane"></i> Submit Evidence
                                 </button>
@@ -131,6 +138,14 @@
         document.getElementById('certificateFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds 5MB. Please choose a smaller file.');
+                    this.value = '';
+                    document.getElementById('filePreview').classList.add('d-none');
+                    return;
+                }
+
                 const preview = document.getElementById('filePreview');
                 const previewImage = document.getElementById('previewImage');
                 const previewPdf = document.getElementById('previewPdf');
@@ -152,60 +167,6 @@
                     previewPdf.classList.remove('d-none');
                     fileName.textContent = file.name;
                 }
-            }
-        });
-
-        // Form submission
-        document.getElementById('evidenceForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const formData = new FormData();
-            const file = document.getElementById('certificateFile').files[0];
-            
-            // Prepare evidence data
-            const evidenceData = {
-                progressId: 1, // TODO: Get from URL parameter
-                certificateType: document.getElementById('certificateType').value,
-                certificateNumber: document.getElementById('certificateNumber').value,
-                issueDate: document.getElementById('issueDate').value,
-                notes: document.getElementById('notes').value,
-                keyLearnings: document.getElementById('keyLearnings').value
-            };
-
-            formData.append('evidence', JSON.stringify(evidenceData));
-            formData.append('file', file);
-
-            // Show loading state
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Submitting...';
-
-            // Submit to API
-            fetch('/api/training/progress/1/complete', { // TODO: Use actual progressId
-                method: 'PUT',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Training evidence submitted successfully! Your manager will review it soon.');
-                window.location.href = '/training/my-progress';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to submit evidence. Please try again.');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            });
-        });
-
-        // Validate file size (max 5MB)
-        document.getElementById('certificateFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file && file.size > 5 * 1024 * 1024) {
-                alert('File size exceeds 5MB. Please choose a smaller file.');
-                this.value = '';
-                document.getElementById('filePreview').classList.add('d-none');
             }
         });
     </script>

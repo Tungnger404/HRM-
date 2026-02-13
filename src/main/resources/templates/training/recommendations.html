@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Training Recommendations - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Training Recommendations</h2>
+                <p class="text-muted">Auto-generated training recommendations based on employee performance</p>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <select class="form-select" id="cycleFilter">
+                    <option value="">All Cycles</option>
+                    <option value="1" selected>Q4 2023</option>
+                    <option value="2">Q3 2023</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="PENDING">Pending Review</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="ASSIGNED">Assigned</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-primary" onclick="applyFilters()">
+                    <i class="fa fa-filter"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Recommendations List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Recommended Training Programs</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Weak KPIs</th>
+                                        <th>Recommended Program</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recommendationsTableBody">
+                                    <!-- Sample data -->
+                                    <tr>
+                                        <td>
+                                            <strong>Nguyen Van A</strong><br>
+                                            <small class="text-muted">Developer</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning">Code Quality (65%)</span><br>
+                                            <span class="badge bg-warning">Testing (70%)</span>
+                                        </td>
+                                        <td>
+                                            <strong>Clean Code & Testing Best Practices</strong><br>
+                                            <small class="text-muted">Technical - 40 hours</small>
+                                        </td>
+                                        <td><span class="badge bg-danger">High</span></td>
+                                        <td><span class="badge bg-warning">Pending Review</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success" onclick="approveRecommendation(1)">
+                                                Approve & Assign
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <strong>Tran Thi B</strong><br>
+                                            <small class="text-muted">Business Analyst</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning">Communication (68%)</span>
+                                        </td>
+                                        <td>
+                                            <strong>Effective Communication Skills</strong><br>
+                                            <small class="text-muted">Soft Skills - 20 hours</small>
+                                        </td>
+                                        <td><span class="badge bg-warning">Medium</span></td>
+                                        <td><span class="badge bg-primary">In Progress</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewProgress(2)">
+                                                View Progress
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info d-none" id="emptyState">
+                            <i class="fa fa-info-circle"></i> No training recommendations found.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve & Assign Training</h5>
+                <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="approveForm">
+                    <div class="mb-3">
+                        <label class="form-label">Training Program</label>
+                        <input type="text" class="form-control" id="programName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mentor (Optional)</label>
+                        <select class="form-select" id="mentorId">
+                            <option value="">No mentor</option>
+                            <option value="1">Senior Dev 1</option>
+                            <option value="2">Senior Dev 2</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitApproval()">Approve & Assign</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script>
+        function applyFilters() {
+            const cycleId = document.getElementById('cycleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            // TODO: Call API with filters
+            // fetch(`/api/training/recommendations?cycleId=${cycleId}&status=${status}`)
+            //   .then(response => response.json())
+            //   .then(data => renderTable(data));
+        }
+
+        function approveRecommendation(recommendationId) {
+            // TODO: Load recommendation details
+            const modal = new coreui.Modal(document.getElementById('approveModal'));
+            modal.show();
+        }
+
+        function submitApproval() {
+            const data = {
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                mentorId: document.getElementById('mentorId').value || null,
+                notes: document.getElementById('notes').value
+            };
+
+            // TODO: Call API to approve and assign
+            // fetch('/api/training/recommendations/1/approve', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(data)
+            // }).then(() => {
+            //     location.reload();
+            // });
+
+            console.log('Approve training:', data);
+            alert('Training approved and assigned successfully!');
+        }
+
+        function viewProgress(recommendationId) {
+            window.location.href = '/training/progress/' + recommendationId;
+        }
+    </script>
+</th:block>
+</body>
+</html>

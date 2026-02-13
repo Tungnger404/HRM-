@@ -8,7 +8,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controller for Evaluation & Training web pages (Thymeleaf views)
@@ -34,6 +37,37 @@ public class EvaluationViewController {
         model.addAttribute("employeeId", employeeId);
         
         return "evaluation/self-review";
+    }
+
+    /**
+     * Submit employee self-evaluation (Pure Server-Side - giống team)
+     */
+    @PostMapping("/self-review/submit")
+    public String submitSelfReview(
+            @RequestParam Integer cycleId,
+            @RequestParam String selfReview,
+            @RequestParam Integer selfScore,
+            @RequestParam(required = false) Integer kpiScore_1,
+            @RequestParam(required = false) String kpiComment_1,
+            @RequestParam(required = false) Integer kpiScore_2,
+            @RequestParam(required = false) String kpiComment_2,
+            @RequestParam(required = false) Integer kpiScore_3,
+            @RequestParam(required = false) String kpiComment_3,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            // TODO: Get current employee ID from security context
+            Integer employeeId = 1; // Placeholder
+
+            // TODO: Call service to save evaluation
+            // evaluationService.createEvaluation(employeeId, cycleId, selfReview, selfScore, kpiScores);
+            
+            redirectAttributes.addFlashAttribute("msg", "Self evaluation submitted successfully! Waiting for manager review.");
+            return "redirect:/evaluation/history";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("err", "Failed to submit evaluation: " + e.getMessage());
+            return "redirect:/evaluation/self-review";
+        }
     }
 
     /**

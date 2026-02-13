@@ -16,32 +16,39 @@
             </div>
         </div>
 
+        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
         <!-- Filter Section -->
         <div class="row mb-3">
-            <div class="col-md-4">
-                <input type="text" class="form-control" id="searchInput" placeholder="Search programs...">
-            </div>
-            <div class="col-md-3">
-                <select class="form-select" id="categoryFilter">
-                    <option value="">All Categories</option>
-                    <option value="technical">Technical Skills</option>
-                    <option value="soft">Soft Skills</option>
-                    <option value="leadership">Leadership</option>
-                    <option value="compliance">Compliance</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select class="form-select" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="open">Open for Registration</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100" id="filterBtn">
-                    <i class="fa fa-filter"></i> Apply
-                </button>
+            <div class="col-12">
+                <form method="get" th:action="@{/training/programs}" class="row g-2">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="search" th:value="${search}" placeholder="Search programs...">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="category">
+                            <option value="">All Categories</option>
+                            <option value="technical" th:selected="${category == 'technical'}">Technical Skills</option>
+                            <option value="soft" th:selected="${category == 'soft'}">Soft Skills</option>
+                            <option value="leadership" th:selected="${category == 'leadership'}">Leadership</option>
+                            <option value="compliance" th:selected="${category == 'compliance'}">Compliance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="status">
+                            <option value="">All Status</option>
+                            <option value="open" th:selected="${status == 'open'}">Open for Registration</option>
+                            <option value="ongoing" th:selected="${status == 'ongoing'}">Ongoing</option>
+                            <option value="completed" th:selected="${status == 'completed'}">Completed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" type="submit">
+                            <i class="fa fa-filter"></i> Apply
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -69,9 +76,14 @@
                             </small>
                         </div>
                         <div class="d-grid">
-                            <button class="btn btn-primary btn-sm" onclick="registerProgram(1)">
-                                <i class="fa fa-plus"></i> Register
-                            </button>
+                            <form method="post" th:action="@{/training/programs/1/register}" style="display:inline;">
+                                <div th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                </div>
+                                <button class="btn btn-primary btn-sm w-100" type="submit">
+                                    <i class="fa fa-plus"></i> Register
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -125,9 +137,14 @@
                             </small>
                         </div>
                         <div class="d-grid">
-                            <button class="btn btn-primary btn-sm" onclick="registerProgram(3)">
-                                <i class="fa fa-plus"></i> Register
-                            </button>
+                            <form method="post" th:action="@{/training/programs/3/register}" style="display:inline;">
+                                <div th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                </div>
+                                <button class="btn btn-primary btn-sm w-100" type="submit">
+                                    <i class="fa fa-plus"></i> Register
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -149,36 +166,13 @@
 
 <th:block layout:fragment="scripts">
     <script>
-        function registerProgram(programId) {
-            if (confirm('Are you sure you want to register for this training program?')) {
-                // TODO: Call API to register
-                fetch(`/api/training/register/${programId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ employeeId: 1 }) // TODO: Get from session
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert('Successfully registered for the training program!');
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to register. Please try again.');
-                });
-            }
-        }
-
-        // Filter functionality
-        document.getElementById('filterBtn').addEventListener('click', function() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const category = document.getElementById('categoryFilter').value;
-            const status = document.getElementById('statusFilter').value;
-
-            // TODO: Implement actual filtering logic with API call
-            console.log('Filtering:', { searchTerm, category, status });
+        // Confirm before registration
+        document.querySelectorAll('form[action*="/register"]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Are you sure you want to register for this training program?')) {
+                    e.preventDefault();
+                }
+            });
         });
     </script>
 </th:block>
