@@ -82,8 +82,17 @@ public class ManagerPayrollController {
     }
 
     @GetMapping("/payslips/{payslipId}")
-    public String payslipDetail(@PathVariable Integer payslipId, Model model, Principal principal) {
+    public String payslipDetail(@PathVariable Integer payslipId, Model model, Principal principal,
+                                Authentication authentication) {
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId(); // ✅ giờ dùng được
+
+        // Allow Admin/HR to view all
+        boolean isAdminOrHr = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+        if (isAdminOrHr) {
+            managerEmpId = null;
+        }
+
         model.addAttribute("p", payrollService.getPayslipDetailForManager(managerEmpId, payslipId));
         return "manager/payslip-detail";
     }
@@ -95,15 +104,18 @@ public class ManagerPayrollController {
                               Principal principal,
                               Authentication authentication) {
 
-        // Manager thường chỉ thấy nhân viên mình quản lý
-        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        Integer managerEmpId = null;
 
         // Nếu HR/ADMIN muốn thấy tất cả thì bật đoạn này:
-        boolean isAdminOrHr = authentication.getAuthorities().stream().anyMatch(a ->
-                a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR")
-        );
-        if (isAdminOrHr)
+        boolean isAdminOrHr = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+
+        if (isAdminOrHr) {
             managerEmpId = null;
+        } else {
+            // Manager thường chỉ thấy nhân viên mình quản lý
+            managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        }
 
         model.addAttribute("rows", payrollService.listPayrollRowsForManager(managerEmpId, q, status));
         model.addAttribute("q", q);
@@ -130,11 +142,11 @@ public class ManagerPayrollController {
         List<Integer> ids = batchIds.stream().distinct().toList();
 
         int ok = 0, fail = 0;
+        List<Integer> approvedIds = new ArrayList<>();
 
         for (Integer batchId : ids) {
             try {
                 if ("approve".equalsIgnoreCase(action)) {
-                    // nếu đang DRAFT thì submit rồi approve (để demo chạy mượt)
                     try {
                         payrollService.approveBatch(batchId, approverEmpId);
                     } catch (IllegalStateException ex) {
@@ -142,6 +154,8 @@ public class ManagerPayrollController {
                         payrollService.approveBatch(batchId, approverEmpId);
                     }
                     ok++;
+                    approvedIds.add(batchId);
+
                 } else if ("reject".equalsIgnoreCase(action)) {
                     payrollService.rejectBatch(batchId);
                     ok++;
@@ -151,6 +165,13 @@ public class ManagerPayrollController {
             } catch (Exception e) {
                 fail++;
             }
+        }
+
+        // ✅ approve xong -> sang bank portal và auto download excel
+        if ("approve".equalsIgnoreCase(action) && !approvedIds.isEmpty()) {
+            String idsParam = approvedIds.stream().map(String::valueOf)
+                    .reduce((a, b) -> a + "," + b).orElse("");
+            return "redirect:/bank/portal?batchIds=" + idsParam + "&auto=1";
         }
 
         ra.addFlashAttribute("msg", "Done: ok=" + ok + ", fail=" + fail);

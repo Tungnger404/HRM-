@@ -1,0 +1,57 @@
+.bank-body {
+    background: #f3f6fb;
+}
+
+.bank-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.bank-sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #0b3b78, #062552);
+    color: #fff;
+}
+
+.bank-link {
+    color: rgba(255, 255, 255, .9);
+}
+
+.bank-link:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .08);
+    border-radius: 10px;
+}
+
+.bank-main {
+    flex: 1;
+}
+
+.bank-topbar {
+    height: 64px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.bank-logo {
+    font-weight: 800;
+    letter-spacing: .5px;
+    color: #0b3b78;
+}
+
+.bank-sub {
+    margin-left: 10px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.bank-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 10px 20px rgba(2, 6, 23, .04);
+}

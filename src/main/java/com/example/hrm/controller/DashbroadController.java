@@ -2,6 +2,7 @@ package com.example.hrm.controller;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
@@ -25,22 +26,26 @@ public class DashbroadController {
     }
 
     @GetMapping("/dashboard/admin")
-    public String adminDash() {
+    public String adminDash(Model model) {
+        model.addAttribute("sidebar", "sidebar-admin.html");
         return "auth/AdminDashbroad";
     }
 
     @GetMapping("/dashboard/hr")
-    public String hrDash() {
+    public String hrDash(Model model) {
+        model.addAttribute("sidebar", "sidebar-hr.html");
         return "auth/HrDashbroad";
     }
 
     @GetMapping("/dashboard/manager")
-    public String managerDash() {
+    public String managerDash(Model model) {
+        model.addAttribute("sidebar", "sidebar-manager.html");
         return "auth/ManagerDashbroad";
     }
 
     @GetMapping("/dashboard/employee")
-    public String employeeDash() {
+    public String employeeDash(Model model) {
+        model.addAttribute("sidebar", "sidebar-employee.html");
         return "auth/EmployeeDashbroad";
     }
 }

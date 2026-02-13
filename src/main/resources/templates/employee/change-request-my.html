@@ -1,0 +1,66 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <title>My Change Requests</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-1">My Change Requests</h3>
+      <div class="text-body-secondary">Track your submitted requests</div>
+    </div>
+    <a class="btn btn-primary" th:href="@{/employee/change-requests/new}">New Request</a>
+  </div>
+
+  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+  <div class="card">
+    <div class="card-body table-responsive">
+      <table class="table table-hover table-bordered align-middle">
+        <thead>
+        <tr>
+          <th>#</th>
+          <th>Field</th>
+          <th>Old</th>
+          <th>New</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Decision Note</th>
+          <th>Decided At</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="r : ${requests}">
+          <td th:text="${r.id}"></td>
+          <td th:text="${fieldOptions[r.fieldKey]}"></td>
+          <td th:text="${r.oldValue}"></td>
+          <td th:text="${r.newValue}"></td>
+
+          <td>
+            <span class="badge bg-warning" th:if="${r.status == 'PENDING'}">PENDING</span>
+            <span class="badge bg-success" th:if="${r.status == 'APPROVED'}">APPROVED</span>
+            <span class="badge bg-danger" th:if="${r.status == 'REJECTED'}">REJECTED</span>
+          </td>
+
+          <td th:text="${#temporals.format(r.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+          <td th:text="${r.decisionNote}"></td>
+          <td th:text="${r.decidedAt != null ? #temporals.format(r.decidedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+        </tr>
+
+        <tr th:if="${#lists.isEmpty(requests)}">
+          <td colspan="8" class="text-center text-muted">No requests</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

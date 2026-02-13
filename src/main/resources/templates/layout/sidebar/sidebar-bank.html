@@ -1,0 +1,15 @@
+<div th:fragment="sidebar" class="p-3">
+    <div class="mb-3">
+        <div class="text-white fw-bold fs-5">PAYBANK</div>
+        <div class="text-white-50 small">Bank Portal</div>
+    </div>
+
+    <ul class="nav flex-column gap-1">
+        <li class="nav-item">
+            <a class="nav-link bank-link" th:href="@{/bank/portal}">Salary Transfer</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link bank-link" th:href="@{/bank/portal/accounts}">Employee Bank Accounts</a>
+        </li>
+    </ul>
+</div>
