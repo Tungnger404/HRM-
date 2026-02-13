@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
+
+<head>
+    <title>Job Description List</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="container-fluid">
+
+        <div class="row mb-3">
+            <div class="col">
+                <h2>Job Description List</h2>
+            </div>
+            <div class="col text-end">
+                <a th:href="@{/hr/job-description/create}"
+                   class="btn btn-primary">
+                    + Create JD
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+
+                <table class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Job</th>
+                        <th>Salary</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th width="180">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="jd : ${list}">
+                        <td th:text="${jd.id}"></td>
+                        <td th:text="${jd.jobTitle}"></td>
+                        <td th:text="${jd.salaryRange}"></td>
+                        <td th:text="${jd.workingLocation}"></td>
+
+                        <td>
+                            <span class="badge bg-success"
+                                  th:if="${jd.status == 'ACTIVE'}">ACTIVE</span>
+                            <span class="badge bg-secondary"
+                                  th:if="${jd.status == 'INACTIVE'}">INACTIVE</span>
+                        </td>
+
+                        <td>
+                            <a th:href="@{'/hr/job-description/' + ${jd.id}}"
+                               class="btn btn-sm btn-info">View</a>
+
+                            <a th:href="@{'/hr/job-description/edit/' + ${jd.id}}"
+                               class="btn btn-sm btn-warning">Edit</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+
+</main>
+</body>
+</html>

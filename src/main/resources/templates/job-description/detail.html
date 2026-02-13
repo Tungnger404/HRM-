@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
+
+<head>
+    <title>Job Description Detail</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="container-fluid">
+
+        <h2 class="mb-3">Job Description Detail</h2>
+
+        <div class="card">
+            <div class="card-body">
+
+                <p><strong>Job:</strong> <span th:text="${jd.jobTitle}"></span></p>
+                <p><strong>Salary:</strong> <span th:text="${jd.salaryRange}"></span></p>
+                <p><strong>Location:</strong> <span th:text="${jd.workingLocation}"></span></p>
+                <p><strong>Status:</strong> <span th:text="${jd.status}"></span></p>
+
+                <hr>
+
+                <h5>Responsibilities</h5>
+                <p th:text="${jd.responsibilities}"></p>
+
+                <h5>Requirements</h5>
+                <p th:text="${jd.requirements}"></p>
+
+                <h5>Benefits</h5>
+                <p th:text="${jd.benefits}"></p>
+
+                <a th:href="@{/hr/job-description}"
+                   class="btn btn-secondary mt-3">Back</a>
+
+            </div>
+        </div>
+
+    </div>
+
+</main>
+</body>
+</html>
