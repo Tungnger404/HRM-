@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
+
+<head>
+    <title>Edit Job Description</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="container-fluid">
+
+        <h2 class="mb-3">Edit Job Description</h2>
+
+        <div class="card">
+            <div class="card-body">
+
+                <form th:action="@{'/hr/job-description/edit/' + ${dto.id}}"
+                      th:object="${dto}"
+                      method="post"
+                      class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Salary Range</label>
+                        <input type="text"
+                               class="form-control"
+                               th:field="*{salaryRange}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Working Location</label>
+                        <input type="text"
+                               class="form-control"
+                               th:field="*{workingLocation}">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Responsibilities</label>
+                        <textarea class="form-control"
+                                  rows="4"
+                                  th:field="*{responsibilities}"></textarea>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Requirements</label>
+                        <textarea class="form-control"
+                                  rows="4"
+                                  th:field="*{requirements}"></textarea>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Benefits</label>
+                        <textarea class="form-control"
+                                  rows="4"
+                                  th:field="*{benefits}"></textarea>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" th:field="*{status}">
+                            <option value="ACTIVE">ACTIVE</option>
+                            <option value="INACTIVE">INACTIVE</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <button class="btn btn-primary" type="submit">
+                            Update
+                        </button>
+
+                        <a th:href="@{/hr/job-description}"
+                           class="btn btn-secondary ms-2">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</main>
+</body>
+</html>
