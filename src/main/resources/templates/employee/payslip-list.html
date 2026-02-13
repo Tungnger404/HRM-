@@ -1,39 +1,58 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
 <head>
-    <meta charset="UTF-8">
     <title>My Payslips</title>
 </head>
+
 <body>
+<div layout:fragment="content">
 
-<h2>My Payslips</h2>
+    <h1 class="mb-4">My Payslips</h1>
 
-<table border="1" cellpadding="6">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Total Income</th>
-        <th>Total Deduction</th>
-        <th>Net</th>
-        <th>Action</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="p : ${payslips}">
-        <td th:text="${p.payslipId}"></td>
-        <td th:text="${p.totalIncome}"></td>
-        <td th:text="${p.totalDeduction}"></td>
-        <td th:text="${p.netSalary}"></td>
-        <td>
-            <a th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">View</a>
-        </td>
-    </tr>
+    <div class="card">
+        <div class="card-body">
 
-    <tr th:if="${#lists.isEmpty(payslips)}">
-        <td colspan="5" style="text-align:center;color:#888;">No data</td>
-    </tr>
-    </tbody>
-</table>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Period</th>
+                        <th class="text-end">Total Income</th>
+                        <th class="text-end">Total Deduction</th>
+                        <th class="text-end">Net</th>
+                        <th style="width:120px;">Action</th>
+                    </tr>
+                    </thead>
 
+                    <tbody>
+                    <tr th:each="p : ${payslips}">
+                        <td th:text="${p.employeeName}"></td>
+                        <td th:text="${p.period}"></td>
+                        <td class="text-end" th:text="${p.totalIncome}"></td>
+                        <td class="text-end" th:text="${p.totalDeduction}"></td>
+                        <td class="text-end" th:text="${p.netSalary}"></td>
+
+                        <td>
+                            <a class="btn btn-primary btn-sm"
+                               th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(payslips)}">
+                        <td colspan="6" class="text-center text-muted">No data</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
 </body>
 </html>

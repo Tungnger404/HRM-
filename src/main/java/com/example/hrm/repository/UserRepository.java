@@ -1,6 +1,6 @@
 package com.example.hrm.repository;
 
-import com.example.hrm.entity.User;
+import  com.example.hrm.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -9,6 +9,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByUsernameIgnoreCase(String username);
     Optional<User> findByEmailIgnoreCase(String email);
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+
 
     boolean existsByUsernameIgnoreCase(String username);
     boolean existsByEmailIgnoreCase(String email);

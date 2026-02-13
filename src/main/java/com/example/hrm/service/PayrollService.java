@@ -170,7 +170,7 @@ public class PayrollService {
                         .payslipId(s.getId())
                         .batchId(batchId)
                         .empId(s.getEmployee().getId())
-                        .employeeName(s.getEmployee().getFullName())
+                        .employeeName(empName(s.getEmployee()))   // ✅ FIX
                         .totalIncome(nz(s.getTotalIncome()))
                         .totalDeduction(nz(s.getTotalDeduction()))
                         .netSalary(nz(s.getNetSalary()))
@@ -187,6 +187,7 @@ public class PayrollService {
                 .payslips(slips)
                 .build();
     }
+
 
     @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForManager(Integer managerEmpId, Integer payslipId) {
@@ -214,7 +215,8 @@ public class PayrollService {
                 .payslipId(p.getId())
                 .batchId(p.getBatch().getId())
                 .empId(p.getEmployee().getId())
-                .employeeName(p.getEmployee().getFullName())
+                .employeeName(empName(p.getEmployee()))
+                .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null)) // ✅ ADD
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
                 .actualWorkDays(nz(p.getActualWorkDays()))
@@ -225,7 +227,6 @@ public class PayrollService {
                 .items(items)
                 .build();
     }
-
 
     /**
      * Generate Payroll Draft (System logic) - bạn có thể gọi từ Manager button
@@ -468,7 +469,8 @@ public class PayrollService {
                 .payslipId(p.getId())
                 .batchId(p.getBatch().getId())
                 .empId(p.getEmployee().getId())
-                .employeeName(p.getEmployee().getFullName())
+                .employeeName(empName(p.getEmployee()))
+                .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null)) // ✅ ADD
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
                 .actualWorkDays(nz(p.getActualWorkDays()))
@@ -492,7 +494,8 @@ public class PayrollService {
                         .payslipId(p.getId())
                         .batchId(p.getBatch().getId())
                         .empId(empId)
-                        .employeeName(emp.getFullName())
+                        .employeeName(empName(emp))
+                        .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null))
                         .totalIncome(nz(p.getTotalIncome()))
                         .totalDeduction(nz(p.getTotalDeduction()))
                         .netSalary(nz(p.getNetSalary()))
@@ -633,4 +636,30 @@ public class PayrollService {
         i.setStatus("RESOLVED");
         inquiryRepo.save(i);
     }
+
+    private String empName(Employee e) {
+        if (e == null)
+            return "";
+        String n = e.getFullName();
+        if (n != null && !n.trim().isEmpty())
+            return n.trim();
+        return "NV" + e.getId(); // fallback
+    }
+
+    private String periodLabel(PayrollPeriod per) {
+        if (per == null)
+            return "";
+        Integer m = per.getMonth();
+        Integer y = per.getYear();
+
+        String mmYY = (m != null && y != null)
+                ? String.format("%02d/%d", m, y)
+                : (per.getName() != null ? per.getName() : "");
+
+        if (per.getStartDate() != null && per.getEndDate() != null) {
+            return mmYY + " (" + per.getStartDate() + " \u2192 " + per.getEndDate() + ")";
+        }
+        return mmYY;
+    }
+
 }
