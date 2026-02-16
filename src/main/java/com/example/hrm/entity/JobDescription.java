@@ -41,5 +41,8 @@ public class JobDescription {
 
     private LocalDateTime createdAt;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private JobDescriptionStatus status;
+
 }

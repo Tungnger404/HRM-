@@ -6,8 +6,10 @@ import com.example.hrm.repository.*;
 import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.JobDescriptionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,12 +23,16 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
     private final CurrentEmployeeService currentEmployeeService;
 
     @Override
-    public void create(JobDescriptionCreateDTO dto) {
+    public void create(JobDescriptionCreateDTO dto, Principal principal) {
+
+        if (principal == null) {
+            throw new AccessDeniedException("User not authenticated");
+        }
 
         JobPosition job = jobRepository.findById(dto.getJobId())
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        Employee creator = currentEmployeeService.getCurrentEmployee();
+        Employee creator = currentEmployeeService.requireEmployee(principal);
 
         JobDescription jd = new JobDescription();
         jd.setJob(job);
@@ -37,7 +43,7 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
         jd.setWorkingLocation(dto.getWorkingLocation());
         jd.setCreatedBy(creator);
         jd.setCreatedAt(LocalDateTime.now());
-        jd.setStatus("ACTIVE");
+        jd.setStatus(JobDescriptionStatus.ACTIVE);
 
         repository.save(jd);
     }
@@ -74,7 +80,7 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
     }
 
     @Override
-    public void changeStatus(Integer id, String status) {
+    public void changeStatus(Integer id, JobDescriptionStatus status) {
 
         JobDescription jd = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("JD not found"));
@@ -100,8 +106,11 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
         dto.setJobTitle(jd.getJob().getTitle());
         dto.setSalaryRange(jd.getSalaryRange());
         dto.setWorkingLocation(jd.getWorkingLocation());
-        dto.setStatus(jd.getStatus());
+        dto.setStatus(jd.getStatus()); // enum
         dto.setCreatedAt(jd.getCreatedAt());
+        dto.setResponsibilities(jd.getResponsibilities());
+        dto.setRequirements(jd.getRequirements());
+        dto.setBenefits(jd.getBenefits());
 
         return dto;
     }
