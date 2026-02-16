@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Job Posting Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4">
+
+    <h2>Job Posting Management (HR)</h2>
+
+    <a th:href="@{/hr/job-posting/create}" class="btn btn-primary mb-3">
+        Create Job Posting
+    </a>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Recruitment Request</th>
+            <th>Status</th>
+            <th>Publish</th>
+            <th>Expiry</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="jp : ${list}">
+            <td th:text="${jp.postingId}"></td>
+            <td th:text="${jp.title}"></td>
+            <td th:text="${jp.recruitmentRequest.reqId}"></td>
+
+            <td>
+                <span class="badge bg-success"
+                      th:if="${jp.status == 'OPEN'}">OPEN</span>
+
+                <span class="badge bg-danger"
+                      th:if="${jp.status == 'CLOSED'}">CLOSED</span>
+
+                <span class="badge bg-warning text-dark"
+                      th:if="${jp.status == 'EXPIRED'}">EXPIRED</span>
+            </td>
+
+            <td th:text="${jp.publishDate}"></td>
+            <td th:text="${jp.expiryDate}"></td>
+
+            <td>
+                <a th:href="@{'/hr/job-posting/status/' + ${jp.postingId} + '/CLOSED'}"
+                   class="btn btn-sm btn-warning">Close</a>
+
+                <a th:href="@{'/hr/job-posting/delete/' + ${jp.postingId}}"
+                   class="btn btn-sm btn-danger"
+                   onclick="return confirm('Delete this posting?')">
+                    Delete
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+
+</body>
+</html>

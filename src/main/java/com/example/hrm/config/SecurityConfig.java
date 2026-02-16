@@ -4,6 +4,7 @@ import jakarta.servlet.DispatcherType;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,6 +16,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import java.io.IOException;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     // =========================
@@ -49,7 +51,6 @@ public class SecurityConfig {
                 boolean isEmployee = authentication.getAuthorities()
                         .stream().anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"));
 
-                // 👉 Redirect theo role
                 if (isAdmin) {
                     response.sendRedirect(ctx + "/dashboard/admin");
                 } else if (isHr) {
@@ -72,45 +73,46 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+                // Tắt CSRF nếu dùng thuần MVC thì có thể bật lại
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
-                        // allow forward & error
+
+                        // Allow forward & error
                         .dispatcherTypeMatchers(
                                 DispatcherType.FORWARD,
                                 DispatcherType.ERROR
                         ).permitAll()
 
-                        // PUBLIC
+                        // ===== PUBLIC =====
                         .requestMatchers(
-                                "/login", "/logout", "/register", "/register/**",
+                                "/login", "/logout",
+                                "/register", "/register/**",
                                 "/css/**", "/js/**", "/images/**",
                                 "/vendors/**", "/assets/**",
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs/**", "/v3/api-docs.yaml",
-                                "/api/**",
-                                "/evaluation/**", "/training/**"
+                                "/v3/api-docs/**"
                         ).permitAll()
 
-
-                        // DASHBOARD ROUTING
+                        // ===== DASHBOARD =====
                         .requestMatchers("/dashboard").authenticated()
                         .requestMatchers("/dashboard/admin").hasRole("ADMIN")
                         .requestMatchers("/dashboard/hr").hasRole("HR")
                         .requestMatchers("/dashboard/manager").hasRole("MANAGER")
                         .requestMatchers("/dashboard/employee").hasRole("EMPLOYEE")
 
-                        // MODULE PERMISSION
-                        .requestMatchers("/employee/**").hasRole("EMPLOYEE")
+                        // ===== MODULE PERMISSION =====
+                        .requestMatchers("/hr/**").authenticated()
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
+                        .requestMatchers("/employee/**").hasRole("EMPLOYEE")
                         .requestMatchers("/bank/**").hasAnyRole("MANAGER", "HR", "ADMIN")
 
-                        // DEFAULT
+                        // ===== DEFAULT =====
                         .anyRequest().authenticated()
                 )
 
-                // LOGIN
+                // ===== LOGIN =====
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -119,10 +121,12 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // LOGOUT
+                // ===== LOGOUT =====
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
                         .permitAll()
                 );
 

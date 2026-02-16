@@ -19,7 +19,7 @@
         <div class="card">
             <div class="card-body">
 
-                <form th:action="@{'/hr/job-description/edit/' + ${dto.id}}"
+                <form th:action="@{/hr/job-description/edit/{id}(id=${id})}"
                       th:object="${dto}"
                       method="post"
                       class="row g-3">

@@ -1,12 +1,15 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.dto.*;
+import com.example.hrm.entity.JobDescriptionStatus;
 import com.example.hrm.service.JobDescriptionService;
 import com.example.hrm.repository.JobPositionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @Controller
 @RequestMapping("/hr/job-description")
@@ -27,14 +30,16 @@ public class JobDescriptionController {
     @GetMapping("/create")
     public String createForm(Model model) {
         model.addAttribute("dto", new JobDescriptionCreateDTO());
-        model.addAttribute("jobs", jobRepository.findAll()); // dropdown
+        model.addAttribute("jobs", jobRepository.findAll());
         return "job-description/create";
     }
 
     // ================= CREATE =================
     @PostMapping("/create")
-    public String create(@ModelAttribute JobDescriptionCreateDTO dto) {
-        service.create(dto);
+    public String create(@ModelAttribute JobDescriptionCreateDTO dto,
+                         Principal principal) {
+
+        service.create(dto, principal);
         return "redirect:/hr/job-description?success";
     }
 
@@ -55,12 +60,18 @@ public class JobDescriptionController {
         dto.setSalaryRange(response.getSalaryRange());
         dto.setWorkingLocation(response.getWorkingLocation());
         dto.setStatus(response.getStatus());
+        dto.setResponsibilities(response.getResponsibilities());
+        dto.setRequirements(response.getRequirements());
+        dto.setBenefits(response.getBenefits());
 
         model.addAttribute("dto", dto);
+        model.addAttribute("statuses", JobDescriptionStatus.values());
         model.addAttribute("id", id);
 
         return "job-description/edit";
     }
+
+
 
     // ================= UPDATE =================
     @PostMapping("/edit/{id}")
@@ -72,13 +83,15 @@ public class JobDescriptionController {
     }
 
     // ================= CHANGE STATUS =================
+
     @GetMapping("/status/{id}/{status}")
     public String changeStatus(@PathVariable Integer id,
-                               @PathVariable String status) {
+                               @PathVariable JobDescriptionStatus status) {
 
         service.changeStatus(id, status);
         return "redirect:/hr/job-description";
     }
+
 
     // ================= DELETE =================
     @GetMapping("/delete/{id}")
