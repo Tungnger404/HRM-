@@ -1,21 +1,22 @@
 package com.example.hrm.service;
 
-import com.example.hrm.entity.DocumentStatus;
-import com.example.hrm.entity.DocumentType;
 import com.example.hrm.entity.EmployeeDocument;
-import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface EmployeeDocumentService {
-    EmployeeDocument upload(Integer employeeId, String title, DocumentType docType, MultipartFile file, Integer uploaderUserId);
-    Resource loadAsResource(Integer docId);
-    EmployeeDocument get(Integer docId);
+    List<EmployeeDocument> search(Integer empId, String docType, String status, String q);
 
-    List<EmployeeDocument> listAll();
-    List<EmployeeDocument> listByEmployee(Integer employeeId);
+    EmployeeDocument upload(Integer empId,
+                            String title,
+                            String docType,
+                            String status,
+                            MultipartFile file);
 
-    void updateStatus(Integer docId, DocumentStatus status);
+    EmployeeDocument updateMeta(Integer docId, String title, String docType, String status);
+
     void delete(Integer docId);
+
+    EmployeeDocument get(Integer docId);
 }
