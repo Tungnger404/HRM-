@@ -138,4 +138,55 @@ public class EvaluationViewController {
             return "error/500";
         }
     }
+
+    /**
+     * Submit manager review (Pure Server-Side - giống team)
+     */
+    @PostMapping("/manager-review/{evaluationId}/submit")
+    public String submitManagerReview(
+            @PathVariable Integer evaluationId,
+            @RequestParam String managerReview,
+            @RequestParam Integer managerScore,
+            @RequestParam String classification,
+            @RequestParam(required = false) boolean promoteRecommendation,
+            @RequestParam(required = false) boolean trainingRecommendation,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            // TODO: Get current manager ID from security context
+            Integer managerId = 1; // Placeholder
+
+            // TODO: Call service to save manager review
+            // evaluationService.submitManagerReview(evaluationId, managerId, managerReview, managerScore, classification);
+            
+            redirectAttributes.addFlashAttribute("msg", "Manager review submitted successfully!");
+            return "redirect:/evaluation/ranking/1";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("err", "Failed to submit review: " + e.getMessage());
+            return "redirect:/evaluation/manager-review/" + evaluationId;
+        }
+    }
+
+    /**
+     * Approve promotion recommendation (Pure Server-Side - giống team)
+     */
+    @PostMapping("/promotion/{employeeId}/approve")
+    public String approvePromotion(
+            @PathVariable Integer employeeId,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            // TODO: Get current manager ID from security context
+            Integer managerId = 1; // Placeholder
+
+            // TODO: Call service to approve promotion
+            // performanceRankingService.approvePromotion(employeeId, managerId);
+            
+            redirectAttributes.addFlashAttribute("msg", "Promotion approved successfully!");
+            return "redirect:/evaluation/promotion-recommendations/1";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("err", "Failed to approve promotion: " + e.getMessage());
+            return "redirect:/evaluation/promotion-recommendations/1";
+        }
+    }
 }

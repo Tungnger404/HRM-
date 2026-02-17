@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Manager Review - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Manager Review</h2>
+                <p class="text-muted">Review employee's self-evaluation and provide feedback</p>
+            </div>
+        </div>
+
+        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+        <!-- Employee Info Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="card-title">Employee Information</h5>
+                                <p class="mb-1"><strong>Name:</strong> Nguyen Van A</p>
+                                <p class="mb-1"><strong>ID:</strong> EMP001</p>
+                                <p class="mb-1"><strong>Position:</strong> Senior Developer</p>
+                                <p class="mb-1"><strong>Department:</strong> Engineering</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="card-title">Evaluation Period</h5>
+                                <p class="mb-1"><strong>Cycle:</strong> Q4 2023</p>
+                                <p class="mb-1"><strong>Period:</strong> Oct 1 - Dec 31, 2023</p>
+                                <p class="mb-1"><strong>Status:</strong> <span class="badge bg-warning">Pending Manager Review</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Self Evaluation -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <strong>Employee Self-Evaluation</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Self Review Summary:</strong></label>
+                            <p class="border rounded p-3 bg-light">
+                                "During Q4 2023, I successfully completed all assigned tasks including the migration of legacy system to Spring Boot, 
+                                implemented new REST APIs for the mobile app, and mentored 2 junior developers. 
+                                I also improved code review processes which reduced bugs by 30%."
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Overall Self Score:</strong></label>
+                            <h3 class="text-primary">92.0 / 100</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Scores Review -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>KPI Assessment Review</strong>
+                    </div>
+                    <div class="card-body">
+                        <!-- KPI 1 -->
+                        <div class="card mb-3 border">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    Code Quality
+                                    <span class="badge bg-secondary float-end">Weight: 30%</span>
+                                </h6>
+                                <p class="text-muted small">Code review score >= 8/10</p>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-info">Employee Self Score:</label>
+                                        <p><span class="badge bg-info">9.0 / 10</span></p>
+                                        <p class="small">"Maintained high code standards, all PRs approved first try."</p>
+                                    </div>
+                                    <div class="col-md-6 border-start">
+                                        <label class="form-label text-success">Manager Score:</label>
+                                        <input type="number" class="form-control" name="managerScore_1" 
+                                               min="0" max="10" step="0.5" placeholder="0-10">
+                                        <label class="form-label mt-2">Manager Comment:</label>
+                                        <textarea class="form-control" name="managerComment_1" 
+                                                  rows="2" placeholder="Provide feedback..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI 2 -->
+                        <div class="card mb-3 border">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    Task Completion
+                                    <span class="badge bg-secondary float-end">Weight: 40%</span>
+                                </h6>
+                                <p class="text-muted small">Task completion rate >= 90%</p>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-info">Employee Self Score:</label>
+                                        <p><span class="badge bg-info">9.5 / 10</span></p>
+                                        <p class="small">"Completed 100% of sprint tasks on time."</p>
+                                    </div>
+                                    <div class="col-md-6 border-start">
+                                        <label class="form-label text-success">Manager Score:</label>
+                                        <input type="number" class="form-control" name="managerScore_2" 
+                                               min="0" max="10" step="0.5" placeholder="0-10">
+                                        <label class="form-label mt-2">Manager Comment:</label>
+                                        <textarea class="form-control" name="managerComment_2" 
+                                                  rows="2" placeholder="Provide feedback..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI 3 -->
+                        <div class="card mb-3 border">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    Team Collaboration
+                                    <span class="badge bg-secondary float-end">Weight: 30%</span>
+                                </h6>
+                                <p class="text-muted small">Peer review score >= 8/10</p>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-info">Employee Self Score:</label>
+                                        <p><span class="badge bg-info">8.5 / 10</span></p>
+                                        <p class="small">"Active in code reviews and team discussions."</p>
+                                    </div>
+                                    <div class="col-md-6 border-start">
+                                        <label class="form-label text-success">Manager Score:</label>
+                                        <input type="number" class="form-control" name="managerScore_3" 
+                                               min="0" max="10" step="0.5" placeholder="0-10">
+                                        <label class="form-label mt-2">Manager Comment:</label>
+                                        <textarea class="form-control" name="managerComment_3" 
+                                                  rows="2" placeholder="Provide feedback..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manager Overall Review Form -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <strong>Manager Overall Review</strong>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" th:action="@{/evaluation/manager-review/1/submit}">
+                            <div th:if="${_csrf != null}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="managerReview" class="form-label">Manager Review Summary <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="managerReview" name="managerReview" rows="5" 
+                                          placeholder="Provide comprehensive feedback on employee's performance..."
+                                          required></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="managerScore" class="form-label">Manager Overall Score (0-100) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="managerScore" name="managerScore" 
+                                       min="0" max="100" step="0.5" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="classification" class="form-label">Final Classification <span class="text-danger">*</span></label>
+                                <select class="form-select" id="classification" name="classification" required>
+                                    <option value="">-- Select Classification --</option>
+                                    <option value="A">A - Excellent (85-100)</option>
+                                    <option value="B">B - Good (75-84)</option>
+                                    <option value="C">C - Average (60-74)</option>
+                                    <option value="D">D - Poor (< 60)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Recommendations:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="promoteRecommendation" id="promoteRecommendation">
+                                    <label class="form-check-label" for="promoteRecommendation">
+                                        Recommend for promotion
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="trainingRecommendation" id="trainingRecommendation">
+                                    <label class="form-check-label" for="trainingRecommendation">
+                                        Recommend for training
+                                    </label>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/evaluation/ranking/1}" class="btn btn-secondary">
+                                    <i class="fa fa-arrow-left"></i> Back to Ranking
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fa fa-check"></i> Submit Review
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
