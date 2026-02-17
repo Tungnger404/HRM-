@@ -75,15 +75,11 @@ public class EvaluationViewController {
      */
     @GetMapping("/manager-review/{evaluationId}")
     public String showManagerReviewForm(@PathVariable Integer evaluationId, Model model) {
-        try {
-            var evaluation = evaluationService.getEvaluationById(evaluationId);
-            model.addAttribute("evaluation", evaluation);
-            model.addAttribute("pageTitle", "Manager Review");
-            return "evaluation/manager-review";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Evaluation not found");
-            return "error/404";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("evaluationId", evaluationId);
+        model.addAttribute("pageTitle", "Manager Review");
+        return "evaluation/manager-review";
     }
 
     /**
@@ -91,16 +87,11 @@ public class EvaluationViewController {
      */
     @GetMapping("/ranking/{cycleId}")
     public String showPerformanceRanking(@PathVariable Integer cycleId, Model model) {
-        try {
-            var rankings = performanceRankingService.getTopPerformers(cycleId, 100); // Get top 100
-            model.addAttribute("rankings", rankings);
-            model.addAttribute("cycleId", cycleId);
-            model.addAttribute("pageTitle", "Performance Ranking");
-            return "evaluation/ranking";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Failed to load rankings");
-            return "error/500";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("cycleId", cycleId);
+        model.addAttribute("pageTitle", "Performance Ranking");
+        return "evaluation/ranking";
     }
 
     /**
@@ -108,16 +99,11 @@ public class EvaluationViewController {
      */
     @GetMapping("/promotion-recommendations/{cycleId}")
     public String showPromotionRecommendations(@PathVariable Integer cycleId, Model model) {
-        try {
-            var recommendations = performanceRankingService.getPromotionCandidates(cycleId);
-            model.addAttribute("recommendations", recommendations);
-            model.addAttribute("cycleId", cycleId);
-            model.addAttribute("pageTitle", "Promotion Recommendations");
-            return "evaluation/promotion-recommendations";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Failed to load recommendations");
-            return "error/500";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("cycleId", cycleId);
+        model.addAttribute("pageTitle", "Promotion Recommendations");
+        return "evaluation/promotion-recommendations";
     }
 
     /**
@@ -128,15 +114,11 @@ public class EvaluationViewController {
         // TODO: Get current employee ID from security context
         Integer employeeId = 1; // Placeholder
         
-        try {
-            var evaluations = evaluationService.getEmployeeEvaluations(employeeId);
-            model.addAttribute("evaluations", evaluations);
-            model.addAttribute("pageTitle", "Evaluation History");
-            return "evaluation/history";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Failed to load evaluation history");
-            return "error/500";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("employeeId", employeeId);
+        model.addAttribute("pageTitle", "Evaluation History");
+        return "evaluation/history";
     }
 
     /**
