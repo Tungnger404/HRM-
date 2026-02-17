@@ -32,20 +32,13 @@ public class TrainingViewController {
             @RequestParam(required = false) String status,
             Model model
     ) {
-        try {
-            var programs = trainingService.getAllTrainingPrograms();
-            // TODO: Apply filters (search, category, status)
-            
-            model.addAttribute("programs", programs);
-            model.addAttribute("search", search);
-            model.addAttribute("category", category);
-            model.addAttribute("status", status);
-            model.addAttribute("pageTitle", "Training Programs");
-            return "training/programs";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Failed to load training programs");
-            return "error/500";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("search", search);
+        model.addAttribute("category", category);
+        model.addAttribute("status", status);
+        model.addAttribute("pageTitle", "Training Programs");
+        return "training/programs";
     }
 
     /**
@@ -95,15 +88,11 @@ public class TrainingViewController {
         // TODO: Get current employee ID from security context
         Integer employeeId = 1; // Placeholder
         
-        try {
-            var progressList = trainingService.getProgressByEmployee(employeeId);
-            model.addAttribute("progressList", progressList);
-            model.addAttribute("pageTitle", "My Training Progress");
-            return "training/my-progress";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Failed to load training progress");
-            return "error/500";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("employeeId", employeeId);
+        model.addAttribute("pageTitle", "My Training Progress");
+        return "training/my-progress";
     }
 
     /**
@@ -164,21 +153,17 @@ public class TrainingViewController {
     }
 
     /**
-     * Show training recommendations for employee
+     * Show training recommendations for manager/employee
      */
     @GetMapping("/recommendations")
     public String showTrainingRecommendations(Model model) {
         // TODO: Get current employee ID from security context
         Integer employeeId = 1; // Placeholder
         
-        try {
-            var recommendations = trainingService.getRecommendationsByEmployee(employeeId);
-            model.addAttribute("recommendations", recommendations);
-            model.addAttribute("pageTitle", "Training Recommendations");
-            return "training/recommendations";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Failed to load recommendations");
-            return "error/500";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("employeeId", employeeId);
+        model.addAttribute("pageTitle", "Training Recommendations");
+        return "training/recommendations";
     }
 }

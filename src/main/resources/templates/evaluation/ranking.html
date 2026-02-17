@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Performance Ranking - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Performance Ranking</h2>
+                <p class="text-muted">Employee performance ranking by evaluation cycle</p>
+            </div>
+        </div>
+
+        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+        <!-- Filter Section -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <form method="get" th:action="@{/evaluation/ranking/1}" class="d-flex gap-2">
+                    <select class="form-select" name="cycleId">
+                        <option value="1" selected>Q4 2023</option>
+                        <option value="2">Q3 2023</option>
+                        <option value="3">Q2 2023</option>
+                    </select>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fa fa-filter"></i> Filter
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">A - Excellent</h5>
+                        <h2>12</h2>
+                        <p class="mb-0">Score >= 85</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">B - Good</h5>
+                        <h2>25</h2>
+                        <p class="mb-0">75 - 84</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">C - Average</h5>
+                        <h2>8</h2>
+                        <p class="mb-0">60 - 74</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">D - Poor</h5>
+                        <h2>3</h2>
+                        <p class="mb-0">Score < 60</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranking Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Performance Ranking - Q4 2023</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width:60px">Rank</th>
+                                        <th>Employee ID</th>
+                                        <th>Full Name</th>
+                                        <th>Department</th>
+                                        <th>Position</th>
+                                        <th class="text-end">Self Score</th>
+                                        <th class="text-end">Manager Score</th>
+                                        <th class="text-end">Total Score</th>
+                                        <th>Classification</th>
+                                        <th style="width:100px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Sample Data -->
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge bg-warning" style="font-size:18px;">🥇</span>
+                                            <strong>1</strong>
+                                        </td>
+                                        <td>EMP001</td>
+                                        <td><strong>Nguyen Van A</strong></td>
+                                        <td>Engineering</td>
+                                        <td>Senior Developer</td>
+                                        <td class="text-end">92.0</td>
+                                        <td class="text-end">95.0</td>
+                                        <td class="text-end"><strong>93.5</strong></td>
+                                        <td><span class="badge bg-success">A - Excellent</span></td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" th:href="@{/evaluation/manager-review/1}">
+                                                Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary" style="font-size:18px;">🥈</span>
+                                            <strong>2</strong>
+                                        </td>
+                                        <td>EMP002</td>
+                                        <td><strong>Tran Thi B</strong></td>
+                                        <td>Engineering</td>
+                                        <td>Developer</td>
+                                        <td class="text-end">88.0</td>
+                                        <td class="text-end">90.0</td>
+                                        <td class="text-end"><strong>89.0</strong></td>
+                                        <td><span class="badge bg-success">A - Excellent</span></td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" th:href="@{/evaluation/manager-review/2}">
+                                                Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary" style="font-size:18px;">🥉</span>
+                                            <strong>3</strong>
+                                        </td>
+                                        <td>EMP003</td>
+                                        <td><strong>Le Van C</strong></td>
+                                        <td>Marketing</td>
+                                        <td>Marketing Manager</td>
+                                        <td class="text-end">85.0</td>
+                                        <td class="text-end">87.0</td>
+                                        <td class="text-end"><strong>86.0</strong></td>
+                                        <td><span class="badge bg-success">A - Excellent</span></td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" th:href="@{/evaluation/manager-review/3}">
+                                                Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><strong>4</strong></td>
+                                        <td>EMP004</td>
+                                        <td>Pham Thi D</td>
+                                        <td>HR</td>
+                                        <td>HR Specialist</td>
+                                        <td class="text-end">78.0</td>
+                                        <td class="text-end">80.0</td>
+                                        <td class="text-end"><strong>79.0</strong></td>
+                                        <td><span class="badge bg-primary">B - Good</span></td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" th:href="@{/evaluation/manager-review/4}">
+                                                Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><strong>5</strong></td>
+                                        <td>EMP005</td>
+                                        <td>Hoang Van E</td>
+                                        <td>Engineering</td>
+                                        <td>Junior Developer</td>
+                                        <td class="text-end">70.0</td>
+                                        <td class="text-end">72.0</td>
+                                        <td class="text-end"><strong>71.0</strong></td>
+                                        <td><span class="badge bg-warning">C - Average</span></td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" th:href="@{/evaluation/manager-review/5}">
+                                                Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><strong>6</strong></td>
+                                        <td>EMP006</td>
+                                        <td>Nguyen Thi F</td>
+                                        <td>Sales</td>
+                                        <td>Sales Representative</td>
+                                        <td class="text-end">55.0</td>
+                                        <td class="text-end">58.0</td>
+                                        <td class="text-end"><strong>56.5</strong></td>
+                                        <td><span class="badge bg-danger">D - Poor</span></td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" th:href="@{/evaluation/manager-review/6}">
+                                                Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info d-none" id="emptyState">
+                            <i class="fa fa-info-circle"></i> No ranking data found.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

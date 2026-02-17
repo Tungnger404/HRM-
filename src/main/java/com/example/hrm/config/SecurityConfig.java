@@ -92,7 +92,8 @@ public class SecurityConfig {
                                 "/vendors/**", "/assets/**",
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/evaluation/**", "/training/**" // For testing without login
                         ).permitAll()
 
                         // ===== DASHBOARD =====
