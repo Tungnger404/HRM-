@@ -1,5 +1,6 @@
 package com.example.hrm.service.impl;
 
+import com.example.hrm.dto.EvaluationResultDTO;
 import com.example.hrm.entity.*;
 import com.example.hrm.entity.Evaluation.EvaluationStatus;
 import com.example.hrm.entity.EvaluationEvidence.VerificationStatus;
@@ -36,6 +37,9 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     @Autowired
     private KpiTemplateRepository kpiTemplateRepository;
+
+    @Autowired
+    private EvalCycleRepository evalCycleRepository;
 
     // === Employee ===
 
@@ -266,7 +270,145 @@ public class EvaluationServiceImpl implements EvaluationService {
         return evaluationRepository.findByCycleId(cycleId);
     }
 
-    // === Private helper ===
+    // === Integration with Payroll Module ===
+
+    @Override
+    @Transactional(readOnly = true)
+    public EvaluationResultDTO getEvaluationResultForPayroll(Integer employeeId, Integer cycleId) {
+        // Find completed evaluation for employee in specific cycle
+        List<Evaluation> evaluations = evaluationRepository.findByEmpIdAndCycleId(employeeId, cycleId);
+        
+        Evaluation completedEval = evaluations.stream()
+                .filter(e -> e.getStatus() == EvaluationStatus.COMPLETED)
+                .findFirst()
+                .orElse(null);
+        
+        if (completedEval == null) {
+            return null; // No completed evaluation found
+        }
+        
+        return buildEvaluationResultDTO(completedEval);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EvaluationResultDTO getEvaluationResultByPeriod(Integer employeeId, Integer year, Integer month) {
+        // Find evaluation cycle by period
+        // Assuming EvalCycle has year/month fields or you can query by date range
+        List<Evaluation> evaluations = evaluationRepository.findByEmpId(employeeId);
+        
+        Evaluation matchingEval = evaluations.stream()
+                .filter(e -> e.getStatus() == EvaluationStatus.COMPLETED)
+                .filter(e -> matchesPeriod(e, year, month))
+                .findFirst()
+                .orElse(null);
+        
+        if (matchingEval == null) {
+            return null; // No completed evaluation found for this period
+        }
+        
+        return buildEvaluationResultDTO(matchingEval);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EvaluationResultDTO getLatestEvaluationResult(Integer employeeId) {
+        // Find latest completed evaluation
+        List<Evaluation> evaluations = evaluationRepository.findByEmpId(employeeId);
+        
+        Evaluation latestEval = evaluations.stream()
+                .filter(e -> e.getStatus() == EvaluationStatus.COMPLETED)
+                .max((e1, e2) -> {
+                    LocalDateTime t1 = e1.getUpdatedAt() != null ? e1.getUpdatedAt() : e1.getCreatedAt();
+                    LocalDateTime t2 = e2.getUpdatedAt() != null ? e2.getUpdatedAt() : e2.getCreatedAt();
+                    return t1.compareTo(t2);
+                })
+                .orElse(null);
+        
+        if (latestEval == null) {
+            return null; // No completed evaluation found
+        }
+        
+        return buildEvaluationResultDTO(latestEval);
+    }
+
+    // === Private helpers ===
+
+    private EvaluationResultDTO buildEvaluationResultDTO(Evaluation evaluation) {
+        BigDecimal totalScore = evaluation.getTotalScore() != null 
+                ? evaluation.getTotalScore() 
+                : calculateTotalScore(evaluation.getId());
+        
+        String classification = evaluation.getClassification() != null
+                ? evaluation.getClassification()
+                : calculateClassification(totalScore);
+        
+        String classificationLabel = getClassificationLabel(classification);
+        BigDecimal bonusPercentage = getSuggestedBonusPercentage(classification);
+        
+        return EvaluationResultDTO.builder()
+                .employeeId(evaluation.getEmpId())
+                .employeeName(null) // Will be populated by caller if needed
+                .evaluationId(evaluation.getId())
+                .cycleId(evaluation.getCycleId())
+                .cycleName(null) // Will be populated by caller if needed
+                .selfScore(evaluation.getSelfScore())
+                .managerScore(evaluation.getManagerScore())
+                .totalScore(totalScore)
+                .classification(classification)
+                .classificationLabel(classificationLabel)
+                .status(evaluation.getStatus().name())
+                .completedAt(evaluation.getUpdatedAt())
+                .suggestedBonusPercentage(bonusPercentage)
+                .build();
+    }
+
+    private String getClassificationLabel(String classification) {
+        return switch (classification) {
+            case "A" -> "Excellent";
+            case "B" -> "Good";
+            case "C" -> "Average";
+            case "D" -> "Poor";
+            default -> "Unknown";
+        };
+    }
+
+    private BigDecimal getSuggestedBonusPercentage(String classification) {
+        return switch (classification) {
+            case "A" -> new BigDecimal("0.20");  // 20% bonus
+            case "B" -> new BigDecimal("0.10");  // 10% bonus
+            case "C" -> BigDecimal.ZERO;          // 0% bonus
+            case "D" -> new BigDecimal("-0.05");  // -5% penalty
+            default -> BigDecimal.ZERO;
+        };
+    }
+
+    private boolean matchesPeriod(Evaluation evaluation, Integer year, Integer month) {
+        if (evaluation.getCycleId() == null) {
+            return false;
+        }
+        
+        Optional<EvalCycle> cycleOpt = evalCycleRepository.findById(evaluation.getCycleId());
+        if (cycleOpt.isEmpty()) {
+            return false;
+        }
+        
+        EvalCycle cycle = cycleOpt.get();
+        LocalDate startDate = cycle.getStartDate();
+        LocalDate endDate = cycle.getEndDate();
+        
+        if (startDate == null || endDate == null) {
+            return false;
+        }
+        
+        // Check if the cycle's period overlaps with the given year/month
+        LocalDate monthStart = LocalDate.of(year, month, 1);
+        LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+        
+        // Cycle overlaps with the month if:
+        // cycle.startDate <= monthEnd AND cycle.endDate >= monthStart
+        return !startDate.isAfter(monthEnd) && !endDate.isBefore(monthStart);
+    }
 
     private void logHistory(Integer evalId, HistoryAction action, Integer actionBy,
                             BigDecimal oldScore, BigDecimal newScore, String comment) {
