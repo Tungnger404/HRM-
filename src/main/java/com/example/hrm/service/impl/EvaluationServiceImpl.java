@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -276,18 +277,20 @@ public class EvaluationServiceImpl implements EvaluationService {
     @Transactional(readOnly = true)
     public EvaluationResultDTO getEvaluationResultForPayroll(Integer employeeId, Integer cycleId) {
         // Find completed evaluation for employee in specific cycle
-        List<Evaluation> evaluations = evaluationRepository.findByEmpIdAndCycleId(employeeId, cycleId);
+        Optional<Evaluation> evalOpt = evaluationRepository.findByEmpIdAndCycleId(employeeId, cycleId);
         
-        Evaluation completedEval = evaluations.stream()
-                .filter(e -> e.getStatus() == EvaluationStatus.COMPLETED)
-                .findFirst()
-                .orElse(null);
-        
-        if (completedEval == null) {
-            return null; // No completed evaluation found
+        if (evalOpt.isEmpty()) {
+            return null; // No evaluation found
         }
         
-        return buildEvaluationResultDTO(completedEval);
+        Evaluation evaluation = evalOpt.get();
+        
+        // Only return if completed
+        if (evaluation.getStatus() != EvaluationStatus.COMPLETED) {
+            return null; // Evaluation not completed yet
+        }
+        
+        return buildEvaluationResultDTO(evaluation);
     }
 
     @Override
@@ -313,16 +316,12 @@ public class EvaluationServiceImpl implements EvaluationService {
     @Override
     @Transactional(readOnly = true)
     public EvaluationResultDTO getLatestEvaluationResult(Integer employeeId) {
-        // Find latest completed evaluation
-        List<Evaluation> evaluations = evaluationRepository.findByEmpId(employeeId);
+        // Find latest completed evaluation using repository query
+        List<Evaluation> evaluations = evaluationRepository.findByEmpIdOrderByEvalIdDesc(employeeId);
         
         Evaluation latestEval = evaluations.stream()
                 .filter(e -> e.getStatus() == EvaluationStatus.COMPLETED)
-                .max((e1, e2) -> {
-                    LocalDateTime t1 = e1.getUpdatedAt() != null ? e1.getUpdatedAt() : e1.getCreatedAt();
-                    LocalDateTime t2 = e2.getUpdatedAt() != null ? e2.getUpdatedAt() : e2.getCreatedAt();
-                    return t1.compareTo(t2);
-                })
+                .findFirst()
                 .orElse(null);
         
         if (latestEval == null) {
@@ -335,9 +334,9 @@ public class EvaluationServiceImpl implements EvaluationService {
     // === Private helpers ===
 
     private EvaluationResultDTO buildEvaluationResultDTO(Evaluation evaluation) {
-        BigDecimal totalScore = evaluation.getTotalScore() != null 
-                ? evaluation.getTotalScore() 
-                : calculateTotalScore(evaluation.getId());
+        BigDecimal totalScore = evaluation.getFinalScore() != null 
+                ? evaluation.getFinalScore() 
+                : calculateTotalScore(evaluation.getEvalId());
         
         String classification = evaluation.getClassification() != null
                 ? evaluation.getClassification()
@@ -349,7 +348,7 @@ public class EvaluationServiceImpl implements EvaluationService {
         return EvaluationResultDTO.builder()
                 .employeeId(evaluation.getEmpId())
                 .employeeName(null) // Will be populated by caller if needed
-                .evaluationId(evaluation.getId())
+                .evaluationId(evaluation.getEvalId())
                 .cycleId(evaluation.getCycleId())
                 .cycleName(null) // Will be populated by caller if needed
                 .selfScore(evaluation.getSelfScore())
@@ -358,7 +357,7 @@ public class EvaluationServiceImpl implements EvaluationService {
                 .classification(classification)
                 .classificationLabel(classificationLabel)
                 .status(evaluation.getStatus().name())
-                .completedAt(evaluation.getUpdatedAt())
+                .completedAt(null) // No timestamp field available in Evaluation entity
                 .suggestedBonusPercentage(bonusPercentage)
                 .build();
     }
