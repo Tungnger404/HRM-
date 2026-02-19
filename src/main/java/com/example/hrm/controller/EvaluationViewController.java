@@ -1,9 +1,5 @@
 package com.example.hrm.controller;
 
-import com.example.hrm.service.EvaluationService;
-import com.example.hrm.service.KpiService;
-import com.example.hrm.service.PerformanceRankingService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,15 +11,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controller for Evaluation & Training web pages (Thymeleaf views)
+ * Using mock data in templates - no service dependencies needed yet
  */
 @Controller
 @RequestMapping("/evaluation")
-@RequiredArgsConstructor
 public class EvaluationViewController {
-
-    private final EvaluationService evaluationService;
-    private final KpiService kpiService;
-    private final PerformanceRankingService performanceRankingService;
 
     /**
      * Show employee self-evaluation form

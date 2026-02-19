@@ -1,7 +1,5 @@
 package com.example.hrm.controller;
 
-import com.example.hrm.service.TrainingService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,13 +12,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controller for Training web pages (Thymeleaf views)
+ * Using mock data in templates - no service dependencies needed yet
  */
 @Controller
 @RequestMapping("/training")
-@RequiredArgsConstructor
 public class TrainingViewController {
-
-    private final TrainingService trainingService;
 
     /**
      * Show training program list
@@ -69,15 +65,11 @@ public class TrainingViewController {
      */
     @GetMapping("/programs/{programId}")
     public String showProgramDetails(@PathVariable Integer programId, Model model) {
-        try {
-            var program = trainingService.getTrainingProgramById(programId);
-            model.addAttribute("program", program);
-            model.addAttribute("pageTitle", "Training Program Details");
-            return "training/program-details";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Training program not found");
-            return "error/404";
-        }
+        // TODO: Fetch real data from service when database has data
+        // For now, use mock data in template for testing
+        model.addAttribute("programId", programId);
+        model.addAttribute("pageTitle", "Training Program Details");
+        return "training/program-details";
     }
 
     /**
