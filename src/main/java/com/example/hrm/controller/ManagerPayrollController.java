@@ -4,15 +4,14 @@ import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.PayrollService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.*;
-
 import java.security.Principal;
+import java.util.*;
 
 @Controller
 @RequiredArgsConstructor
@@ -20,7 +19,7 @@ import java.security.Principal;
 public class ManagerPayrollController {
 
     private final PayrollService payrollService;
-    private final CurrentEmployeeService currentEmployeeService; // ✅ THÊM DÒNG NÀY
+    private final CurrentEmployeeService currentEmployeeService;
 
     // DEMO: bạn thay bằng current manager empId từ Security sau
     private Integer demoManagerEmpId() {
@@ -59,8 +58,9 @@ public class ManagerPayrollController {
     }
 
     @PostMapping("/batches/{batchId}/approve")
-    public String approve(@PathVariable Integer batchId) {
-        payrollService.approveBatch(batchId, demoManagerEmpId());
+    public String approve(@PathVariable Integer batchId, Principal principal) {
+        Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        payrollService.approveBatch(batchId, approverEmpId);
         return "redirect:/manager/payroll/batches/" + batchId;
     }
 
@@ -82,9 +82,12 @@ public class ManagerPayrollController {
     }
 
     @GetMapping("/payslips/{payslipId}")
-    public String payslipDetail(@PathVariable Integer payslipId, Model model, Principal principal,
+    public String payslipDetail(@PathVariable Integer payslipId,
+                                Model model,
+                                Principal principal,
                                 Authentication authentication) {
-        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId(); // ✅ giờ dùng được
+
+        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
 
         // Allow Admin/HR to view all
         boolean isAdminOrHr = authentication.getAuthorities().stream()
@@ -104,16 +107,14 @@ public class ManagerPayrollController {
                               Principal principal,
                               Authentication authentication) {
 
-        Integer managerEmpId = null;
+        Integer managerEmpId;
 
-        // Nếu HR/ADMIN muốn thấy tất cả thì bật đoạn này:
         boolean isAdminOrHr = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
 
         if (isAdminOrHr) {
             managerEmpId = null;
         } else {
-            // Manager thường chỉ thấy nhân viên mình quản lý
             managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
         }
 
@@ -122,7 +123,7 @@ public class ManagerPayrollController {
         model.addAttribute("status", status);
         model.addAttribute("statusOptions", List.of("", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PAID"));
 
-        return "manager/payroll-list"; // -> /WEB-INF/views/manager/payroll-list.jsp
+        return "manager/payroll-list";
     }
 
     @PostMapping("/payslips/bulk")
@@ -131,15 +132,22 @@ public class ManagerPayrollController {
                        Principal principal,
                        RedirectAttributes ra) {
 
+        // ✅ redirect về Pending để dòng xử lý xong biến mất
+        String redirectPending = "redirect:/manager/payroll/payslips?status=PENDING_APPROVAL";
+
         if (batchIds == null || batchIds.isEmpty()) {
-            ra.addFlashAttribute("msg", "Bạn chưa chọn dòng nào.");
-            return "redirect:/manager/payroll/payslips";
+            ra.addFlashAttribute("msgType", "warning");
+            ra.addFlashAttribute("msg", "Bạn chưa chọn dòng nào (chỉ chọn được trạng thái PENDING).");
+            return redirectPending;
         }
 
         Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
 
         // distinct batch ids
-        List<Integer> ids = batchIds.stream().distinct().toList();
+        List<Integer> ids = batchIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
 
         int ok = 0, fail = 0;
         List<Integer> approvedIds = new ArrayList<>();
@@ -150,6 +158,7 @@ public class ManagerPayrollController {
                     try {
                         payrollService.approveBatch(batchId, approverEmpId);
                     } catch (IllegalStateException ex) {
+                        // nếu đang DRAFT thì submit rồi approve
                         payrollService.submitBatchForApproval(batchId);
                         payrollService.approveBatch(batchId, approverEmpId);
                     }
@@ -159,6 +168,7 @@ public class ManagerPayrollController {
                 } else if ("reject".equalsIgnoreCase(action)) {
                     payrollService.rejectBatch(batchId);
                     ok++;
+
                 } else {
                     fail++;
                 }
@@ -169,14 +179,19 @@ public class ManagerPayrollController {
 
         // ✅ approve xong -> sang bank portal và auto download excel
         if ("approve".equalsIgnoreCase(action) && !approvedIds.isEmpty()) {
-            String idsParam = approvedIds.stream().map(String::valueOf)
-                    .reduce((a, b) -> a + "," + b).orElse("");
+            String idsParam = approvedIds.stream()
+                    .map(String::valueOf)
+                    .reduce((a, b) -> a + "," + b)
+                    .orElse("");
             return "redirect:/bank/portal?batchIds=" + idsParam + "&auto=1";
         }
 
+        // ✅ msg màu đúng theo ok/fail
+        String msgType = (fail == 0) ? "success" : (ok == 0 ? "danger" : "warning");
+        ra.addFlashAttribute("msgType", msgType);
         ra.addFlashAttribute("msg", "Done: ok=" + ok + ", fail=" + fail);
-        return "redirect:/manager/payroll/payslips";
+
+        // ✅ reject xong quay về Pending để batch vừa reject biến mất khỏi list Pending
+        return redirectPending;
     }
-
-
 }

@@ -15,8 +15,14 @@
         <div class="card-body">
             <p class="mb-1"><b>Batch:</b> <span th:text="${b.batchName}"></span></p>
             <p class="mb-1"><b>Status:</b> <span th:text="${b.status}"></span></p>
-            <p class="mb-1"><b>Total Gross:</b> <span th:text="${b.totalGross}"></span></p>
-            <p class="mb-1"><b>Total Net:</b> <span th:text="${b.totalNet}"></span></p>
+
+            <!-- ✅ Format money -->
+            <p class="mb-1"><b>Total Gross:</b>
+                <span th:text="${b.totalGross == null ? '0' : #numbers.formatDecimal(b.totalGross, 1, 'COMMA', 0, 'POINT')}"></span>
+            </p>
+            <p class="mb-1"><b>Total Net:</b>
+                <span th:text="${b.totalNet == null ? '0' : #numbers.formatDecimal(b.totalNet, 1, 'COMMA', 0, 'POINT')}"></span>
+            </p>
 
             <a class="btn btn-sm btn-outline-primary mt-2"
                th:href="@{/manager/payroll/batches/{id}/export(id=${b.batchId})}">
@@ -60,9 +66,9 @@
                 <tr>
                     <th>PayslipId</th>
                     <th>Employee</th>
-                    <th>Total Income</th>
-                    <th>Total Deduction</th>
-                    <th>Net</th>
+                    <th class="text-end">Total Income</th>
+                    <th class="text-end">Total Deduction</th>
+                    <th class="text-end">Net</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -71,10 +77,22 @@
                         <a th:href="@{/manager/payroll/payslips/{id}(id=${p.payslipId})}"
                            th:text="${p.payslipId}"></a>
                     </td>
+
                     <td th:text="${p.employeeName}"></td>
-                    <td th:text="${p.totalIncome}"></td>
-                    <td th:text="${p.totalDeduction}"></td>
-                    <td th:text="${p.netSalary}"></td>
+
+                    <!-- ✅ Format money + null safe -->
+                    <td class="text-end"
+                        th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                    <td class="text-end"
+                        th:text="${p.totalDeduction == null ? '0' : #numbers.formatDecimal(p.totalDeduction, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                    <td class="text-end"
+                        th:text="${p.netSalary == null ? '0' : #numbers.formatDecimal(p.netSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+
+                <tr th:if="${b.payslips == null || #lists.isEmpty(b.payslips)}">
+                    <td colspan="5" class="text-center text-body-secondary">Chưa có payslips</td>
                 </tr>
                 </tbody>
             </table>

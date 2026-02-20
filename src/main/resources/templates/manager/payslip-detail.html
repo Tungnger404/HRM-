@@ -1,60 +1,71 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/layout}">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
 
 <head>
     <title>Payslip Detail</title>
 </head>
 
 <body>
-    <div layout:fragment="content">
+<div layout:fragment="content">
 
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <h2 class="mb-0">Payslip Detail</h2>
-            <a class="btn btn-secondary btn-sm" th:href="@{/manager/payroll/payslips}">Back</a>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-body">
-                <p class="mb-1"><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
-                <p class="mb-1"><b>Period:</b> <span th:text="${p.period}"></span></p>
-                <p class="mb-1"><b>Payslip ID:</b> <span th:text="${p.payslipId}"></span></p>
-
-                <hr class="my-2" />
-
-                <p class="mb-1"><b>Total Income:</b> <span th:text="${p.totalIncome}"></span></p>
-                <p class="mb-1"><b>Total Deduction:</b> <span th:text="${p.totalDeduction}"></span></p>
-                <p class="mb-0"><b>Net Salary:</b> <span th:text="${p.netSalary}"></span></p>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header"><b>Items</b></div>
-            <div class="card-body table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Name</th>
-                            <th class="text-end">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="it : ${p.items}">
-                            <td th:text="${it.type}"></td>
-                            <td th:text="${it.name}"></td>
-                            <td class="text-end" th:text="${it.amount}"></td>
-                        </tr>
-
-                        <tr th:if="${#lists.isEmpty(p.items)}">
-                            <td colspan="3" class="text-center text-muted">No items</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">Payslip Detail</h2>
+        <a class="btn btn-secondary btn-sm" th:href="@{/manager/payroll/payslips}">Back</a>
     </div>
-</body>
 
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="mb-1"><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
+            <p class="mb-1"><b>Period:</b> <span th:text="${p.period}"></span></p>
+            <p class="mb-1"><b>Payslip ID:</b> <span th:text="${p.payslipId}"></span></p>
+
+            <hr class="my-2"/>
+
+            <!-- ✅ Format money + null safe -->
+            <p class="mb-1"><b>Total Income:</b>
+                <span th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}"></span>
+            </p>
+            <p class="mb-1"><b>Total Deduction:</b>
+                <span th:text="${p.totalDeduction == null ? '0' : #numbers.formatDecimal(p.totalDeduction, 1, 'COMMA', 0, 'POINT')}"></span>
+            </p>
+            <p class="mb-0"><b>Net Salary:</b>
+                <span th:text="${p.netSalary == null ? '0' : #numbers.formatDecimal(p.netSalary, 1, 'COMMA', 0, 'POINT')}"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><b>Items</b></div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th class="text-end">Amount</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="it : ${p.items}">
+                    <td th:text="${it.type}"></td>
+                    <td th:text="${it.name}"></td>
+
+                    <!-- ✅ Format money + null safe -->
+                    <td class="text-end"
+                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+
+                <tr th:if="${p.items == null || #lists.isEmpty(p.items)}">
+                    <td colspan="3" class="text-center text-muted">No items</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
 </html>

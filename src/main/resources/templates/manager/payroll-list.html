@@ -9,16 +9,18 @@
 <body>
 <div layout:fragment="content">
 
-    <h2 class="mb-3 text-center">DANH SÁCH BẢNG LƯƠNG</h2>
-
-    <div th:if="${msg != null}" class="alert alert-success" th:text="${msg}"></div>
+    <!-- ✅ Alert đổi màu theo msgType -->
+    <div th:if="${msg != null}"
+         th:class="'alert alert-' + (${msgType} != null ? ${msgType} : 'success')">
+        <span th:text="${msg}"></span>
+    </div>
 
     <div class="card mb-3">
         <div class="card-body">
             <form method="get" th:action="@{/manager/payroll/payslips}"
                   class="d-flex gap-2 align-items-center flex-wrap">
                 <input class="form-control" style="max-width:320px"
-                       name="q" th:value="${q}" placeholder="Search (name / empId)"/>
+                       name="q" th:value="${q}" placeholder="Search"/>
 
                 <select class="form-select" style="max-width:220px" name="status">
                     <option th:each="op : ${statusOptions}"
@@ -33,17 +35,14 @@
         </div>
     </div>
 
-    <!-- ✅ Bulk Form -->
     <form id="bulkForm" method="post" th:action="@{/manager/payroll/payslips/bulk}">
         <div th:if="${_csrf != null}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         </div>
 
-        <!-- ✅ hidden field để gửi action -->
         <input type="hidden" name="action" id="bulkAction"/>
 
         <div class="d-flex gap-2 mb-2">
-            <!-- ✅ đổi sang type=button để JS confirm rồi mới submit -->
             <button class="btn btn-success" type="button" id="btnApprove">Approve</button>
             <button class="btn btn-danger" type="button" id="btnReject">Reject</button>
         </div>
@@ -53,7 +52,6 @@
                 <table class="table table-bordered table-hover align-middle">
                     <thead>
                     <tr>
-                        <!-- ✅ Select All -->
                         <th style="width:90px" class="text-center">
                             <input class="form-check-input" type="checkbox" id="checkAll">
                             <label for="checkAll" class="ms-1">All</label>
@@ -63,7 +61,6 @@
                         <th>Mã NV</th>
                         <th>Name</th>
 
-                        <!-- ✅ NEW -->
                         <th>Vị trí</th>
                         <th class="text-end">Lương vị trí</th>
                         <th class="text-end">Lương ngày</th>
@@ -77,24 +74,43 @@
                     </thead>
 
                     <tbody>
-                    <tr th:each="r,st : ${rows}">
+                    <tr th:each="r,st : ${rows}"
+                        th:classappend="${r.batchStatus != 'PENDING_APPROVAL'} ? 'text-muted' : ''">
+
                         <td class="text-center">
-                            <!-- ✅ thêm class row-check để JS bắt -->
-                            <input type="checkbox" class="row-check" name="batchIds" th:value="${r.batchId}">
+                            <!-- ✅ Chỉ cho chọn PENDING_APPROVAL -->
+                            <input type="checkbox"
+                                   class="row-check"
+                                   name="batchIds"
+                                   th:value="${r.batchId}"
+                                   th:disabled="${r.batchStatus != 'PENDING_APPROVAL'}">
                         </td>
 
                         <td th:text="${st.index + 1}"></td>
                         <td th:text="${r.empCode}"></td>
                         <td th:text="${r.fullName}"></td>
 
-                        <!-- ✅ NEW -->
                         <td th:text="${r.jobTitle}"></td>
-                        <td class="text-end" th:text="${r.baseSalary}"></td>
-                        <td class="text-end" th:text="${r.dailySalary}"></td>
 
-                        <td><span th:text="${r.month}"></span>/<span th:text="${r.year}"></span></td>
-                        <td><span th:text="${r.startDate}"></span> - <span th:text="${r.endDate}"></span></td>
-                        <td class="text-end" th:text="${r.netSalary}"></td>
+                        <td class="text-end"
+                            th:text="${r.baseSalary == null ? '0' : #numbers.formatDecimal(r.baseSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                        <td class="text-end"
+                            th:text="${r.dailySalary == null ? '0' : #numbers.formatDecimal(r.dailySalary, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                        <td>
+                            <span th:text="${r.month}"></span>/<span th:text="${r.year}"></span>
+                        </td>
+
+                        <td>
+                            <span th:text="${r.startDate != null ? #temporals.format(r.startDate, 'dd/MM/yyyy') : ''}"></span>
+                            -
+                            <span th:text="${r.endDate != null ? #temporals.format(r.endDate, 'dd/MM/yyyy') : ''}"></span>
+                        </td>
+
+                        <td class="text-end"
+                            th:text="${r.netSalary == null ? '0' : #numbers.formatDecimal(r.netSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+
                         <td th:text="${r.statusLabel}"></td>
                         <td>
                             <a class="btn btn-sm btn-outline-primary"
@@ -105,7 +121,6 @@
                     </tr>
 
                     <tr th:if="${#lists.isEmpty(rows)}">
-                        <!-- ✅ UPDATE colspan: 12 cột -->
                         <td colspan="12" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
                     </tr>
                     </tbody>
@@ -114,7 +129,6 @@
         </div>
     </form>
 
-    <!-- ✅ JS: select all + confirm approve/reject -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("bulkForm");
@@ -124,25 +138,23 @@
             const btnReject = document.getElementById("btnReject");
 
             const rowChecks = () => Array.from(document.querySelectorAll(".row-check"));
+            const enabledChecks = () => rowChecks().filter(cb => !cb.disabled);
 
-            // ✅ đếm unique batchIds (vì có thể trùng batchId ở nhiều dòng)
             function selectedUniqueBatchCount() {
                 const set = new Set();
                 rowChecks().forEach(cb => {
-                    if (cb.checked) set.add(cb.value);
+                    if (!cb.disabled && cb.checked) set.add(cb.value);
                 });
                 return set.size;
             }
 
-            // ✅ Tick/Untick all
             checkAll?.addEventListener("change", function () {
-                rowChecks().forEach(cb => cb.checked = checkAll.checked);
+                enabledChecks().forEach(cb => cb.checked = checkAll.checked);
             });
 
-            // ✅ Update "check all" when click each row
             document.addEventListener("change", function (e) {
                 if (e.target.classList && e.target.classList.contains("row-check")) {
-                    const checks = rowChecks();
+                    const checks = enabledChecks();
                     const allChecked = checks.length > 0 && checks.every(cb => cb.checked);
                     if (checkAll) checkAll.checked = allChecked;
                 }
@@ -151,7 +163,7 @@
             function submitBulk(actionName) {
                 const count = selectedUniqueBatchCount();
                 if (count === 0) {
-                    alert("Bạn chưa chọn dòng nào.");
+                    alert("Bạn chỉ có thể chọn dòng đang ở trạng thái PENDING.");
                     return;
                 }
 
