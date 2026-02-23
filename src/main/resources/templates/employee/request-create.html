@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content">
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Create Leave / Overtime Request</h5>
+        </div>
+
+        <div class="card-body">
+
+            <!-- Thông báo thành công -->
+            <div th:if="${param.success}"
+                 class="alert alert-success">
+                Request submitted successfully!
+            </div>
+
+            <form th:action="@{/employee/requests/create}"
+                  th:object="${request}"
+                  method="post">
+
+                <!-- Request Type -->
+                <div class="mb-3">
+                    <label class="form-label">Request Type</label>
+                    <select class="form-select"
+                            th:field="*{requestType}" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="LEAVE">Leave</option>
+                        <option value="OVERTIME">Overtime</option>
+                    </select>
+                </div>
+
+                <!-- Start Time -->
+                <div class="mb-3">
+                    <label class="form-label">Start Time</label>
+                    <input type="datetime-local"
+                           class="form-control"
+                           th:field="*{startTime}"
+                           required>
+                </div>
+
+                <!-- End Time -->
+                <div class="mb-3">
+                    <label class="form-label">End Time</label>
+                    <input type="datetime-local"
+                           class="form-control"
+                           th:field="*{endTime}"
+                           required>
+                </div>
+
+                <!-- Reason -->
+                <div class="mb-3">
+                    <label class="form-label">Reason</label>
+                    <textarea class="form-control"
+                              th:field="*{reason}"
+                              rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Submit Request
+                </button>
+
+                <a th:href="@{/employee/dashboard}"
+                   class="btn btn-secondary">
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+</html>
