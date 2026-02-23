@@ -6,3 +6,4 @@ public enum RecruitmentRequestStatus {
     APPROVED,
     REJECTED
 }
+

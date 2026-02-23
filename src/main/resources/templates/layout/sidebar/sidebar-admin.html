@@ -1,0 +1,39 @@
+<div th:fragment="sidebar">
+  <div class="sidebar-brand d-none d-md-flex">
+    <span class="fw-bold text-white px-3">ADMIN</span>
+  </div>
+
+  <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+    <li class="nav-title">System</li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/dashboard/admin}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use></svg>
+        Dashboard
+      </a>
+    </li>
+
+    <li class="nav-title">Management</li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/admin/users}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use></svg>
+        User Management
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/admin/roles}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-people"></use></svg>
+        Role Management
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/admin/settings}">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-settings"></use></svg>
+        Settings
+      </a>
+    </li>
+  </ul>
+</div>

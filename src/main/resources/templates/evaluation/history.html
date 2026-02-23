@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Evaluation History - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>My Evaluation History</h2>
+                <p class="text-muted">View your past performance evaluations</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Evaluation Records</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Cycle</th>
+                                        <th>Period</th>
+                                        <th>Self Score</th>
+                                        <th>Manager Score</th>
+                                        <th>Total Score</th>
+                                        <th>Classification</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="evaluationTableBody">
+                                    <!-- Sample data -->
+                                    <tr>
+                                        <td>Q4 2023</td>
+                                        <td>Oct - Dec 2023</td>
+                                        <td><span class="badge bg-info">85</span></td>
+                                        <td><span class="badge bg-success">88</span></td>
+                                        <td><strong>86.5</strong></td>
+                                        <td><span class="badge bg-success">A - Excellent</span></td>
+                                        <td><span class="badge bg-success">Completed</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" onclick="viewDetail(1)">
+                                                <i class="fa fa-eye"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Q3 2023</td>
+                                        <td>Jul - Sep 2023</td>
+                                        <td><span class="badge bg-info">80</span></td>
+                                        <td><span class="badge bg-success">82</span></td>
+                                        <td><strong>81.0</strong></td>
+                                        <td><span class="badge bg-primary">B - Good</span></td>
+                                        <td><span class="badge bg-success">Completed</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" onclick="viewDetail(2)">
+                                                <i class="fa fa-eye"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info d-none" id="emptyState">
+                            <i class="fa fa-info-circle"></i> No evaluation records found.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script>
+        function viewDetail(evalId) {
+            // TODO: Navigate to detail page
+            window.location.href = '/evaluation/detail/' + evalId;
+        }
+
+        // TODO: Load actual data from API
+        // fetch('/api/evaluation/employee/1')
+        //   .then(response => response.json())
+        //   .then(data => renderTable(data));
+    </script>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <title>Submit Change Request</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-1">Submit Change Request</h3>
+      <div class="text-body-secondary" th:text="'Employee: ' + ${employee.fullName} + ' (#' + ${employee.id} + ')'"></div>
+    </div>
+    <a class="btn btn-outline-secondary" th:href="@{/employee/change-requests/my}">My Requests</a>
+  </div>
+
+  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+  <div class="card">
+    <div class="card-body">
+
+      <form th:action="@{/employee/change-requests/new}" method="post" th:object="${form}">
+        <input type="hidden" th:field="*{employeeId}"/>
+
+        <div class="mb-3">
+          <label class="form-label">Field</label>
+          <select class="form-select" th:field="*{fieldKey}">
+            <option value="">-- Select field --</option>
+            <option th:each="it : ${fieldOptions.entrySet()}"
+                    th:value="${it.key}"
+                    th:text="${it.value}">
+            </option>
+          </select>
+          <div class="text-danger small" th:if="${#fields.hasErrors('fieldKey')}" th:errors="*{fieldKey}"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">New value</label>
+          <input class="form-control" th:field="*{newValue}" placeholder="Enter new value..."/>
+          <div class="text-danger small" th:if="${#fields.hasErrors('newValue')}" th:errors="*{newValue}"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Reason (optional)</label>
+          <textarea class="form-control" rows="3" th:field="*{reason}" placeholder="Why do you want to update?"></textarea>
+        </div>
+
+        <button class="btn btn-primary">Submit</button>
+        <a class="btn btn-outline-secondary ms-2" th:href="@{/dashboard/employee}">Back</a>
+      </form>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

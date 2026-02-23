@@ -1,0 +1,60 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Payroll Inquiries</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <h2 class="mb-3">Payroll Inquiries</h2>
+
+    <div class="mb-3">
+        Filter:
+        <a th:href="@{/manager/inquiries}">All</a> |
+        <a th:href="@{/manager/inquiries(status='OPEN')}">OPEN</a> |
+        <a th:href="@{/manager/inquiries(status='RESOLVED')}">RESOLVED</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Payslip</th>
+                    <th>EmpId</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="i : ${inquiries}">
+                    <td th:text="${i.id}"></td>
+                    <td th:text="${i.payslipId}"></td>
+                    <td th:text="${i.empId}"></td>
+                    <td th:text="${i.status}"></td>
+                    <td th:text="${i.createdAt}"></td>
+                    <td>
+                        <a class="btn btn-sm btn-primary"
+                           th:href="@{/manager/inquiries/{id}(id=${i.id})}">
+                            View
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(inquiries)}">
+                    <td colspan="6" class="text-center text-body-secondary">No data</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

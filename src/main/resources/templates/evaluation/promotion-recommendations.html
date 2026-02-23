@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Promotion Recommendations - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Promotion Recommendations</h2>
+                <p class="text-muted">Auto-generated promotion candidates based on performance</p>
+            </div>
+        </div>
+
+        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+        <!-- Filter Section -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <form method="get" th:action="@{/evaluation/promotion-recommendations/1}">
+                    <select class="form-select" name="cycleId" onchange="this.form.submit()">
+                        <option value="1" selected>Q4 2023</option>
+                        <option value="2">Q3 2023</option>
+                        <option value="3">Q2 2023</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recommendations List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Promotion Candidates - Q4 2023</strong>
+                        <span class="badge bg-info ms-2">Auto-Generated</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-primary mb-4">
+                            <i class="fa fa-info-circle"></i> 
+                            <strong>Criteria:</strong> Classification A (score >= 85) for 2+ consecutive cycles
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Current Position</th>
+                                        <th>Department</th>
+                                        <th class="text-end">Total Score</th>
+                                        <th>Classification</th>
+                                        <th>Consecutive A's</th>
+                                        <th>Suggested Position</th>
+                                        <th>Priority</th>
+                                        <th style="width:120px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Sample Data -->
+                                    <tr>
+                                        <td>
+                                            <strong>Nguyen Van A</strong><br>
+                                            <small class="text-muted">EMP001</small>
+                                        </td>
+                                        <td>Senior Developer</td>
+                                        <td>Engineering</td>
+                                        <td class="text-end"><strong>93.5</strong></td>
+                                        <td><span class="badge bg-success">A - Excellent</span></td>
+                                        <td class="text-center"><span class="badge bg-info">3 cycles</span></td>
+                                        <td><strong>Tech Lead</strong></td>
+                                        <td><span class="badge bg-danger">High</span></td>
+                                        <td>
+                                            <form method="post" th:action="@{/evaluation/promotion/1/approve}" style="display:inline;">
+                                                <div th:if="${_csrf != null}">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                </div>
+                                                <button class="btn btn-sm btn-success" type="submit" 
+                                                        onclick="return confirm('Approve promotion for this employee?')">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <strong>Tran Thi B</strong><br>
+                                            <small class="text-muted">EMP002</small>
+                                        </td>
+                                        <td>Developer</td>
+                                        <td>Engineering</td>
+                                        <td class="text-end"><strong>89.0</strong></td>
+                                        <td><span class="badge bg-success">A - Excellent</span></td>
+                                        <td class="text-center"><span class="badge bg-info">2 cycles</span></td>
+                                        <td><strong>Senior Developer</strong></td>
+                                        <td><span class="badge bg-warning">Medium</span></td>
+                                        <td>
+                                            <form method="post" th:action="@{/evaluation/promotion/2/approve}" style="display:inline;">
+                                                <div th:if="${_csrf != null}">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                </div>
+                                                <button class="btn btn-sm btn-success" type="submit"
+                                                        onclick="return confirm('Approve promotion for this employee?')">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <strong>Le Van C</strong><br>
+                                            <small class="text-muted">EMP003</small>
+                                        </td>
+                                        <td>Marketing Manager</td>
+                                        <td>Marketing</td>
+                                        <td class="text-end"><strong>86.0</strong></td>
+                                        <td><span class="badge bg-success">A - Excellent</span></td>
+                                        <td class="text-center"><span class="badge bg-info">2 cycles</span></td>
+                                        <td><strong>Marketing Director</strong></td>
+                                        <td><span class="badge bg-danger">High</span></td>
+                                        <td>
+                                            <form method="post" th:action="@{/evaluation/promotion/3/approve}" style="display:inline;">
+                                                <div th:if="${_csrf != null}">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                </div>
+                                                <button class="btn btn-sm btn-success" type="submit"
+                                                        onclick="return confirm('Approve promotion for this employee?')">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fa fa-lightbulb"></i>
+                            <strong>Note:</strong> Promotion recommendations are automatically generated based on consistent high performance.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

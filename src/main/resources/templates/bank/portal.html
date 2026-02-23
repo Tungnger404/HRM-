@@ -1,0 +1,108 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Bank Portal - Salary Transfer</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <!-- ✅ style ngân hàng chỉ áp dụng trong content -->
+    <style>
+        .bank-wrap {
+            background: #f6f9ff;
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .bank-hero {
+            background: linear-gradient(135deg, #0b2a4a, #0b4ea2);
+            color: #fff;
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .bank-card {
+            background: #fff;
+            border: 1px solid #e7eefb;
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .bank-badge {
+            background: rgba(255, 255, 255, .15);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+    </style>
+
+    <div class="bank-wrap">
+        <div class="bank-hero d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <div class="fw-bold fs-4">PAYBANK</div>
+                <div class="opacity-75">Salary Processing Portal</div>
+            </div>
+            <div class="bank-badge">BANK OPS</div>
+        </div>
+
+        <!-- mini tab trong content (vì sidebar vẫn là sidebar manager) -->
+        <div class="d-flex gap-2 mb-3">
+            <a class="btn btn-primary" th:href="@{/bank/portal}">Salary Transfer</a>
+            <a class="btn btn-outline-primary" th:href="@{/bank/portal/accounts}">Employee Bank Accounts</a>
+        </div>
+
+        <div class="bank-card">
+            <div class="fw-bold mb-2">Tải file Excel chuyển lương theo batchIds</div>
+
+            <div class="row g-2 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Batch IDs (ngăn cách bằng dấu ,)</label>
+                    <input class="form-control" id="batchIdsInput"
+                           th:value="${batchIds}" placeholder="VD: 10,11,12"/>
+                    <div class="form-text">Approve từ Payroll List sẽ tự đưa batchIds sang đây.</div>
+                </div>
+
+                <div class="col-md-4">
+                    <a class="btn btn-success w-100" id="downloadBtn" href="#">
+                        Download Excel
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-3 alert alert-warning"
+                 th:if="${batchIds == null || #strings.isEmpty(batchIds)}">
+                Chưa có batchIds. Vui lòng nhập hoặc approve từ Payroll List để tự chuyển sang đây.
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // set link theo input
+        const input = document.getElementById('batchIdsInput');
+        const btn = document.getElementById('downloadBtn');
+
+        function updateHref() {
+            const ids = (input.value || '').trim();
+            btn.href = ids.length
+                ? /*[[@{/bank/portal/download(batchIds=${'__IDS__'})}]]*/ ''
+                    .replace('__IDS__', encodeURIComponent(ids))
+                : '#';
+        }
+
+        input.addEventListener('input', updateHref);
+        updateHref();
+
+        // auto download nếu redirect từ approve
+        const auto = [[${auto}]];
+        const batchIds = [[${batchIds}]];
+        if (auto && batchIds && batchIds.length > 0) {
+            window.location.href = /*[[@{/bank/portal/download(batchIds=${batchIds})}]]*/ "";
+        }
+    </script>
+
+</div>
+</body>
+<

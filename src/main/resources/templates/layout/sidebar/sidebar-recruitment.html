@@ -1,0 +1,64 @@
+<div th:fragment="sidebar">
+
+    <div class="sidebar-header border-bottom">
+        <div class="sidebar-brand">
+            <svg class="sidebar-brand-full" width="88" height="32">
+                <use xlink:href="/assets/brand/coreui.svg#full"></use>
+            </svg>
+            <svg class="sidebar-brand-narrow" width="32" height="32">
+                <use xlink:href="/assets/brand/coreui.svg#signet"></use>
+            </svg>
+        </div>
+
+        <button class="btn-close d-lg-none" type="button"
+                onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
+        </button>
+    </div>
+
+    <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use>
+                </svg>
+                Dashboard
+            </a>
+        </li>
+
+        <li class="nav-title">Recruitment</li>
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/recruitment-request/create}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user-follow"></use>
+                </svg>
+                Create Request
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/recruitment-request/my-requests}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+                </svg>
+                My Requests
+            </a>
+        </li>
+
+        <li class="nav-divider"></li>
+
+        <li class="nav-title">System</li>
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/logout}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>
+                </svg>
+                Logout
+            </a>
+        </li>
+
+    </ul>
+
+</div>

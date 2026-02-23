@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+    <meta charset="UTF-8">
+    <title>HRM System</title>
+
+    <link th:href="@{/vendors/simplebar/css/simplebar.css}" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link th:href="@{/css/examples.css}" rel="stylesheet">
+    <link th:href="@{/css/theme-toggle.css}" rel="stylesheet">
+
+    <script th:src="@{/js/config.js}"></script>
+    <script th:src="@{/js/color-modes.js}"></script>
+
+    <!-- Theme CSS Variables -->
+    <style>
+        :root {
+            /* Light mode (default) */
+            --bg-body: #ffffff;
+            --bg-surface: #f8f9fa;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+        }
+
+        [data-theme="dark"] {
+            /* Dark mode */
+            --bg-body: #1a1d20;
+            --bg-surface: #2c3034;
+            --text-primary: #e4e6eb;
+            --text-secondary: #b0b3b8;
+            --border-color: #3e4042;
+        }
+
+        body {
+            background-color: var(--bg-body) !important;
+            color: var(--text-primary) !important;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .body, main.body {
+            background-color: var(--bg-body) !important;
+            color: var(--text-primary) !important;
+        }
+
+        .card {
+            background-color: var(--bg-surface) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .table {
+            color: var(--text-primary) !important;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--bg-surface) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
+    <div th:replace="~{layout/sidebar/__${sidebar != null ? sidebar : 'sidebar-default.html'}__ :: sidebar}">
+    </div>
+
+</div>
+
+<div class="wrapper d-flex flex-column min-vh-100">
+
+    <header class="header header-sticky p-0 mb-4">
+        <div class="container-fluid border-bottom px-4">
+
+            <button class="header-toggler" type="button"
+                    onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
+                <svg class="icon icon-lg">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-menu"></use>
+                </svg>
+            </button>
+
+            <ul class="header-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown">
+                        <div class="avatar avatar-md">
+                            <img class="avatar-img" th:src="@{/assets/img/avatars/8.jpg}" alt="avatar">
+                        </div>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end pt-0">
+                        <div class="dropdown-header bg-body-tertiary fw-semibold">Account</div>
+
+                        <a class="dropdown-item" th:href="@{/profile}">
+                            <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use></svg>
+                            Profile
+                        </a>
+
+                        <!-- Dark Mode Toggle -->
+                        <div class="dropdown-item d-flex justify-content-between align-items-center px-3">
+                            <span>
+                                <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-moon"></use></svg>
+                                Dark Mode
+                            </span>
+                            <label class="theme-switch mb-0">
+                                <input type="checkbox" id="themeToggle">
+                                <span class="theme-slider"></span>
+                            </label>
+                        </div>
+
+                        <a class="dropdown-item" th:href="@{/logout}">
+                            <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use></svg>
+                            Logout
+                        </a>
+                    </div>
+                </li>
+            </ul>
+
+        </div>
+    </header>
+
+    <main class="body flex-grow-1 px-4 py-3" layout:fragment="content">
+    </main>
+
+    <footer class="footer px-4">
+        <div>HRM System © 2025</div>
+        <div class="ms-auto">Powered by CoreUI</div>
+    </footer>
+
+</div>
+
+<script th:src="@{/vendors/@coreui/coreui/js/coreui.bundle.min.js}"></script>
+<script th:src="@{/vendors/simplebar/js/simplebar.min.js}"></script>
+<script th:src="@{/js/theme-toggle.js}"></script>
+
+</body>
+</html>

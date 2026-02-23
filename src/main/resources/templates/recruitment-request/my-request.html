@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-recruitment'">
+
+<head>
+    <title>My Recruitment Requests</title>
+    <style>
+        .badge {
+            padding: 4px 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 13px;
+        }
+        .pending { background: orange; }
+        .approved { background: green; }
+        .rejected { background: red; }
+    </style>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="container mt-4">
+        <h2 class="mb-4">My Recruitment Requests</h2>
+
+        <div class="card">
+            <div class="card-header">
+                <strong>My Requests</strong>
+            </div>
+
+            <div class="card-body">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                        <th>Job Position</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>HR Response</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="r : ${requests}">
+                        <td th:text="${r.jobPosition.title}"></td>
+                        <td th:text="${r.quantity}"></td>
+
+                        <!-- STATUS -->
+                        <td>
+                            <span th:switch="${r.status.name()}">
+                                  <span th:case="'DRAFT'" class="badge pending">Draft</span>
+                                  <span th:case="'SUBMITTED'" class="badge pending">Submitted</span>
+                                  <span th:case="'APPROVED'" class="badge approved">Approved</span>
+                                  <span th:case="'REJECTED'" class="badge rejected">Rejected</span>
+                            </span>
+                        </td>
+
+                        <!-- HR RESPONSE -->
+                        <td th:text="${r.status.name() == 'REJECTED'} ? ${r.reason} : '—'"></td>
+
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

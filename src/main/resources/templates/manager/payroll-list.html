@@ -1,0 +1,306 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Payroll List</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <!-- Alert server -->
+    <div th:if="${msg != null}"
+         id="serverAlert"
+         th:class="'alert alert-' + (${msgType} != null ? ${msgType} : 'success')">
+        <span th:text="${msg}"></span>
+        <div class="small mt-1 text-muted">
+            Lưu ý: Dòng trong bảng là <b>payslip</b>. Approve sẽ theo <b>batch</b>, Reject sẽ xoá <b>đúng payslip</b>.
+        </div>
+    </div>
+
+    <!-- Alert client (AJAX) -->
+    <div id="clientAlert" style="display:none"></div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" th:action="@{/manager/payroll/payslips}"
+                  class="d-flex gap-2 align-items-center flex-wrap">
+                <input class="form-control" style="max-width:320px"
+                       name="q" th:value="${q}" placeholder="Search"/>
+
+                <select class="form-select" style="max-width:220px" name="status" id="statusSelect">
+                    <option th:each="op : ${statusOptions}"
+                            th:value="${op}"
+                            th:selected="${op == status}"
+                            th:text="${op == '' ? 'All Status' : op}">
+                    </option>
+                </select>
+
+                <button class="btn btn-primary" type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+
+    <form id="bulkForm" method="post" th:action="@{/manager/payroll/payslips/bulk}">
+        <div th:if="${_csrf != null}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id="csrfToken">
+        </div>
+
+        <!-- giữ filter nếu fallback submit form thường -->
+        <input type="hidden" name="q" th:value="${q}">
+        <input type="hidden" name="status" th:value="${status}">
+
+        <input type="hidden" name="action" id="bulkAction"/>
+
+        <div class="d-flex gap-2 mb-2">
+            <button class="btn btn-success" type="button" id="btnApprove">Approve</button>
+            <button class="btn btn-danger" type="button" id="btnReject">Reject</button>
+        </div>
+
+        <div class="card">
+            <div class="card-body table-responsive">
+                <table class="table table-bordered table-hover align-middle" id="payrollTable">
+                    <thead>
+                    <tr>
+                        <th style="width:90px" class="text-center">
+                            <input class="form-check-input" type="checkbox" id="checkAll">
+                            <label for="checkAll" class="ms-1">All</label>
+                        </th>
+
+                        <th style="width:60px">Stt</th>
+                        <th>Mã NV</th>
+                        <th>Name</th>
+
+                        <th>Vị trí</th>
+                        <th class="text-end">Lương vị trí</th>
+                        <th class="text-end">Lương ngày</th>
+
+                        <th>Kỳ lương</th>
+                        <th>Thời gian</th>
+                        <th class="text-end">Tổng lương (Net)</th>
+                        <th>Trạng thái</th>
+                        <th style="width:90px">Xem</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="payrollTbody">
+                    <tr th:each="r,st : ${rows}"
+                        th:attr="data-clickable='1'"
+                        th:classappend="${r.batchStatus == 'APPROVED' or r.batchStatus == 'PAID'} ? 'text-muted' : ''">
+
+                        <td class="text-center">
+                            <div class="form-check d-flex justify-content-center m-0">
+                                <!-- ✅ QUAN TRỌNG: checkbox gửi payslipIds (không gửi batchIds nữa) -->
+                                <input type="checkbox"
+                                       class="row-check form-check-input"
+                                       name="payslipIds"
+                                       th:value="${r.payslipId}"
+                                       th:attr="data-status=${r.batchStatus}"
+                                       th:disabled="${r.batchStatus == 'APPROVED' or r.batchStatus == 'PAID'}">
+                            </div>
+                        </td>
+
+                        <td th:text="${st.index + 1}"></td>
+                        <td th:text="${r.empCode}"></td>
+                        <td th:text="${r.fullName}"></td>
+
+                        <td th:text="${r.jobTitle}"></td>
+
+                        <td class="text-end"
+                            th:text="${r.baseSalary == null ? '0' : #numbers.formatDecimal(r.baseSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                        <td class="text-end"
+                            th:text="${r.dailySalary == null ? '0' : #numbers.formatDecimal(r.dailySalary, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                        <td>
+                            <span th:text="${r.month}"></span>/<span th:text="${r.year}"></span>
+                        </td>
+
+                        <td>
+                            <span th:text="${r.startDate != null ? #temporals.format(r.startDate, 'dd/MM/yyyy') : ''}"></span>
+                            -
+                            <span th:text="${r.endDate != null ? #temporals.format(r.endDate, 'dd/MM/yyyy') : ''}"></span>
+                        </td>
+
+                        <td class="text-end"
+                            th:text="${r.netSalary == null ? '0' : #numbers.formatDecimal(r.netSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                        <td th:text="${r.statusLabel}"></td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-primary view-link"
+                               th:href="@{/manager/payroll/payslips/{id}(id=${r.payslipId})}">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(rows)}" id="emptyRow">
+                        <td colspan="12" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("bulkForm");
+            const tbody = document.getElementById("payrollTbody");
+            const checkAll = document.getElementById("checkAll");
+            const btnApprove = document.getElementById("btnApprove");
+            const btnReject = document.getElementById("btnReject");
+            const bulkAction = document.getElementById("bulkAction");
+            const clientAlert = document.getElementById("clientAlert");
+            const csrfToken = document.getElementById("csrfToken");
+            const serverAlert = document.getElementById("serverAlert");
+
+            const bulkJsonUrl = /*[[@{/manager/payroll/payslips/bulk-json}]]*/ "/manager/payroll/payslips/bulk-json";
+
+            const allChecks = () => Array.from(document.querySelectorAll(".row-check"));
+            const enabledChecks = () => allChecks().filter(cb => !cb.disabled);
+
+            function showAlert(type, text) {
+                if (serverAlert) serverAlert.style.display = "none";
+                clientAlert.className = "alert alert-" + (type || "success");
+                clientAlert.innerText = text || "";
+                clientAlert.style.display = "block";
+            }
+
+            function setCheckAllState() {
+                const list = enabledChecks();
+                if (!checkAll) return;
+                checkAll.checked = list.length > 0 && list.every(cb => cb.checked);
+            }
+
+            function ensureEmptyRow() {
+                const rows = Array.from(tbody.querySelectorAll("tr")).filter(tr => tr.id !== "emptyRow");
+                const empty = document.getElementById("emptyRow");
+
+                if (rows.length === 0) {
+                    if (!empty) {
+                        const tr = document.createElement("tr");
+                        tr.id = "emptyRow";
+                        tr.innerHTML = `<td colspan="12" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>`;
+                        tbody.appendChild(tr);
+                    }
+                } else {
+                    if (empty) empty.remove();
+                }
+            }
+
+            // Click row để toggle checkbox (trừ click input/link/button/label)
+            tbody?.addEventListener("click", function (e) {
+                const target = e.target;
+                if (!target) return;
+                if (target.closest("input") || target.closest("a") || target.closest("button") || target.closest("label")) return;
+
+                const tr = target.closest("tr");
+                if (!tr || tr.getAttribute("data-clickable") !== "1") return;
+
+                const cb = tr.querySelector(".row-check");
+                if (!cb || cb.disabled) return;
+
+                cb.checked = !cb.checked;
+                setCheckAllState();
+            });
+
+            checkAll?.addEventListener("change", function () {
+                enabledChecks().forEach(cb => cb.checked = checkAll.checked);
+            });
+
+            document.addEventListener("change", function (e) {
+                if (e.target && e.target.classList && e.target.classList.contains("row-check")) {
+                    setCheckAllState();
+                }
+            });
+
+            function getSelectedPayslipIds() {
+                const set = new Set();
+                enabledChecks().forEach(cb => {
+                    if (cb.checked) set.add(cb.value); // ✅ cb.value là payslipId
+                });
+                return Array.from(set);
+            }
+
+            // ✅ Xóa đúng row theo payslipId (không dính batch nữa)
+            function removeRowsByPayslipIds(processedIds) {
+                const processed = new Set((processedIds || []).map(String));
+
+                document.querySelectorAll(".row-check").forEach(cb => {
+                    if (processed.has(String(cb.value))) {
+                        const tr = cb.closest("tr");
+                        if (tr) tr.remove();
+                    }
+                });
+
+                setCheckAllState();
+                ensureEmptyRow();
+            }
+
+            async function submitAjax(actionName) {
+                const ids = getSelectedPayslipIds();
+                if (ids.length === 0) {
+                    showAlert("warning", "Bạn chưa chọn dòng nào.");
+                    return;
+                }
+
+                const msg = actionName === "approve"
+                    ? `Bạn có chắc muốn APPROVE theo batch của ${ids.length} dòng đã chọn không?`
+                    : `Bạn có chắc muốn REJECT (xoá) ${ids.length} payslip đã chọn không?`;
+
+                if (!confirm(msg)) return;
+
+                bulkAction.value = actionName;
+
+                const fd = new FormData(form);
+                fd.set("action", actionName);
+
+                try {
+                    const headers = {"X-Requested-With": "XMLHttpRequest"};
+                    if (csrfToken && csrfToken.value) headers["X-CSRF-TOKEN"] = csrfToken.value;
+
+                    const resp = await fetch(bulkJsonUrl, {
+                        method: "POST",
+                        body: fd,
+                        headers
+                    });
+
+                    const ct = (resp.headers.get("content-type") || "").toLowerCase();
+                    if (!ct.includes("application/json")) {
+                        showAlert("danger", "Server không trả JSON (có thể lỗi/timeout). Mở Console để xem lỗi.");
+                        return; // ✅ KHÔNG submit form => không nhảy trang
+                    }
+
+                    const data = await resp.json();
+
+                    // approve có redirectUrl -> đi luôn
+                    if (data.redirectUrl) {
+                        window.location.href = data.redirectUrl;
+                        return;
+                    }
+
+                    // reject -> xoá row ngay
+                    const processedIds = data.processedIds || [];
+                    if (processedIds.length > 0) removeRowsByPayslipIds(processedIds);
+
+                    showAlert(data.msgType || "success", data.msg || "Done");
+
+                } catch (e) {
+                    console.error(e);
+                    showAlert("danger", "Có lỗi khi gọi bulk-json. Mở Console để xem lỗi. (Không nhảy trang)");
+                }
+            }
+
+            btnApprove?.addEventListener("click", () => submitAjax("approve"));
+            btnReject?.addEventListener("click", () => submitAjax("reject"));
+
+            ensureEmptyRow();
+            setCheckAllState();
+        });
+    </script>
+
+</div>
+</body>
+</html>

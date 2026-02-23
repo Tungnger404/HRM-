@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Self Evaluation - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Self Evaluation Form</strong>
+                        <span class="badge bg-info ms-2">Employee Self-Review</span>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+                        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+                        <form method="post" th:action="@{/evaluation/self-review/submit}">
+                            <div th:if="${_csrf != null}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            </div>
+
+                            <!-- Evaluation Cycle Selection -->
+                            <div class="mb-3">
+                                <label for="cycleId" class="form-label">Evaluation Cycle <span class="text-danger">*</span></label>
+                                <select class="form-select" id="cycleId" name="cycleId" required>
+                                    <option value="">-- Select Evaluation Cycle --</option>
+                                    <option value="1">Q1 2024</option>
+                                    <option value="2">Q2 2024</option>
+                                </select>
+                            </div>
+
+                            <!-- Self Review Text -->
+                            <div class="mb-3">
+                                <label for="selfReview" class="form-label">Self Review Summary <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="selfReview" name="selfReview" rows="5" 
+                                          placeholder="Describe your achievements, challenges, and overall performance during this period..."
+                                          required></textarea>
+                                <div class="form-text">Provide a comprehensive summary of your performance.</div>
+                            </div>
+
+                            <!-- Self Score -->
+                            <div class="mb-3">
+                                <label for="selfScore" class="form-label">Overall Self Score (0-100) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="selfScore" name="selfScore" min="0" max="100" required>
+                                <div class="form-text">Rate your overall performance from 0 to 100.</div>
+                            </div>
+
+                            <hr>
+
+                            <!-- KPI Scores Section (Static for now) -->
+                            <h5 class="mb-3">KPI Self-Assessment</h5>
+                            
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        Code Quality
+                                        <span class="badge bg-secondary float-end">Weight: 30%</span>
+                                    </h6>
+                                    <p class="text-muted small">Code review score >= 8/10</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Score (0-10)</label>
+                                            <input type="number" class="form-control" name="kpiScore_1" 
+                                                   min="0" max="10" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Comment</label>
+                                            <textarea class="form-control" name="kpiComment_1" 
+                                                      rows="2" placeholder="Brief explanation..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        Task Completion
+                                        <span class="badge bg-secondary float-end">Weight: 40%</span>
+                                    </h6>
+                                    <p class="text-muted small">Task completion rate >= 90%</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Score (0-10)</label>
+                                            <input type="number" class="form-control" name="kpiScore_2" 
+                                                   min="0" max="10" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Comment</label>
+                                            <textarea class="form-control" name="kpiComment_2" 
+                                                      rows="2" placeholder="Brief explanation..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        Team Collaboration
+                                        <span class="badge bg-secondary float-end">Weight: 30%</span>
+                                    </h6>
+                                    <p class="text-muted small">Peer review score >= 8/10</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Score (0-10)</label>
+                                            <input type="number" class="form-control" name="kpiScore_3" 
+                                                   min="0" max="10" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Comment</label>
+                                            <textarea class="form-control" name="kpiComment_3" 
+                                                      rows="2" placeholder="Brief explanation..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-paper-plane"></i> Submit Self Evaluation
+                                </button>
+                                <a th:href="@{/evaluation/history}" class="btn btn-secondary ms-2">
+                                    <i class="fa fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

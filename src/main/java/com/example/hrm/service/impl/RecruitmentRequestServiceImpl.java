@@ -7,6 +7,7 @@ import com.example.hrm.service.RecruitmentRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +20,8 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
     private final DepartmentRepository departmentRepository;
     private final JobPositionRepository jobPositionRepository;
     private final EmployeeRepository employeeRepository;
+    private final RecruitmentRequestRepository repository;
+
 
     @Override
     public void createRecruitmentRequest(RecruitmentRequestCreateDTO dto) {
@@ -50,6 +53,33 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         return recruitmentRequestRepository.findForHR(
                 RecruitmentRequestStatus.DRAFT
         );
+    }
+
+    @Override
+    public RecruitmentRequest getById(Integer id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+    }
+
+    @Override
+    public void approveRequest(Integer id) {
+        RecruitmentRequest request = getById(id);
+        request.setStatus(RecruitmentRequestStatus.APPROVED);
+        request.setReason(null);
+        repository.save(request);
+    }
+
+    @Override
+    public void rejectRequest(Integer id, String reason) {
+        RecruitmentRequest request = getById(id);
+        request.setStatus(RecruitmentRequestStatus.REJECTED);
+        request.setReason(reason);
+        repository.save(request);
+    }
+    @Override
+    public List<RecruitmentRequest> getRequestsByEmployee(Integer empId) {
+        return recruitmentRequestRepository
+                .findByCreatedBy_EmpId(empId);
     }
 
 }

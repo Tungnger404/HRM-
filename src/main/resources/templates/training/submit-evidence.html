@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Submit Training Evidence - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <!-- Back Button -->
+                <button class="btn btn-link mb-3" onclick="window.history.back()">
+                    <i class="fa fa-arrow-left"></i> Back to My Training
+                </button>
+
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Submit Training Evidence</strong>
+                        <span class="badge bg-warning text-dark ms-2">Awaiting Evidence</span>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+                        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+                        <!-- Training Program Info -->
+                        <div class="alert alert-info">
+                            <h5 class="alert-heading">Advanced Java Programming</h5>
+                            <hr>
+                            <p class="mb-0">
+                                <strong>Status:</strong> Course Completed<br>
+                                <strong>Completion Date:</strong> February 28, 2024<br>
+                                <strong>Duration:</strong> 40 hours
+                            </p>
+                        </div>
+
+                        <!-- Evidence Submission Form -->
+                        <form method="post" th:action="@{/training/submit-evidence/{id}/submit(id=${progressId})}" 
+                              enctype="multipart/form-data">
+                            <div th:if="${_csrf != null}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            </div>
+                            <h6 class="mb-3">Certificate / Evidence Details</h6>
+
+                            <!-- Certificate Type -->
+                            <div class="mb-3">
+                                <label for="certificateType" class="form-label">Certificate Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="certificateType" name="certificateType" required>
+                                    <option value="">-- Select Certificate Type --</option>
+                                    <option value="completion">Certificate of Completion</option>
+                                    <option value="achievement">Certificate of Achievement</option>
+                                    <option value="attendance">Certificate of Attendance</option>
+                                    <option value="other">Other Documentation</option>
+                                </select>
+                            </div>
+
+                            <!-- Certificate Number -->
+                            <div class="mb-3">
+                                <label for="certificateNumber" class="form-label">Certificate Number</label>
+                                <input type="text" class="form-control" id="certificateNumber" name="certificateNumber"
+                                       placeholder="Enter certificate ID or number (if applicable)">
+                            </div>
+
+                            <!-- Issue Date -->
+                            <div class="mb-3">
+                                <label for="issueDate" class="form-label">Issue Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="issueDate" name="issueDate" required>
+                            </div>
+
+                            <!-- File Upload -->
+                            <div class="mb-3">
+                                <label for="certificateFile" class="form-label">Upload Certificate/Evidence <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="certificateFile" name="certificateFile"
+                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                <div class="form-text">
+                                    Accepted formats: PDF, JPG, PNG. Max size: 5MB
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div id="filePreview" class="mb-3 d-none">
+                                <label class="form-label">Preview:</label>
+                                <div class="border rounded p-3 bg-light">
+                                    <img id="previewImage" src="" alt="Preview" class="img-fluid" style="max-height: 300px;">
+                                    <div id="previewPdf" class="text-center">
+                                        <i class="fa fa-file-pdf fa-3x text-danger"></i>
+                                        <p class="mt-2 mb-0" id="fileName"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Notes -->
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Additional Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="Any additional information about the training or certificate..."></textarea>
+                            </div>
+
+                            <!-- Key Learnings -->
+                            <div class="mb-3">
+                                <label for="keyLearnings" class="form-label">Key Learnings <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="keyLearnings" name="keyLearnings" rows="4" 
+                                          placeholder="Summarize what you learned and how you plan to apply it in your work..."
+                                          required></textarea>
+                                <div class="form-text">
+                                    Please provide a brief summary of the key takeaways from this training.
+                                </div>
+                            </div>
+
+                            <!-- Important Notice -->
+                            <div class="alert alert-warning">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong>Important:</strong> Your manager will review the submitted evidence. 
+                                Please ensure all information is accurate and the uploaded file is clear and legible.
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/training/my-progress}" class="btn btn-secondary">
+                                    <i class="fa fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-paper-plane"></i> Submit Evidence
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script>
+        // File preview functionality
+        document.getElementById('certificateFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds 5MB. Please choose a smaller file.');
+                    this.value = '';
+                    document.getElementById('filePreview').classList.add('d-none');
+                    return;
+                }
+
+                const preview = document.getElementById('filePreview');
+                const previewImage = document.getElementById('previewImage');
+                const previewPdf = document.getElementById('previewPdf');
+                const fileName = document.getElementById('fileName');
+
+                preview.classList.remove('d-none');
+
+                if (file.type.startsWith('image/')) {
+                    previewImage.classList.remove('d-none');
+                    previewPdf.classList.add('d-none');
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    previewImage.classList.add('d-none');
+                    previewPdf.classList.remove('d-none');
+                    fileName.textContent = file.name;
+                }
+            }
+        });
+    </script>
+</th:block>
+</body>
+</html>

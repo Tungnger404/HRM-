@@ -1,0 +1,14 @@
+<!-- templates/layout/sidebar/sidebar-default.html -->
+<div th:fragment="sidebar" class="p-3">
+  <h6 class="text-uppercase text-muted mb-3">Menu</h6>
+
+  <ul class="nav flex-column gap-1">
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/hr/profile}">My Profile</a>
+    </li>
+  </ul>
+</div>
