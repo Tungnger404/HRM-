@@ -47,4 +47,21 @@ public interface PayslipRepository extends JpaRepository<Payslip, Integer> {
                                       @Param("kw") String kw,
                                       @Param("empId") Integer empId);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        delete from Payslip p
+        where p.batch.id = :batchId
+    """)
+    int deleteByBatchId(@Param("batchId") Integer batchId);
+
+    @Query("select s.batch.id from Payslip s where s.id in :payslipIds")
+    List<Integer> findBatchIdsByPayslipIds(@Param("payslipIds") List<Integer> payslipIds);
+
+    long countByBatch_Id(Integer batchId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PayslipItem it where it.payslip.id = :payslipId")
+    int deleteByPayslipId(@Param("payslipId") Integer payslipId);
 }
+
+

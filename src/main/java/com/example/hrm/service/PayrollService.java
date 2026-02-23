@@ -42,6 +42,55 @@ public class PayrollService {
     // =========================
 
     @Transactional(readOnly = true)
+    public List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds) {
+        if (payslipIds == null || payslipIds.isEmpty())
+            return List.of();
+        return payslipRepo.findBatchIdsByPayslipIds(payslipIds);
+    }
+
+    @Transactional
+    public void rejectPayslip(Integer payslipId) {
+        Payslip p = payslipRepo.findById(payslipId)
+                .orElseThrow(() -> new IllegalArgumentException("Payslip not found: " + payslipId));
+
+        // Chỉ cho reject khi batch DRAFT hoặc PENDING_APPROVAL (đúng flow)
+        String st = (p.getBatch() == null || p.getBatch().getStatus() == null)
+                ? ""
+                : p.getBatch().getStatus().trim().toUpperCase();
+
+        if (!"DRAFT".equals(st) && !"PENDING_APPROVAL".equals(st)) {
+            throw new IllegalStateException("Chỉ reject được khi batch là DRAFT hoặc PENDING_APPROVAL.");
+        }
+
+        PayrollBatch b = p.getBatch();
+        Integer batchId = (b != null ? b.getId() : null);
+
+        // xóa con trước
+        inquiryRepo.deleteByPayslipId(payslipId);
+        itemRepo.deleteByPayslipId(payslipId);
+
+        // update total trước khi xóa (tùy bạn có cần chuẩn số không)
+        if (b != null) {
+            BigDecimal gross = b.getTotalGross() == null ? BigDecimal.ZERO : b.getTotalGross();
+            BigDecimal net = b.getTotalNet() == null ? BigDecimal.ZERO : b.getTotalNet();
+
+            BigDecimal slipIncome = p.getTotalIncome() == null ? BigDecimal.ZERO : p.getTotalIncome();
+            BigDecimal slipNet = p.getNetSalary() == null ? BigDecimal.ZERO : p.getNetSalary();
+
+            b.setTotalGross(gross.subtract(slipIncome).max(BigDecimal.ZERO));
+            b.setTotalNet(net.subtract(slipNet).max(BigDecimal.ZERO));
+            batchRepo.save(b);
+        }
+
+        payslipRepo.deleteById(payslipId);
+
+        // nếu batch rỗng thì xoá batch luôn (để sạch DB)
+        if (batchId != null && payslipRepo.countByBatch_Id(batchId) == 0) {
+            batchRepo.deleteById(batchId);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<PayrollRowDTO> listPayrollRowsForManager(Integer managerEmpId, String q, String status) {
 
         Integer empId = null;
@@ -434,13 +483,23 @@ public class PayrollService {
     @Transactional
     public void rejectBatch(Integer batchId) {
         PayrollBatch batch = batchRepo.findById(batchId)
-                .orElseThrow(() -> new IllegalArgumentException("Batch not found"));
-        if (!"PENDING_APPROVAL".equals(batch.getStatus())) {
-            throw new IllegalStateException("Only PENDING_APPROVAL can be rejected.");
+                .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
+
+        String st = (batch.getStatus() == null ? "" : batch.getStatus().trim().toUpperCase());
+
+        // ✅ Bạn muốn "Reject là biến mất luôn" => xóa batch cho cả DRAFT & PENDING_APPROVAL
+        if ("DRAFT".equals(st) || "PENDING_APPROVAL".equals(st)) {
+
+            // xóa theo thứ tự để không vướng FK
+            inquiryRepo.deleteByBatchId(batchId);
+            itemRepo.deleteByBatchId(batchId);
+            payslipRepo.deleteByBatchId(batchId);
+            batchRepo.delete(batch);
+
+            return;
         }
-        batch.setStatus("DRAFT");
-        batchRepo.save(batch);
-        // Nếu bạn muốn lưu reason reject -> mình sẽ thêm table audit log cho bạn.
+
+        throw new IllegalStateException("Reject chỉ áp dụng cho batch DRAFT hoặc PENDING_APPROVAL.");
     }
 
     // Export Excel payroll batch

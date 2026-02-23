@@ -128,70 +128,175 @@ public class ManagerPayrollController {
 
     @PostMapping("/payslips/bulk")
     public String bulk(@RequestParam("action") String action,
-                       @RequestParam(value = "batchIds", required = false) List<Integer> batchIds,
+                       @RequestParam(value = "payslipIds", required = false) List<Integer> payslipIds,
+                       @RequestParam(value = "q", required = false) String q,
+                       @RequestParam(value = "status", required = false) String status,
                        Principal principal,
                        RedirectAttributes ra) {
 
-        // ✅ redirect về Pending để dòng xử lý xong biến mất
-        String redirectPending = "redirect:/manager/payroll/payslips?status=PENDING_APPROVAL";
+        String redirectBack = "redirect:/manager/payroll/payslips"
+                + ((q != null && !q.isBlank()) ? "?q=" + q : "")
+                + ((status != null && !status.isBlank())
+                ? ((q != null && !q.isBlank()) ? "&" : "?") + "status=" + status
+                : "");
 
-        if (batchIds == null || batchIds.isEmpty()) {
+        if (payslipIds == null || payslipIds.isEmpty()) {
             ra.addFlashAttribute("msgType", "warning");
-            ra.addFlashAttribute("msg", "Bạn chưa chọn dòng nào (chỉ chọn được trạng thái PENDING).");
-            return redirectPending;
+            ra.addFlashAttribute("msg", "Bạn chưa chọn dòng nào.");
+            return redirectBack;
         }
 
         Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
 
-        // distinct batch ids
-        List<Integer> ids = batchIds.stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
+        List<Integer> ids = payslipIds.stream().filter(Objects::nonNull).distinct().toList();
 
         int ok = 0, fail = 0;
-        List<Integer> approvedIds = new ArrayList<>();
 
-        for (Integer batchId : ids) {
-            try {
-                if ("approve".equalsIgnoreCase(action)) {
+        try {
+            if ("approve".equalsIgnoreCase(action)) {
+                // approve theo batch của các payslip đã chọn
+                List<Integer> batchIds = payrollService.findBatchIdsByPayslipIds(ids);
+                batchIds = batchIds.stream().filter(Objects::nonNull).distinct().toList();
+
+                List<Integer> approvedIds = new ArrayList<>();
+
+                for (Integer batchId : batchIds) {
+                    try {
+                        try {
+                            payrollService.approveBatch(batchId, approverEmpId);
+                        } catch (IllegalStateException ex) {
+                            payrollService.submitBatchForApproval(batchId);
+                            payrollService.approveBatch(batchId, approverEmpId);
+                        }
+                        ok++;
+                        approvedIds.add(batchId);
+                    } catch (Exception e) {
+                        fail++;
+                    }
+                }
+
+                if (!approvedIds.isEmpty()) {
+                    String idsParam = approvedIds.stream().map(String::valueOf).reduce((a, b) -> a + "," + b).orElse("");
+                    return "redirect:/bank/portal?batchIds=" + idsParam + "&auto=1";
+                }
+            } else if ("reject".equalsIgnoreCase(action)) {
+                // reject 1 dòng = xoá đúng payslip
+                for (Integer payslipId : ids) {
+                    try {
+                        payrollService.rejectPayslip(payslipId);
+                        ok++;
+                    } catch (Exception e) {
+                        fail++;
+                    }
+                }
+            } else {
+                ra.addFlashAttribute("msgType", "danger");
+                ra.addFlashAttribute("msg", "Action không hợp lệ.");
+                return redirectBack;
+            }
+
+        } catch (Exception e) {
+            ra.addFlashAttribute("msgType", "danger");
+            ra.addFlashAttribute("msg", "Lỗi xử lý bulk.");
+            return redirectBack;
+        }
+
+        String msgType = (fail == 0) ? "success" : (ok == 0 ? "danger" : "warning");
+        ra.addFlashAttribute("msgType", msgType);
+        ra.addFlashAttribute("msg", "Done: ok=" + ok + ", fail=" + fail);
+        return redirectBack;
+    }
+
+    @PostMapping(value = "/payslips/bulk-json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> bulkJson(@RequestParam("action") String action,
+                                        @RequestParam(value = "payslipIds", required = false) List<Integer> payslipIds,
+                                        Principal principal) {
+
+        Map<String, Object> res = new HashMap<>();
+
+        if (payslipIds == null || payslipIds.isEmpty()) {
+            res.put("ok", 0);
+            res.put("fail", 0);
+            res.put("msgType", "warning");
+            res.put("msg", "Bạn chưa chọn dòng nào.");
+            res.put("processedIds", List.of());
+            return res;
+        }
+
+        Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
+
+        List<Integer> ids = payslipIds.stream().filter(Objects::nonNull).distinct().toList();
+
+        int ok = 0, fail = 0;
+        List<Integer> processed = new ArrayList<>();
+
+        if ("approve".equalsIgnoreCase(action)) {
+            // approve theo batch của các payslip đã chọn
+            List<Integer> batchIds = payrollService.findBatchIdsByPayslipIds(ids);
+            batchIds = batchIds.stream().filter(Objects::nonNull).distinct().toList();
+
+            List<Integer> approvedBatchIds = new ArrayList<>();
+
+            for (Integer batchId : batchIds) {
+                try {
                     try {
                         payrollService.approveBatch(batchId, approverEmpId);
                     } catch (IllegalStateException ex) {
-                        // nếu đang DRAFT thì submit rồi approve
                         payrollService.submitBatchForApproval(batchId);
                         payrollService.approveBatch(batchId, approverEmpId);
                     }
                     ok++;
-                    approvedIds.add(batchId);
-
-                } else if ("reject".equalsIgnoreCase(action)) {
-                    payrollService.rejectBatch(batchId);
-                    ok++;
-
-                } else {
+                    approvedBatchIds.add(batchId);
+                } catch (Exception e) {
                     fail++;
                 }
-            } catch (Exception e) {
-                fail++;
             }
+
+            res.put("ok", ok);
+            res.put("fail", fail);
+            res.put("processedIds", List.of()); // UI không cần xoá vì sẽ redirect
+
+            String msgType = (fail > 0) ? "warning" : "success";
+            res.put("msgType", msgType);
+            res.put("msg", "Done");
+
+            if (!approvedBatchIds.isEmpty()) {
+                String idsParam = approvedBatchIds.stream().map(String::valueOf)
+                        .reduce((a, b) -> a + "," + b).orElse("");
+                res.put("redirectUrl", "/bank/portal?batchIds=" + idsParam + "&auto=1");
+            }
+            return res;
         }
 
-        // ✅ approve xong -> sang bank portal và auto download excel
-        if ("approve".equalsIgnoreCase(action) && !approvedIds.isEmpty()) {
-            String idsParam = approvedIds.stream()
-                    .map(String::valueOf)
-                    .reduce((a, b) -> a + "," + b)
-                    .orElse("");
-            return "redirect:/bank/portal?batchIds=" + idsParam + "&auto=1";
+        if ("reject".equalsIgnoreCase(action)) {
+            // reject 1 dòng = xoá đúng payslip
+            for (Integer payslipId : ids) {
+                try {
+                    payrollService.rejectPayslip(payslipId);
+                    ok++;
+                    processed.add(payslipId); // ✅ trả payslipId để UI xoá đúng dòng
+                } catch (Exception e) {
+                    fail++;
+                }
+            }
+
+            res.put("ok", ok);
+            res.put("fail", fail);
+            res.put("processedIds", processed);
+
+            // reject thì nên màu đỏ/warning
+            String msgType = (fail > 0) ? "warning" : "danger";
+            res.put("msgType", msgType);
+            res.put("msg", "Done");
+            return res;
         }
 
-        // ✅ msg màu đúng theo ok/fail
-        String msgType = (fail == 0) ? "success" : (ok == 0 ? "danger" : "warning");
-        ra.addFlashAttribute("msgType", msgType);
-        ra.addFlashAttribute("msg", "Done: ok=" + ok + ", fail=" + fail);
-
-        // ✅ reject xong quay về Pending để batch vừa reject biến mất khỏi list Pending
-        return redirectPending;
+        res.put("ok", 0);
+        res.put("fail", ids.size());
+        res.put("processedIds", List.of());
+        res.put("msgType", "danger");
+        res.put("msg", "Action không hợp lệ.");
+        return res;
     }
 }
