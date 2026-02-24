@@ -1,4 +1,4 @@
-package com.example.hrm.entity;
+package com.example.hrm.dto;
 
 import lombok.*;
 
