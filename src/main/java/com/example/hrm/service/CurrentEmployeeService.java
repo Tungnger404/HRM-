@@ -36,4 +36,15 @@ public class CurrentEmployeeService {
     public Integer requireCurrentEmpId(Principal principal) {
         return requireEmployee(principal).getId();
     }
+
+    // ✅ NEW: lấy user_id để gán uploaded_by
+    public Integer requireUserId(Principal principal) {
+        if (principal == null || principal.getName() == null) {
+            throw new AccessDeniedException("User not authenticated");
+        }
+        String username = principal.getName();
+        return userRepo.findByUsername(username)
+                .map(UserAccount::getId)
+                .orElseThrow(() -> new AccessDeniedException("User not found: " + username));
+    }
 }
