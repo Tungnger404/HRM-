@@ -1,7 +1,6 @@
 package com.example.hrm.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,122 +9,80 @@ public class EmployeeDocument {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "doc_id") // ✅ PK thật trong DB
+    @Column(name = "doc_id")
     private Integer id;
 
-    // DB có emp_id NOT NULL (còn employee_id là cột thừa/đã phát sinh)
+    // ✅ dùng emp_id (đúng cột chuẩn)
     @Column(name = "emp_id", nullable = false)
     private Integer employeeId;
 
-    // "title" của người khác -> map vào doc_name (DB đang có)
+    // ✅ DB có cả doc_name và title → ta dùng doc_name chính thức
     @Column(name = "doc_name", length = 100)
     private String title;
 
-    // DB có doc_type
     @Column(name = "doc_type", length = 50)
     private String docType;
 
-    // DB có status (NOT NULL)
     @Column(name = "status", nullable = false, length = 20)
     private String status = "DRAFT";
 
-    // DB có file_name (NOT NULL)
+    // ✅ version đã có trong DB
+    @Column(name = "doc_version", nullable = false)
+    private Integer version = 1;
+
     @Column(name = "file_name", nullable = false, length = 255)
     private String fileName;
 
-    // DB có content_type
     @Column(name = "content_type", length = 255)
     private String contentType;
 
-    // DB có stored_path (NOT NULL)
     @Column(name = "stored_path", nullable = false, length = 255)
     private String storedPath;
 
-    // DB có file_url (nếu bạn muốn dùng)
     @Column(name = "file_url", length = 255)
     private String fileUrl;
 
-    // DB có uploaded_at default getdate()
     @Column(name = "uploaded_at", insertable = false, updatable = false)
     private LocalDateTime uploadedAt;
 
-    // ✅ Cột uploaded_by_user_id KHÔNG có trong bảng => để transient để Hibernate không đòi tạo thêm cột
-    @Transient
+    // ✅ bỏ @Transient vì DB đã có cột này
+    @Column(name = "uploaded_by_user_id")
     private Integer uploadedByUserId;
 
-    public Integer getId() {
-        return id;
-    }
+    // ================= GETTER / SETTER =================
 
-    public Integer getEmployeeId() {
-        return employeeId;
-    }
+    public Integer getId() { return id; }
 
-    public void setEmployeeId(Integer employeeId) {
-        this.employeeId = employeeId;
-    }
+    public Integer getEmployeeId() { return employeeId; }
+    public void setEmployeeId(Integer employeeId) { this.employeeId = employeeId; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getDocType() { return docType; }
+    public void setDocType(String docType) { this.docType = docType; }
 
-    public String getDocType() {
-        return docType;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setDocType(String docType) {
-        this.docType = docType;
-    }
+    public Integer getVersion() { return version; }
+    public void setVersion(Integer version) { this.version = version; }
 
-    public String getStatus() {
-        return status;
-    }
+    public String getFileName() { return fileName; }
+    public void setFileName(String fileName) { this.fileName = fileName; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
 
-    public String getFileName() {
-        return fileName;
-    }
+    public String getStoredPath() { return storedPath; }
+    public void setStoredPath(String storedPath) { this.storedPath = storedPath; }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
 
-    public String getContentType() {
-        return contentType;
-    }
+    public LocalDateTime getUploadedAt() { return uploadedAt; }
+    public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    public String getStoredPath() {
-        return storedPath;
-    }
-
-    public void setStoredPath(String storedPath) {
-        this.storedPath = storedPath;
-    }
-
-    public Integer getUploadedByUserId() {
-        return uploadedByUserId;
-    }
-
-    public void setUploadedByUserId(Integer uploadedByUserId) {
-        this.uploadedByUserId = uploadedByUserId;
-    }
-
-    public LocalDateTime getUploadedAt() {
-        return uploadedAt;
-    }
-
-    public void setUploadedAt(LocalDateTime uploadedAt) {
-        this.uploadedAt = uploadedAt;
-    }
+    public Integer getUploadedByUserId() { return uploadedByUserId; }
+    public void setUploadedByUserId(Integer uploadedByUserId) { this.uploadedByUserId = uploadedByUserId; }
 }

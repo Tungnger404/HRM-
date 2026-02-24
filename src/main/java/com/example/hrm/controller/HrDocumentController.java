@@ -1,6 +1,7 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.entity.EmployeeDocument;
+import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.EmployeeDocumentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -24,10 +26,14 @@ public class HrDocumentController {
 
     private final EmployeeDocumentService docService;
     private final DocumentStorageService storage;
+    private final CurrentEmployeeService currentEmployeeService;
 
-    public HrDocumentController(EmployeeDocumentService docService, DocumentStorageService storage) {
+    public HrDocumentController(EmployeeDocumentService docService,
+                                DocumentStorageService storage,
+                                CurrentEmployeeService currentEmployeeService) {
         this.docService = docService;
         this.storage = storage;
+        this.currentEmployeeService = currentEmployeeService;
     }
 
     @GetMapping
@@ -56,9 +62,11 @@ public class HrDocumentController {
                          @RequestParam(value = "docType", required = false) String docType,
                          @RequestParam(value = "status", required = false) String status,
                          @RequestParam("file") MultipartFile file,
+                         Principal principal,
                          RedirectAttributes ra) {
         try {
-            docService.upload(empId, title, docType, status, file);
+            Integer uploaderUserId = currentEmployeeService.requireUserId(principal);
+            docService.upload(empId, title, docType, status, file, uploaderUserId);
             ra.addFlashAttribute("msg", "Uploaded document!");
         } catch (Exception ex) {
             ra.addFlashAttribute("err", ex.getMessage());
