@@ -85,6 +85,28 @@
             </button>
 
             <ul class="header-nav ms-auto">
+                <li class="nav-item dropdown me-3">
+                    <a class="nav-link position-relative py-0" id="notificationBell" data-coreui-toggle="dropdown" style="cursor: pointer;">
+                        <svg class="icon icon-lg">
+                            <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
+                        </svg>
+                        <span class="badge rounded-pill badge-pill bg-danger position-absolute top-0 start-100 translate-middle" 
+                              id="notificationCount" style="display: none;">
+                            0
+                        </span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end pt-0" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                        <div class="dropdown-header bg-body-tertiary fw-semibold d-flex justify-content-between">
+                            <span>Notifications</span>
+                            <span class="badge bg-secondary" id="totalNotifications">0</span>
+                        </div>
+                        <div id="notificationList">
+                            <div class="dropdown-item text-center text-muted py-3">
+                                No new notifications
+                            </div>
+                        </div>
+                    </div>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown">
                         <div class="avatar avatar-md">
@@ -135,6 +157,69 @@
 <script th:src="@{/vendors/@coreui/coreui/js/coreui.bundle.min.js}"></script>
 <script th:src="@{/vendors/simplebar/js/simplebar.min.js}"></script>
 <script th:src="@{/js/theme-toggle.js}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
+});
+
+function loadNotifications() {
+    fetch('/api/notifications/unread')
+        .then(res => res.json())
+        .then(data => {
+            const badge = document.getElementById('notificationCount');
+            const totalBadge = document.getElementById('totalNotifications');
+            const list = document.getElementById('notificationList');
+            
+            if (data.length > 0) {
+                badge.textContent = data.length;
+                badge.style.display = 'block';
+                totalBadge.textContent = data.length;
+                
+                list.innerHTML = data.map(n => `
+                    <a class="dropdown-item d-flex align-items-start py-2 border-bottom" 
+                       href="${n.linkUrl}" 
+                       onclick="markAsRead(${n.notificationId}, event)">
+                        <div class="flex-shrink-0 me-2">
+                            <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px;"></span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">${n.title}</div>
+                            <div class="small text-muted">${n.message || ''}</div>
+                            <div class="tiny text-muted">${formatTime(n.createdAt)}</div>
+                        </div>
+                    </a>
+                `).join('');
+            } else {
+                badge.style.display = 'none';
+                totalBadge.textContent = '0';
+                list.innerHTML = '<div class="dropdown-item text-center text-muted py-3">No new notifications</div>';
+            }
+        })
+        .catch(err => console.error('Failed to load notifications:', err));
+}
+
+function markAsRead(notificationId, event) {
+    fetch('/api/notifications/' + notificationId + '/mark-read', { method: 'POST' })
+        .then(() => loadNotifications())
+        .catch(err => console.error('Failed to mark as read:', err));
+}
+
+function formatTime(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return diffMins + ' mins ago';
+    if (diffHours < 24) return diffHours + ' hours ago';
+    if (diffDays < 7) return diffDays + ' days ago';
+    return date.toLocaleDateString('vi-VN');
+}
+</script>
 
 </body>
 </html>

@@ -93,7 +93,8 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                "/evaluation/**", "/training/**" // For testing without login
+                                "/evaluation/**", "/training/**", // For testing without login
+                                "/hr/kpi/**", "/manager/evaluation/**", "/api/notifications/**" // For testing KPI workflow
                         ).permitAll()
 
                         // ===== DASHBOARD =====
@@ -103,8 +104,13 @@ public class SecurityConfig {
                         .requestMatchers("/dashboard/manager").hasRole("MANAGER")
                         .requestMatchers("/dashboard/employee").hasRole("EMPLOYEE")
 
+                        // ===== NOTIFICATION API =====
+                        .requestMatchers("/api/notifications/**").authenticated()
+
                         // ===== MODULE PERMISSION =====
+                        .requestMatchers("/hr/kpi/**").hasRole("HR")
                         .requestMatchers("/hr/**").authenticated()
+                        .requestMatchers("/manager/evaluation/**").hasAnyRole("MANAGER", "HR", "ADMIN")
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
                         .requestMatchers("/employee/**").hasRole("EMPLOYEE")
                         .requestMatchers("/bank/**").hasAnyRole("MANAGER", "HR", "ADMIN")

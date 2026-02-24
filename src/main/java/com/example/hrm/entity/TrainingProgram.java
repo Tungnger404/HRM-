@@ -43,6 +43,15 @@ public class TrainingProgram {
     @Column(name = "status", length = 20)
     private TrainingStatus status = TrainingStatus.ACTIVE;
 
+    @Column(name = "training_method", length = 50)
+    private String trainingMethod; // ONLINE, OFFLINE, MENTORING, HYBRID
+
+    @Column(name = "course_url", length = 500)
+    private String courseUrl;
+
+    @Column(name = "default_mentor_id")
+    private Integer defaultMentorId;
+
     @Column(name = "created_by")
     private Integer createdBy;
 
@@ -82,4 +91,13 @@ public class TrainingProgram {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getTrainingMethod() { return trainingMethod; }
+    public void setTrainingMethod(String trainingMethod) { this.trainingMethod = trainingMethod; }
+
+    public String getCourseUrl() { return courseUrl; }
+    public void setCourseUrl(String courseUrl) { this.courseUrl = courseUrl; }
+
+    public Integer getDefaultMentorId() { return defaultMentorId; }
+    public void setDefaultMentorId(Integer defaultMentorId) { this.defaultMentorId = defaultMentorId; }
 }

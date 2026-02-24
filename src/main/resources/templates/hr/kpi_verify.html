@@ -1,0 +1,142 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <title>HR - Verify KPI</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-1">Verify KPI Submission</h3>
+      <div class="text-body-secondary">Employee ID: <span th:text="${assignment.empId}"></span></div>
+    </div>
+    <a class="btn btn-outline-secondary" th:href="@{/hr/kpi/pending-verification}">
+      <i class="cil-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      
+      <div class="card mb-3">
+        <div class="card-header">
+          <strong>HR Comment (Initial)</strong>
+        </div>
+        <div class="card-body">
+          <p th:text="${assignment.hrComment}" style="white-space: pre-wrap;"></p>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">
+          <strong>Files from Employee</strong>
+        </div>
+        <div class="card-body">
+          
+          <div class="mb-3">
+            <label class="fw-bold">KPI Excel:</label>
+            <div>
+              <a th:href="@{/hr/kpi/download-employee/{id}(id=${assignment.assignmentId})}" 
+                 class="btn btn-sm btn-success">
+                <i class="cil-cloud-download"></i> Download KPI Excel
+              </a>
+              <small class="text-muted ms-2">Submitted at: <span th:text="${#temporals.format(assignment.employeeSubmittedAt, 'dd/MM/yyyy HH:mm')}"></span></small>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="fw-bold">Evidence Files (<span th:text="${#lists.size(evidences)}"></span> files):</label>
+            <div class="list-group">
+              <div class="list-group-item" th:each="ev : ${evidences}">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="cil-file"></i>
+                    <span th:text="${ev.fileName}"></span>
+                    <small class="text-muted">(<span th:text="${#numbers.formatDecimal(ev.fileSize / 1024 / 1024, 1, 1)}"></span> MB)</small>
+                  </div>
+                  <a th:href="@{/hr/kpi/download-evidence/{id}(id=${ev.evidenceId})}" 
+                     class="btn btn-sm btn-outline-primary">
+                    Download
+                  </a>
+                </div>
+              </div>
+              <div th:if="${#lists.isEmpty(evidences)}" class="list-group-item text-muted text-center">
+                No evidence files
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="fw-bold">Employee Comment:</label>
+            <div class="border p-3 rounded bg-light" style="white-space: pre-wrap;" th:text="${assignment.employeeComment}"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+      
+      <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+          <strong>HR Verification</strong>
+        </div>
+        <div class="card-body">
+          
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="check1">
+              <label class="form-check-label" for="check1">
+                Excel file belongs to this employee
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="check2">
+              <label class="form-check-label" for="check2">
+                Evidence files are valid and complete
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="check3">
+              <label class="form-check-label" for="check3">
+                No signs of fraud
+              </label>
+            </div>
+          </div>
+
+          <form method="post" th:action="@{/hr/kpi/verify/{id}/approve(id=${assignment.assignmentId})}">
+            <div class="mb-3">
+              <label class="form-label">HR Note (optional):</label>
+              <textarea name="hrNote" class="form-control" rows="3" placeholder="Files verified, forwarding to Manager..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-success w-100 mb-2">
+              <i class="cil-check"></i> Forward to Manager
+            </button>
+          </form>
+
+          <form method="post" th:action="@{/hr/kpi/verify/{id}/reject(id=${assignment.assignmentId})}">
+            <div class="mb-3">
+              <label class="form-label">Rejection Reason:</label>
+              <textarea name="rejectReason" class="form-control" rows="3" placeholder="Example: Excel file format is incorrect..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger w-100">
+              <i class="cil-x"></i> Return to Employee
+            </button>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -7,136 +7,157 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <strong>Self Evaluation Form</strong>
-                        <span class="badge bg-info ms-2">Employee Self-Review</span>
-                    </div>
-                    <div class="card-body">
-                        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
-                        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
 
-                        <form method="post" th:action="@{/evaluation/self-review/submit}">
-                            <div th:if="${_csrf != null}">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            </div>
+  <div class="mb-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+        <li class="breadcrumb-item"><a th:href="@{/evaluation/history}">Evaluation</a></li>
+        <li class="breadcrumb-item active">Tự đánh giá</li>
+      </ol>
+    </nav>
+  </div>
 
-                            <!-- Evaluation Cycle Selection -->
-                            <div class="mb-3">
-                                <label for="cycleId" class="form-label">Evaluation Cycle <span class="text-danger">*</span></label>
-                                <select class="form-select" id="cycleId" name="cycleId" required>
-                                    <option value="">-- Select Evaluation Cycle --</option>
-                                    <option value="1">Q1 2024</option>
-                                    <option value="2">Q2 2024</option>
-                                </select>
-                            </div>
-
-                            <!-- Self Review Text -->
-                            <div class="mb-3">
-                                <label for="selfReview" class="form-label">Self Review Summary <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="selfReview" name="selfReview" rows="5" 
-                                          placeholder="Describe your achievements, challenges, and overall performance during this period..."
-                                          required></textarea>
-                                <div class="form-text">Provide a comprehensive summary of your performance.</div>
-                            </div>
-
-                            <!-- Self Score -->
-                            <div class="mb-3">
-                                <label for="selfScore" class="form-label">Overall Self Score (0-100) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="selfScore" name="selfScore" min="0" max="100" required>
-                                <div class="form-text">Rate your overall performance from 0 to 100.</div>
-                            </div>
-
-                            <hr>
-
-                            <!-- KPI Scores Section (Static for now) -->
-                            <h5 class="mb-3">KPI Self-Assessment</h5>
-                            
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h6 class="card-title">
-                                        Code Quality
-                                        <span class="badge bg-secondary float-end">Weight: 30%</span>
-                                    </h6>
-                                    <p class="text-muted small">Code review score >= 8/10</p>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Score (0-10)</label>
-                                            <input type="number" class="form-control" name="kpiScore_1" 
-                                                   min="0" max="10" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Comment</label>
-                                            <textarea class="form-control" name="kpiComment_1" 
-                                                      rows="2" placeholder="Brief explanation..."></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h6 class="card-title">
-                                        Task Completion
-                                        <span class="badge bg-secondary float-end">Weight: 40%</span>
-                                    </h6>
-                                    <p class="text-muted small">Task completion rate >= 90%</p>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Score (0-10)</label>
-                                            <input type="number" class="form-control" name="kpiScore_2" 
-                                                   min="0" max="10" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Comment</label>
-                                            <textarea class="form-control" name="kpiComment_2" 
-                                                      rows="2" placeholder="Brief explanation..."></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h6 class="card-title">
-                                        Team Collaboration
-                                        <span class="badge bg-secondary float-end">Weight: 30%</span>
-                                    </h6>
-                                    <p class="text-muted small">Peer review score >= 8/10</p>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Score (0-10)</label>
-                                            <input type="number" class="form-control" name="kpiScore_3" 
-                                                   min="0" max="10" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Comment</label>
-                                            <textarea class="form-control" name="kpiComment_3" 
-                                                      rows="2" placeholder="Brief explanation..."></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="mt-4">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fa fa-paper-plane"></i> Submit Self Evaluation
-                                </button>
-                                <a th:href="@{/evaluation/history}" class="btn btn-secondary ms-2">
-                                    <i class="fa fa-times"></i> Cancel
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-1">STEP 2/2: OVERALL SELF ASSESSMENT</h3>
+      <div class="text-body-secondary">Overall assessment of achievements and development</div>
     </div>
-</div>
+  </div>
 
+  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+  <div class="row">
+    <div class="col-lg-8">
+
+      <div class="alert alert-info mb-3" th:if="${hasKpiDraft}">
+        <h6 class="alert-heading">
+          <i class="cil-check-circle"></i> You have submitted KPI & Evidence in Step 1
+        </h6>
+        <div class="mb-2">
+          <strong>Files submitted:</strong>
+          <ul class="mb-0">
+            <li>KPI Excel: 
+              <a th:href="@{/evaluation/download-template/{id}(id=${kpiAssignment.assignmentId})}" class="alert-link">
+                Download
+              </a>
+            </li>
+            <li>Evidence: <span th:text="${#lists.size(kpiEvidences)}"></span> files</li>
+          </ul>
+        </div>
+        <div>
+          <strong>Your comment:</strong>
+          <p class="mb-0 mt-1" style="white-space: pre-wrap;" th:text="${kpiAssignment.employeeComment}"></p>
+        </div>
+        <hr>
+        <a th:href="@{/evaluation/submit-kpi}" class="alert-link">
+          <i class="cil-arrow-left"></i> Back to Step 1 to edit
+        </a>
+      </div>
+
+      <div class="alert alert-warning" th:unless="${hasKpiDraft}">
+        <i class="cil-warning"></i> You have not completed Step 1 yet. 
+        <a th:href="@{/evaluation/submit-kpi}" class="alert-link">Click here to submit KPI & Evidence</a>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">
+          <strong>Overall Self Assessment</strong>
+        </div>
+        <div class="card-body">
+          
+          <form method="post" th:action="@{/evaluation/self-review/submit}">
+            
+            <input type="hidden" name="cycleId" th:value="${cycleId}">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                Overall Self Assessment <span class="text-danger">*</span>
+              </label>
+              <textarea name="selfAssessment" class="form-control" rows="8" required
+                        placeholder="Main achievements this cycle:&#10;1. Completed 7/5 projects, exceeded target by 40%&#10;2. Achieved 120M/100M revenue, exceeded by 20%&#10;3. Customer satisfaction 4.8/4.5, top 3 in team&#10;4. Supported onboarding of 3 new members&#10;5. Led 2 process improvement initiatives&#10;&#10;Team contributions:&#10;- Mentored junior developers&#10;- Weekly knowledge sharing sessions"></textarea>
+              <small class="text-muted">Describe your achievements and contributions in detail</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                Overall Self Score <span class="text-danger">*</span>
+              </label>
+              <input type="number" name="selfScore" class="form-control" min="0" max="100" 
+                     placeholder="Example: 90" required>
+              <small class="text-muted">Overall self-assessment score (0-100)</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                Challenges Faced
+              </label>
+              <textarea name="challenges" class="form-control" rows="4"
+                        placeholder="- Tight deadlines in January and February&#10;- Lack of resources when scaling projects&#10;- Some stakeholders were not responsive&#10;- Need to improve time management when handling multiple projects"></textarea>
+              <small class="text-muted">Challenges and difficulties you encountered</small>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold">
+                Development Goals
+              </label>
+              <textarea name="developmentGoals" class="form-control" rows="4"
+                        placeholder="Plans for next cycle:&#10;1. Learn more about Advanced Project Management&#10;2. Improve presentation skills&#10;3. Explore process automation&#10;4. Mentor 2 more junior members"></textarea>
+              <small class="text-muted">Learning and development goals for next cycle</small>
+            </div>
+
+            <hr>
+
+            <div class="d-flex gap-2">
+              <a th:href="@{/evaluation/submit-kpi}" class="btn btn-outline-secondary">
+                <i class="cil-arrow-left"></i> Back to Step 1
+              </a>
+              <button type="submit" class="btn btn-primary" th:disabled="${!hasKpiDraft}">
+                <i class="cil-check"></i> SUBMIT EVALUATION
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card bg-light">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Workflow</h6>
+          <div class="d-flex align-items-center mb-2">
+            <span class="badge bg-success me-2">1</span>
+            <span class="text-success">✓ Submit KPI & Evidence</span>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <span class="badge bg-primary me-2">2</span>
+            <span class="fw-bold">Self Assessment (current)</span>
+          </div>
+          <div class="d-flex align-items-center mb-2">
+            <span class="badge bg-secondary me-2">3</span>
+            <span class="text-muted">HR verification</span>
+          </div>
+          <div class="d-flex align-items-center">
+            <span class="badge bg-secondary me-2">4</span>
+            <span class="text-muted">Manager review</span>
+          </div>
+          <hr>
+          <h6 class="fw-bold mb-2">Notes</h6>
+          <ul class="mb-0 small">
+            <li>Self assessment is OVERALL evaluation</li>
+            <li>Challenges: Be honest for improvement</li>
+            <li>Development goals: Specific learning plan</li>
+            <li>After submit, wait for HR to verify KPI files</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 </body>
 </html>

@@ -8,6 +8,17 @@ import java.time.LocalDateTime;
 @Table(name = "kpi_assignments")
 public class KpiAssignment {
 
+    public enum AssignmentStatus {
+        ASSIGNED,
+        DRAFT,
+        EMPLOYEE_SUBMITTED,
+        HR_REJECTED,
+        EMPLOYEE_RESUBMITTED,
+        HR_VERIFIED,
+        MANAGER_REJECTED,
+        COMPLETED
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "assignment_id")
@@ -39,6 +50,34 @@ public class KpiAssignment {
 
     @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
+
+    @Column(name = "hr_excel_template_path", length = 255)
+    private String hrExcelTemplatePath;
+
+    @Column(name = "hr_comment", columnDefinition = "NVARCHAR(MAX)")
+    private String hrComment;
+
+    @Column(name = "employee_excel_path", length = 255)
+    private String employeeExcelPath;
+
+    @Column(name = "employee_comment", columnDefinition = "NVARCHAR(MAX)")
+    private String employeeComment;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 30)
+    private AssignmentStatus status = AssignmentStatus.ASSIGNED;
+
+    @Column(name = "employee_submitted_at")
+    private LocalDateTime employeeSubmittedAt;
+
+    @Column(name = "hr_verified_at")
+    private LocalDateTime hrVerifiedAt;
+
+    @Column(name = "hr_verified_by")
+    private Integer hrVerifiedBy;
+
+    @Column(name = "hr_verification_note", columnDefinition = "NVARCHAR(MAX)")
+    private String hrVerificationNote;
 
     // Constructors
     public KpiAssignment() {}
@@ -88,6 +127,33 @@ public class KpiAssignment {
     public LocalDateTime getAssignedAt() { return assignedAt; }
     public void setAssignedAt(LocalDateTime assignedAt) { this.assignedAt = assignedAt; }
 
+    public String getHrExcelTemplatePath() { return hrExcelTemplatePath; }
+    public void setHrExcelTemplatePath(String hrExcelTemplatePath) { this.hrExcelTemplatePath = hrExcelTemplatePath; }
+
+    public String getHrComment() { return hrComment; }
+    public void setHrComment(String hrComment) { this.hrComment = hrComment; }
+
+    public String getEmployeeExcelPath() { return employeeExcelPath; }
+    public void setEmployeeExcelPath(String employeeExcelPath) { this.employeeExcelPath = employeeExcelPath; }
+
+    public String getEmployeeComment() { return employeeComment; }
+    public void setEmployeeComment(String employeeComment) { this.employeeComment = employeeComment; }
+
+    public AssignmentStatus getStatus() { return status; }
+    public void setStatus(AssignmentStatus status) { this.status = status; }
+
+    public LocalDateTime getEmployeeSubmittedAt() { return employeeSubmittedAt; }
+    public void setEmployeeSubmittedAt(LocalDateTime employeeSubmittedAt) { this.employeeSubmittedAt = employeeSubmittedAt; }
+
+    public LocalDateTime getHrVerifiedAt() { return hrVerifiedAt; }
+    public void setHrVerifiedAt(LocalDateTime hrVerifiedAt) { this.hrVerifiedAt = hrVerifiedAt; }
+
+    public Integer getHrVerifiedBy() { return hrVerifiedBy; }
+    public void setHrVerifiedBy(Integer hrVerifiedBy) { this.hrVerifiedBy = hrVerifiedBy; }
+
+    public String getHrVerificationNote() { return hrVerificationNote; }
+    public void setHrVerificationNote(String hrVerificationNote) { this.hrVerificationNote = hrVerificationNote; }
+
     @Override
     public String toString() {
         return "KpiAssignment{" +
@@ -96,6 +162,7 @@ public class KpiAssignment {
                 ", kpiId=" + kpiId +
                 ", empId=" + empId +
                 ", deptId=" + deptId +
+                ", status=" + status +
                 '}';
     }
 }

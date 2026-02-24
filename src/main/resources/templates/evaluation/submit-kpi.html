@@ -1,0 +1,146 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <title>Nộp KPI & Evidence</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+  <div class="mb-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+        <li class="breadcrumb-item"><a th:href="@{/evaluation/history}">Evaluation</a></li>
+        <li class="breadcrumb-item active">Nộp KPI</li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-1">STEP 1/2: SUBMIT KPI & EVIDENCE</h3>
+      <div class="text-body-secondary">Upload completed KPI Excel and evidence files</div>
+    </div>
+  </div>
+
+  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      
+      <div class="card mb-3" th:if="${assignment != null}">
+        <div class="card-header bg-info text-white">
+          <i class="cil-info"></i> <strong>Comment from HR</strong>
+        </div>
+        <div class="card-body">
+          <p style="white-space: pre-wrap;" th:text="${assignment.hrComment}"></p>
+          <div class="mt-2">
+            <a th:href="@{/evaluation/download-template/{id}(id=${assignment.assignmentId})}" 
+               class="btn btn-sm btn-success">
+              <i class="cil-cloud-download"></i> Download Excel Template from HR
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">
+          <strong>Upload Files</strong>
+        </div>
+        <div class="card-body">
+          
+          <form method="post" th:action="@{/evaluation/submit-kpi}" enctype="multipart/form-data">
+            
+            <input type="hidden" name="cycleId" th:value="${cycleId}">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                1. Upload Completed KPI Excel <span class="text-danger">*</span>
+              </label>
+              <input type="file" name="kpiExcelFile" class="form-control" accept=".xlsx,.xls" required>
+              <small class="text-muted">Accepted: .xlsx, .xls | Max: 10MB</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                2. Upload Evidence Files <span class="text-danger">*</span>
+              </label>
+              <input type="file" name="evidenceFiles" class="form-control" multiple required
+                     accept=".pdf,.xlsx,.xls,.docx,.doc,.jpg,.jpeg,.png,.gif,.webp">
+              <small class="text-muted">
+                Accepted: PDF, Excel, Word, Images | Max 10 files | Each file max 10MB | Total max 50MB
+              </small>
+              <div class="alert alert-info mt-2 mb-0">
+                <small>
+                  <strong>Evidence types:</strong>
+                  <ul class="mb-0">
+                    <li>PDF - Reports, certificates</li>
+                    <li>Excel - Data, calculations</li>
+                    <li>Word - Meeting minutes, proposals</li>
+                    <li>Images - Screenshots, photos</li>
+                  </ul>
+                </small>
+              </div>
+            </div>
+
+            <div class="mb-3" th:if="${existingEvidences != null and not #lists.isEmpty(existingEvidences)}">
+              <label class="form-label fw-bold">Previously uploaded files:</label>
+              <div class="list-group">
+                <div class="list-group-item" th:each="ev : ${existingEvidences}">
+                  <i class="cil-file"></i>
+                  <span th:text="${ev.fileName}"></span>
+                  <small class="text-muted">
+                    (<span th:text="${#numbers.formatDecimal(ev.fileSize / 1024 / 1024, 1, 1)}"></span> MB)
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold">
+                3. Your KPI Comment <span class="text-danger">*</span>
+              </label>
+              <textarea name="employeeComment" class="form-control" rows="5" required
+                        placeholder="Example:&#10;I exceeded targets by 20%:&#10;- Projects: 7/5 (140%)&#10;- Revenue: 120M/100M (120%)&#10;- Customer satisfaction: 4.8/4.5&#10;&#10;Evidence attached:&#10;- Complete project reports&#10;- Revenue data from CRM system"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <a th:href="@{/evaluation/history}" class="btn btn-outline-secondary">
+                <i class="cil-arrow-left"></i> Back
+              </a>
+              <button type="submit" class="btn btn-primary">
+                Next (Step 2) <i class="cil-arrow-right"></i>
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card bg-light">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Instructions</h6>
+          <ol class="mb-0">
+            <li class="mb-2">Download Excel template from HR</li>
+            <li class="mb-2">Open Excel, fill in your achieved KPIs</li>
+            <li class="mb-2">Save the Excel file</li>
+            <li class="mb-2">Return here, upload the filled Excel</li>
+            <li class="mb-2">Upload evidence files (proof)</li>
+            <li class="mb-2">Write explanatory comment</li>
+            <li class="mb-2">Click "Next" to proceed to Step 2</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,65 +1,230 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.entity.KpiAssignment;
+import com.example.hrm.entity.KpiEvidence;
+import com.example.hrm.repository.KpiAssignmentRepository;
+import com.example.hrm.service.DocumentStorageService;
+import com.example.hrm.service.FileValidationService;
+import com.example.hrm.service.KpiEvidenceService;
+import com.example.hrm.service.NotificationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.List;
+
 /**
- * Controller for Evaluation & Training web pages (Thymeleaf views)
- * Using mock data in templates - no service dependencies needed yet
+ * Controller for Evaluation web pages (Thymeleaf views)
+ * Implements 2-step evaluation submission: KPI + Evidence → Self Review
  */
 @Controller
 @RequestMapping("/evaluation")
 public class EvaluationViewController {
 
+    @Autowired
+    private KpiAssignmentRepository kpiAssignmentRepository;
+
+    @Autowired
+    private DocumentStorageService documentStorageService;
+
+    @Autowired
+    private FileValidationService fileValidationService;
+
+    @Autowired
+    private KpiEvidenceService kpiEvidenceService;
+
+    @Autowired
+    private NotificationService notificationService;
+
     /**
-     * Show employee self-evaluation form
+     * STEP 1: Show KPI + Evidence submission form
+     */
+    @GetMapping("/submit-kpi")
+    public String showKpiSubmissionForm(Model model,
+                                       @ModelAttribute("msg") String msg,
+                                       @ModelAttribute("err") String err) {
+        Integer employeeId = 1;
+        
+        Integer cycleId = 1;
+        KpiAssignment assignment = kpiAssignmentRepository
+                .findByEmpIdAndCycleId(employeeId, cycleId)
+                .stream()
+                .findFirst()
+                .orElse(null);
+        
+        if (assignment != null) {
+            List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignment.getAssignmentId());
+            model.addAttribute("assignment", assignment);
+            model.addAttribute("existingEvidences", evidences);
+        }
+        
+        model.addAttribute("pageTitle", "Submit KPI & Evidence");
+        model.addAttribute("employeeId", employeeId);
+        model.addAttribute("cycleId", cycleId);
+        
+        return "evaluation/submit-kpi";
+    }
+
+    /**
+     * STEP 1: Handle KPI + Evidence submission (saves as DRAFT)
+     */
+    @PostMapping("/submit-kpi")
+    public String handleKpiSubmission(
+            @RequestParam Integer cycleId,
+            @RequestParam(required = false) MultipartFile kpiExcelFile,
+            @RequestParam(required = false) List<MultipartFile> evidenceFiles,
+            @RequestParam String employeeComment,
+            RedirectAttributes ra) {
+        
+        try {
+            Integer employeeId = 1;
+            
+            String validationError = fileValidationService.validateFiles(kpiExcelFile, evidenceFiles);
+            if (validationError != null) {
+                ra.addFlashAttribute("err", validationError);
+                return "redirect:/evaluation/submit-kpi";
+            }
+            
+            KpiAssignment assignment = kpiAssignmentRepository
+                    .findByEmpIdAndCycleId(employeeId, cycleId)
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("KPI assignment not found"));
+            
+            if (kpiExcelFile != null && !kpiExcelFile.isEmpty()) {
+                String excelPath = documentStorageService.store(kpiExcelFile);
+                assignment.setEmployeeExcelPath(excelPath);
+            }
+            
+            assignment.setEmployeeComment(employeeComment);
+            assignment.setStatus(KpiAssignment.AssignmentStatus.DRAFT);
+            kpiAssignmentRepository.save(assignment);
+            
+            if (evidenceFiles != null) {
+                for (MultipartFile file : evidenceFiles) {
+                    if (!file.isEmpty()) {
+                        kpiEvidenceService.saveEvidence(assignment.getAssignmentId(), file);
+                    }
+                }
+            }
+            
+            ra.addFlashAttribute("msg", "KPI & Evidence saved. Continue to Step 2.");
+            return "redirect:/evaluation/self-review";
+            
+        } catch (Exception e) {
+            ra.addFlashAttribute("err", "Error: " + e.getMessage());
+            return "redirect:/evaluation/submit-kpi";
+        }
+    }
+
+    /**
+     * STEP 2: Show employee self-evaluation form (loads KPI draft from step 1)
      */
     @GetMapping("/self-review")
-    public String showSelfReviewForm(Model model) {
-        // TODO: Get current employee ID from security context
-        Integer employeeId = 1; // Placeholder
+    public String showSelfReviewForm(Model model,
+                                    @ModelAttribute("msg") String msg,
+                                    @ModelAttribute("err") String err) {
+        Integer employeeId = 1;
+        Integer cycleId = 1;
+        
+        KpiAssignment assignment = kpiAssignmentRepository
+                .findByEmpIdAndCycleId(employeeId, cycleId)
+                .stream()
+                .findFirst()
+                .orElse(null);
+        
+        if (assignment != null && assignment.getStatus() == KpiAssignment.AssignmentStatus.DRAFT) {
+            List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignment.getAssignmentId());
+            model.addAttribute("kpiAssignment", assignment);
+            model.addAttribute("kpiEvidences", evidences);
+            model.addAttribute("hasKpiDraft", true);
+        } else {
+            model.addAttribute("hasKpiDraft", false);
+        }
         
         model.addAttribute("pageTitle", "Self Evaluation");
         model.addAttribute("employeeId", employeeId);
+        model.addAttribute("cycleId", cycleId);
         
         return "evaluation/self-review";
     }
 
     /**
-     * Submit employee self-evaluation (Pure Server-Side - giống team)
+     * STEP 2: Submit complete self-evaluation (finalizes submission)
      */
     @PostMapping("/self-review/submit")
     public String submitSelfReview(
             @RequestParam Integer cycleId,
-            @RequestParam String selfReview,
+            @RequestParam String selfAssessment,
             @RequestParam Integer selfScore,
-            @RequestParam(required = false) Integer kpiScore_1,
-            @RequestParam(required = false) String kpiComment_1,
-            @RequestParam(required = false) Integer kpiScore_2,
-            @RequestParam(required = false) String kpiComment_2,
-            @RequestParam(required = false) Integer kpiScore_3,
-            @RequestParam(required = false) String kpiComment_3,
-            RedirectAttributes redirectAttributes
+            @RequestParam(required = false) String challenges,
+            @RequestParam(required = false) String developmentGoals,
+            RedirectAttributes ra
     ) {
         try {
-            // TODO: Get current employee ID from security context
-            Integer employeeId = 1; // Placeholder
-
-            // TODO: Call service to save evaluation
-            // evaluationService.createEvaluation(employeeId, cycleId, selfReview, selfScore, kpiScores);
+            Integer employeeId = 1;
             
-            redirectAttributes.addFlashAttribute("msg", "Self evaluation submitted successfully! Waiting for manager review.");
+            KpiAssignment assignment = kpiAssignmentRepository
+                    .findByEmpIdAndCycleId(employeeId, cycleId)
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("KPI assignment not found"));
+            
+            if (assignment.getStatus() != KpiAssignment.AssignmentStatus.DRAFT) {
+                ra.addFlashAttribute("err", "You need to complete Step 1 first");
+                return "redirect:/evaluation/submit-kpi";
+            }
+            
+            assignment.setStatus(KpiAssignment.AssignmentStatus.EMPLOYEE_SUBMITTED);
+            assignment.setEmployeeSubmittedAt(LocalDateTime.now());
+            kpiAssignmentRepository.save(assignment);
+            
+            Integer hrStaffId = 1;
+            notificationService.createEvaluationPendingNotification(
+                    hrStaffId,
+                    assignment.getAssignmentId(),
+                    "Employee ID " + employeeId
+            );
+            
+            ra.addFlashAttribute("msg", "Evaluation submitted successfully! Waiting for HR verification.");
             return "redirect:/evaluation/history";
+            
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("err", "Failed to submit evaluation: " + e.getMessage());
+            ra.addFlashAttribute("err", "Error: " + e.getMessage());
             return "redirect:/evaluation/self-review";
         }
+    }
+
+    /**
+     * Download HR KPI template
+     */
+    @GetMapping("/download-template/{assignmentId}")
+    public ResponseEntity<Resource> downloadHrTemplate(@PathVariable Integer assignmentId) {
+        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new RuntimeException("Assignment not found"));
+        
+        Resource resource = documentStorageService.loadAsResource(assignment.getHrExcelTemplatePath());
+        
+        String filename = "KPI_Template.xlsx";
+        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+        
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                .body(resource);
     }
 
     /**

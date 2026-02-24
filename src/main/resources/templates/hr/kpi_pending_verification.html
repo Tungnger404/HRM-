@@ -1,0 +1,72 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <title>HR - KPI Pending Verification</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-1">KPI Pending Verification</h3>
+      <div class="text-body-secondary">Verify KPI submissions from employees</div>
+    </div>
+    <a class="btn btn-outline-secondary" th:href="@{/hr/kpi/configure}">
+      <i class="cil-plus"></i> Send New KPI
+    </a>
+  </div>
+
+  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+  <div class="card">
+    <div class="card-body table-responsive">
+      <table class="table table-hover table-bordered align-middle">
+        <thead>
+        <tr>
+          <th>Assignment ID</th>
+          <th>Employee ID</th>
+          <th>Cycle ID</th>
+          <th>Submitted Date</th>
+          <th>Status</th>
+          <th style="width:150px;">Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="a : ${assignments}">
+          <td th:text="${a.assignmentId}"></td>
+          <td th:text="${a.empId}"></td>
+          <td th:text="${a.cycleId}"></td>
+          <td th:text="${#temporals.format(a.employeeSubmittedAt, 'dd/MM/yyyy HH:mm')}"></td>
+          <td>
+            <span class="badge bg-warning text-dark" 
+                  th:if="${a.status.name() == 'EMPLOYEE_SUBMITTED'}">
+              Pending Verify
+            </span>
+            <span class="badge bg-info text-dark" 
+                  th:if="${a.status.name() == 'EMPLOYEE_RESUBMITTED'}">
+              Resubmitted
+            </span>
+          </td>
+          <td>
+            <a class="btn btn-sm btn-primary" 
+               th:href="@{/hr/kpi/verify/{id}(id=${a.assignmentId})}">
+              View Details
+            </a>
+          </td>
+        </tr>
+
+        <tr th:if="${#lists.isEmpty(assignments)}">
+          <td colspan="6" class="text-center text-muted">No KPI pending verification</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
