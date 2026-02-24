@@ -541,6 +541,36 @@ public class PayrollService {
     // =========================
 
     @Transactional(readOnly = true)
+    public List<PayrollInquiryDTO> listInquiriesForEmployee(Integer empId, Integer payslipId) {
+        Payslip p = payslipRepo.findById(payslipId)
+                .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
+
+        // chỉ chủ payslip mới xem được
+        if (!p.getEmployee().getId().equals(empId)) {
+            throw new SecurityException("Not allowed");
+        }
+
+        // chỉ xem khi đã release
+        if (!Boolean.TRUE.equals(p.getSentToEmployee())) {
+            throw new IllegalStateException("Payslip not released yet");
+        }
+
+        return inquiryRepo.findByPayslip_IdOrderByCreatedAtDesc(payslipId).stream()
+                .filter(i -> i.getEmployee() != null && i.getEmployee().getId().equals(empId))
+                .map(i -> PayrollInquiryDTO.builder()
+                        .id(i.getId())
+                        .payslipId(payslipId)
+                        .empId(empId)
+                        .question(i.getQuestion())
+                        .answer(i.getAnswer())
+                        .status(i.getStatus())
+                        .createdAt(i.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+
+    @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForEmployee(Integer empId, Integer payslipId) {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
