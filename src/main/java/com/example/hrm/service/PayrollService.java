@@ -12,6 +12,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.hrm.service.NotificationService;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ public class PayrollService {
     private final PayslipRepository payslipRepo;
     private final PayslipItemRepository itemRepo;
     private final PayrollInquiryRepository inquiryRepo;
+    private final NotificationService notificationService;
 
     private final EmployeeRepository employeeRepo;
     private final ContractRepository contractRepo;
@@ -657,6 +659,13 @@ public class PayrollService {
                 .createdAt(LocalDateTime.now())
                 .build();
         inq = inquiryRepo.save(inq);
+        // ===== NOTIFY MANAGER when employee submitted inquiry =====
+        notificationService.createPayrollInquirySubmitted(
+                emp.getDirectManagerId(),   // manager emp_id
+                inq.getId(),                // inquiry_id
+                p.getId(),                  // payslip_id
+                empName(emp)                // employee name
+        );
 
         return PayrollInquiryDTO.builder()
                 .id(inq.getId())
@@ -827,6 +836,12 @@ public class PayrollService {
         i.setAnswer(answer);
         i.setStatus("RESOLVED");
         inquiryRepo.save(i);
+        // ===== NOTIFY EMPLOYEE when manager resolved inquiry =====
+        notificationService.createPayrollInquiryResolved(
+                i.getEmployee().getId(),    // employee emp_id
+                i.getId(),                  // inquiry_id
+                i.getPayslip().getId()      // payslip_id
+        );
     }
 
     private String empName(Employee e) {
