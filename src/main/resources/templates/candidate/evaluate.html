@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-candidate'">
+
+<head>
+    <title>Candidate Evaluate</title>
+</head>
+
+<body>
+
+<div layout:fragment="content">
+
+    <h2>Evaluate Candidate</h2>
+
+    <form method="post" th:action="@{/hr/candidates/evaluate}">
+        <input type="hidden" name="id" th:value="${candidate.id}" />
+        <input type="hidden" name="postingId" th:value="${candidate.postingId}" />
+
+        <div class="mb-3">
+            <label>Score:</label>
+            <input type="number" name="score" min="0" max="100"
+                   class="form-control" required />
+        </div>
+
+        <button type="submit" name="action" value="pass"
+                class="btn btn-success">Pass</button>
+
+        <button type="submit" name="action" value="reject"
+                class="btn btn-danger">Reject</button>
+    </form>
+
+</div>
+
+</body>
+</html>
