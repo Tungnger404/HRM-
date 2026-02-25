@@ -1,8 +1,10 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.dto.BatchInterviewDTO;
 import com.example.hrm.dto.CandidateEvaluateDTO;
 import com.example.hrm.dto.CandidateListDTO;
 import com.example.hrm.entity.Candidate;
+import com.example.hrm.entity.CandidateStatus;
 import com.example.hrm.service.CandidateService;
 
 import jakarta.validation.Valid;
@@ -29,15 +31,27 @@ public class HRCandidateController {
                        @RequestParam(value = "keyword", required = false) String keyword,
                        Model model) {
 
+
+        CandidateStatus statusEnum = null;
+
+        if (status != null && !status.isBlank()) {
+            try {
+                statusEnum = CandidateStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                statusEnum = null;
+            }
+        }
+
         List<CandidateListDTO> candidates =
-                service.getCandidates(postingId, status, keyword);
+                service.getCandidates(postingId, statusEnum, keyword);
 
         model.addAttribute("candidates", candidates);
         model.addAttribute("postingId", postingId);
         model.addAttribute("status", status);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("statuses", CandidateStatus.values());
 
-        return "candidate/list";   // ✅ đúng folder của em
+        return "candidate/list";
     }
 
 
@@ -53,7 +67,7 @@ public class HRCandidateController {
 
         model.addAttribute("candidate", dto);
 
-        return "candidate/evaluate";  // ✅ đúng folder
+        return "candidate/evaluate";
     }
 
 
@@ -86,5 +100,14 @@ public class HRCandidateController {
         model.addAttribute("postingId", postingId);
 
         return "candidate/detail";
+    }
+    @PostMapping("/batch-interview")
+    public String scheduleBatchInterview(
+            @ModelAttribute BatchInterviewDTO dto,
+            @RequestParam Integer postingId) {
+
+        service.scheduleBatchInterview(dto);
+
+        return "redirect:/hr/candidates?postingId=" + postingId;
     }
 }
