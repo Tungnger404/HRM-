@@ -33,5 +33,30 @@
         Documents
       </a>
     </li>
+
+    <li class="nav-title">Evaluation & KPI</li>
+
+    <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/hr/kpi')} ? 'show' : ''">
+      <a class="nav-link nav-group-toggle" href="#">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-task"></use></svg>
+        KPI Configuration
+      </a>
+      <ul class="nav-group-items compact">
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/hr/kpi/configure}" 
+             th:classappend="${#strings.endsWith(currentUri, '/configure')} ? 'active' : ''">
+            <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+            Send Template
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/hr/kpi/pending-verification}"
+             th:classappend="${#strings.contains(currentUri, 'pending-verification')} ? 'active' : ''">
+            <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+            Pending Verifications
+          </a>
+        </li>
+      </ul>
+    </li>
   </ul>
 </div>
