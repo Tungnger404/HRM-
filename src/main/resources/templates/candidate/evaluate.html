@@ -3,7 +3,7 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}"
-      th:with="sidebar='sidebar-candidate'">
+      th:with="sidebar='sidebar-hr'">
 
 <head>
     <title>Candidate Evaluate</title>
@@ -15,21 +15,40 @@
 
     <h2>Evaluate Candidate</h2>
 
-    <form method="post" th:action="@{/hr/candidates/evaluate}">
-        <input type="hidden" name="id" th:value="${candidate.id}" />
-        <input type="hidden" name="postingId" th:value="${candidate.postingId}" />
+    <form method="post"
+          th:action="@{/hr/candidates/evaluate}"
+          th:object="${candidate}">
+
+        <!-- Hidden fields -->
+        <input type="hidden" th:field="*{id}" />
+        <input type="hidden" th:field="*{postingId}" />
 
         <div class="mb-3">
-            <label>Score:</label>
-            <input type="number" name="score" min="0" max="100"
-                   class="form-control" required />
+            <label class="form-label">Score:</label>
+            <input type="number"
+                   th:field="*{score}"
+                   min="0"
+                   max="100"
+                   class="form-control"
+                   required />
         </div>
 
-        <button type="submit" name="action" value="pass"
-                class="btn btn-success">Pass</button>
+        <div class="mt-3">
+            <button type="submit"
+                    name="action"
+                    value="pass"
+                    class="btn btn-success me-2">
+                Pass
+            </button>
 
-        <button type="submit" name="action" value="reject"
-                class="btn btn-danger">Reject</button>
+            <button type="submit"
+                    name="action"
+                    value="reject"
+                    class="btn btn-danger">
+                Reject
+            </button>
+        </div>
+
     </form>
 
 </div>
