@@ -1,5 +1,6 @@
 package com.example.hrm.service;
 
+import java.time.format.DateTimeFormatter;
 import com.example.hrm.dto.*;
 import com.example.hrm.repository.BankAccountRepository;
 import com.example.hrm.entity.*;
@@ -12,7 +13,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.hrm.service.NotificationService;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
@@ -42,6 +42,9 @@ public class PayrollService {
     // =========================
     // MANAGER SIDE
     // =========================
+
+    private static final DateTimeFormatter VN_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
 
     @Transactional(readOnly = true)
     public List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds) {
@@ -394,8 +397,25 @@ public class PayrollService {
             BigDecimal overtimePay = hourly.multiply(otHours).multiply(BigDecimal.valueOf(1.5))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            BigDecimal totalIncome = salaryByDays.add(overtimePay);
-            BigDecimal totalDeduction = BigDecimal.ZERO; // bạn có thể thêm tax/insurance sau
+            // ===== BENEFITS (Phúc lợi) =====
+            // bạn đổi số tiền/ngày ở đây
+            BigDecimal mealAllowance = actualDays.multiply(new BigDecimal("30000"))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal transportAllowance = actualDays.multiply(new BigDecimal("20000"))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal totalIncome = salaryByDays
+                    .add(overtimePay)
+                    .add(mealAllowance)
+                    .add(transportAllowance);
+
+        // ===== DEDUCTION: BHYT/BHXH 3% (demo) =====
+            BigDecimal insuranceRate = new BigDecimal("0.03"); // 3%
+            BigDecimal insuranceDeduction = baseSalary.multiply(insuranceRate)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal totalDeduction = insuranceDeduction;
             BigDecimal net = totalIncome.subtract(totalDeduction);
 
             Payslip slip = Payslip.builder()
@@ -430,6 +450,39 @@ public class PayrollService {
                         .itemName("Overtime pay")
                         .amount(overtimePay)
                         .itemType("INCOME")
+                        .manualAdjustment(false)
+                        .build());
+            }
+
+            if (mealAllowance.compareTo(BigDecimal.ZERO) > 0) {
+                items.add(PayslipItem.builder()
+                        .payslip(slip)
+                        .itemCode("MEAL_ALLOW")
+                        .itemName("Meal allowance")
+                        .amount(mealAllowance)
+                        .itemType("INCOME")
+                        .manualAdjustment(false)
+                        .build());
+            }
+
+            if (transportAllowance.compareTo(BigDecimal.ZERO) > 0) {
+                items.add(PayslipItem.builder()
+                        .payslip(slip)
+                        .itemCode("TRANSPORT_ALLOW")
+                        .itemName("Transport allowance")
+                        .amount(transportAllowance)
+                        .itemType("INCOME")
+                        .manualAdjustment(false)
+                        .build());
+            }
+
+            if (insuranceDeduction.compareTo(BigDecimal.ZERO) > 0) {
+                items.add(PayslipItem.builder()
+                        .payslip(slip)
+                        .itemCode("BHYT")          // bạn đổi thành "BHXH" nếu muốn
+                        .itemName("BHYT (3%)")     // hiển thị
+                        .amount(insuranceDeduction)
+                        .itemType("DEDUCTION")
                         .manualAdjustment(false)
                         .build());
             }
@@ -854,8 +907,8 @@ public class PayrollService {
     }
 
     private String periodLabel(PayrollPeriod per) {
-        if (per == null)
-            return "";
+        if (per == null) return "";
+
         Integer m = per.getMonth();
         Integer y = per.getYear();
 
@@ -864,7 +917,9 @@ public class PayrollService {
                 : (per.getName() != null ? per.getName() : "");
 
         if (per.getStartDate() != null && per.getEndDate() != null) {
-            return mmYY + " (" + per.getStartDate() + " \u2192 " + per.getEndDate() + ")";
+            String s = per.getStartDate().format(VN_DATE);
+            String e = per.getEndDate().format(VN_DATE);
+            return mmYY + " (" + s + " \u2192 " + e + ")";
         }
         return mmYY;
     }

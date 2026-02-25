@@ -15,15 +15,17 @@
         <a class="btn btn-secondary btn-sm" th:href="@{/manager/payroll/payslips}">Back</a>
     </div>
 
+    <!-- Summary -->
     <div class="card mb-3">
         <div class="card-body">
             <p class="mb-1"><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
             <p class="mb-1"><b>Period:</b> <span th:text="${p.period}"></span></p>
-            <p class="mb-1"><b>Payslip ID:</b> <span th:text="${p.payslipId}"></span></p>
+            <p class="mb-1"><b>Employee ID:</b>
+                <span th:text="'NV' + ${p.empId}"></span>
+            </p>
 
             <hr class="my-2"/>
 
-            <!-- ✅ Format money + null safe -->
             <p class="mb-1"><b>Total Income:</b>
                 <span th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}"></span>
             </p>
@@ -36,13 +38,122 @@
         </div>
     </div>
 
+    <!-- Work metrics (giống sheet: lương cơ bản / ngày công / OT) -->
+    <div class="card mb-3">
+        <div class="card-header"><b>Work & Calculation Details</b></div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <tbody>
+                <tr>
+                    <th style="width:240px;">Base Salary</th>
+                    <td class="text-end"
+                        th:text="${p.baseSalary == null ? '0' : #numbers.formatDecimal(p.baseSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+                <tr>
+                    <th>Standard Work Days</th>
+                    <td class="text-end" th:text="${p.standardWorkDays == null ? '0' : p.standardWorkDays}"></td>
+                </tr>
+                <tr>
+                    <th>Actual Work Days</th>
+                    <td class="text-end" th:text="${p.actualWorkDays == null ? '0' : p.actualWorkDays}"></td>
+                </tr>
+                <tr>
+                    <th>OT Hours</th>
+                    <td class="text-end" th:text="${p.otHours == null ? '0' : p.otHours}"></td>
+                </tr>
+
+                <!-- Daily salary (base / standard) -->
+                <tr th:with="daily=${(p.standardWorkDays != null and p.standardWorkDays > 0) ? (p.baseSalary / p.standardWorkDays) : 0}">
+                    <th>Daily Salary (Base / StandardDays)</th>
+                    <td class="text-end"
+                        th:text="${#numbers.formatDecimal(daily, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+
+                <!-- Hourly salary (daily / 8) -->
+                <tr th:with="daily=${(p.standardWorkDays != null and p.standardWorkDays > 0) ? (p.baseSalary / p.standardWorkDays) : 0},
+                             hourly=${daily / 8}">
+                    <th>Hourly Salary (Daily / 8)</th>
+                    <td class="text-end"
+                        th:text="${#numbers.formatDecimal(hourly, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Income & Benefits (phúc lợi/bonus nằm trong INCOME items) -->
+    <div class="card mb-3">
+        <div class="card-header"><b>Income & Benefits</b></div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                <tr>
+                    <th style="width:160px;">Code</th>
+                    <th>Name</th>
+                    <th class="text-end" style="width:200px;">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="it : ${p.items}" th:if="${it.type == 'INCOME'}">
+                    <td th:text="${it.code}"></td>
+                    <td th:text="${it.name}"></td>
+                    <td class="text-end"
+                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+                <tr th:if="${p.items == null || #lists.isEmpty(p.items)}">
+                    <td colspan="3" class="text-center text-muted">No income items</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Deductions -->
+    <div class="card mb-3">
+        <div class="card-header"><b>Deductions</b></div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                <tr>
+                    <th style="width:160px;">Code</th>
+                    <th>Name</th>
+                    <th class="text-end" style="width:120px;">Rate</th>
+                    <th class="text-end" style="width:200px;">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                <tr th:each="it : ${p.items}"
+                    th:if="${it.type == 'DEDUCTION'}"
+                    th:with="rate=${it.code == 'BHYT' ? 3 : (it.code == 'BHXH' ? 3 : 0)}">
+
+                    <td th:text="${it.code}"></td>
+                    <td th:text="${it.name}"></td>
+
+                    <td class="text-end" th:text="${rate == 0 ? '' : rate + '%'}"></td>
+
+                    <td class="text-end"
+                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+
+                <tr th:if="${p.items == null || #lists.isEmpty(p.items.?[type == 'DEDUCTION'])}">
+                    <td colspan="4" class="text-center text-muted">No deduction items</td>
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Raw Items (giữ lại để debug/soát) -->
     <div class="card">
-        <div class="card-header"><b>Items</b></div>
+        <div class="card-header"><b>All Items</b></div>
         <div class="card-body table-responsive">
             <table class="table table-bordered table-hover align-middle">
                 <thead>
                 <tr>
                     <th>Type</th>
+                    <th>Code</th>
                     <th>Name</th>
                     <th class="text-end">Amount</th>
                 </tr>
@@ -51,15 +162,14 @@
                 <tbody>
                 <tr th:each="it : ${p.items}">
                     <td th:text="${it.type}"></td>
+                    <td th:text="${it.code}"></td>
                     <td th:text="${it.name}"></td>
-
-                    <!-- ✅ Format money + null safe -->
                     <td class="text-end"
                         th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
                 </tr>
 
                 <tr th:if="${p.items == null || #lists.isEmpty(p.items)}">
-                    <td colspan="3" class="text-center text-muted">No items</td>
+                    <td colspan="4" class="text-center text-muted">No items</td>
                 </tr>
                 </tbody>
             </table>
