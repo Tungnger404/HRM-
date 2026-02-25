@@ -10,63 +10,211 @@
     <link th:href="@{/vendors/simplebar/css/simplebar.css}" rel="stylesheet">
     <link th:href="@{/css/style.css}" rel="stylesheet">
     <link th:href="@{/css/examples.css}" rel="stylesheet">
-    <link th:href="@{/css/theme-toggle.css}" rel="stylesheet">
 
     <script th:src="@{/js/config.js}"></script>
-    <script th:src="@{/js/color-modes.js}"></script>
 
-    <!-- Theme CSS Variables -->
     <style>
+        /* =========================
+           ROOT VARIABLES
+        ========================= */
         :root {
-            /* Light mode (default) */
-            --bg-body: #ffffff;
-            --bg-surface: #f8f9fa;
-            --text-primary: #212529;
-            --text-secondary: #6c757d;
-            --border-color: #dee2e6;
+            --bg-body: #f4f6fb;
+            --bg-surface: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+
+            --cui-sidebar-width: 260px;
         }
 
-        [data-theme="dark"] {
-            /* Dark mode */
-            --bg-body: #1a1d20;
-            --bg-surface: #2c3034;
-            --text-primary: #e4e6eb;
-            --text-secondary: #b0b3b8;
-            --border-color: #3e4042;
-        }
-
+        /* =========================
+           BODY
+        ========================= */
         body {
-            background-color: var(--bg-body) !important;
-            color: var(--text-primary) !important;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            margin: 0;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
-        .body, main.body {
-            background-color: var(--bg-body) !important;
-            color: var(--text-primary) !important;
+        /* =========================
+           SIDEBAR (Improved SaaS Style)
+        ========================= */
+        .sidebar {
+            width: var(--cui-sidebar-width);
+            background: linear-gradient(180deg, #0f2a5a, #123c85);
+            flex-shrink: 0;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+            transition: left 0.3s ease;
+            border-right: none !important;
+        }
+
+        /* Sidebar Brand */
+        .sidebar-brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Section title */
+        .sidebar .nav-title {
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            letter-spacing: 1px;
+            margin-top: 25px;
+        }
+
+        /* Menu link */
+        .sidebar .nav-link {
+            color: #e6edf7 !important;
+            font-weight: 500;
+            border-radius: 8px;
+            margin: 6px 12px;
+            padding: 10px 14px;
+            transition: all 0.2s ease;
+        }
+
+        /* Hover effect */
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateX(3px);
+        }
+
+        /* Active effect */
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.12) !important;
+            border-left: 4px solid #4facfe;
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        /* Icons */
+        .sidebar svg,
+        .sidebar .nav-icon {
+            color: rgba(255,255,255,0.85);
+            fill: rgba(255,255,255,0.85);
+        }
+
+        /* =========================
+           CONTENT
+        ========================= */
+        .body {
+            background-color: var(--bg-body);
+            padding: 30px;
         }
 
         .card {
-            background-color: var(--bg-surface) !important;
-            color: var(--text-primary) !important;
-            border-color: var(--border-color) !important;
+            background-color: var(--bg-surface);
+            border-radius: 14px;
+            border: none;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
         }
 
-        .table {
-            color: var(--text-primary) !important;
+        /* =========================
+           NAVBAR
+        ========================= */
+        .header {
+            height: 72px;
+            background: linear-gradient(90deg, #0f2a5a, #123c85);
+            display: flex;
+            align-items: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            position: relative;
+            z-index: 1100;
         }
 
-        .form-control, .form-select {
-            background-color: var(--bg-surface) !important;
-            color: var(--text-primary) !important;
-            border-color: var(--border-color) !important;
+        /* Subtle bottom line */
+        .header::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
         }
+
+        /* Navbar icon color */
+        .header .nav-link,
+        .header svg {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        .header .nav-link:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+            transition: 0.2s ease;
+        }
+
+        /* Avatar */
+        .avatar-img {
+            border: 2px solid rgba(255,255,255,0.4);
+            transition: 0.3s ease;
+        }
+
+        .avatar-img:hover {
+            box-shadow: 0 0 10px rgba(79, 172, 254, 0.7);
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+        .footer {
+            padding: 15px 30px;
+            color: var(--text-secondary);
+        }
+
+        /* =========================
+           DROPDOWN FIX
+        ========================= */
+        .dropdown-menu {
+            z-index: 2000 !important;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                position: fixed;
+                top: 72px;
+                left: -260px;
+                height: calc(100vh - 72px);
+                z-index: 1050;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+        }
+
     </style>
 </head>
-
 <body>
 
-<div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
+<div class="sidebar sidebar-fixed border-end" id="sidebar">
+    <div class="sidebar-brand d-flex align-items-center gap-3 px-4 py-4">
+        <div class="sidebar-logo">
+            <svg class="icon icon-lg text-white">
+                <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-building"></use>
+            </svg>
+        </div>
+        <div class="sidebar-title text-white fw-semibold">
+            Software House <br>
+            <span style="font-size:13px; opacity:0.7;">HRM System</span>
+        </div>
+    </div>
     <div th:replace="~{layout/sidebar/__${sidebar != null ? sidebar : 'sidebar-default'}__ :: sidebar}">
     </div>
 
@@ -74,28 +222,37 @@
 
 <div class="wrapper d-flex flex-column min-vh-100">
 
-    <header class="header header-sticky p-0 mb-4">
-        <div class="container-fluid border-bottom px-4">
+    <header class="header header-sticky p-0">
+        <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
 
-            <button class="header-toggler" type="button"
-                    onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
-                <svg class="icon icon-lg">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-menu"></use>
-                </svg>
-            </button>
+            <!-- LEFT SIDE -->
+            <div class="d-flex align-items-center gap-4">
 
-            <ul class="header-nav ms-auto">
-                <li class="nav-item dropdown me-3">
-                    <a class="nav-link position-relative py-0" id="notificationBell" data-coreui-toggle="dropdown" style="cursor: pointer;">
+                <!-- Sidebar Toggle -->
+                <button class="header-toggler text-white" type="button"
+                        onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
+                    <svg class="icon icon-lg">
+                        <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-menu"></use>
+                    </svg>
+                </button>
+
+            </div>
+
+            <!-- RIGHT SIDE -->
+            <ul class="header-nav ms-auto align-items-center">
+
+                <!-- Notification -->
+                <li class="nav-item dropdown me-4">
+                    <a class="nav-link position-relative py-0" id="notificationBell" data-coreui-toggle="dropdown">
                         <svg class="icon icon-lg">
                             <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
                         </svg>
-                        <span class="badge rounded-pill badge-pill bg-danger position-absolute top-0 start-100 translate-middle" 
-                              id="notificationCount" style="display: none;">
-                            0
-                        </span>
+                        <span class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle"
+                              id="notificationCount" style="display: none;">0</span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end pt-0" style="width: 350px; max-height: 400px; overflow-y: auto;">
+
+                    <div class="dropdown-menu dropdown-menu-end pt-0"
+                         style="width: 350px; max-height: 400px; overflow-y: auto;">
                         <div class="dropdown-header bg-body-tertiary fw-semibold d-flex justify-content-between">
                             <span>Notifications</span>
                             <span class="badge bg-secondary" id="totalNotifications">0</span>
@@ -107,118 +264,113 @@
                         </div>
                     </div>
                 </li>
+
+                <!-- Avatar -->
                 <li class="nav-item dropdown">
                     <a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown">
                         <div class="avatar avatar-md">
                             <img class="avatar-img" th:src="@{/assets/img/avatars/8.jpg}" alt="avatar">
                         </div>
                     </a>
+
                     <div class="dropdown-menu dropdown-menu-end pt-0">
                         <div class="dropdown-header bg-body-tertiary fw-semibold">Account</div>
 
                         <a class="dropdown-item" th:href="@{/profile}">
-                            <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use></svg>
+                            <svg class="icon me-2">
+                                <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+                            </svg>
                             Profile
                         </a>
 
-                        <!-- Dark Mode Toggle -->
-                        <div class="dropdown-item d-flex justify-content-between align-items-center px-3">
-                            <span>
-                                <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-moon"></use></svg>
-                                Dark Mode
-                            </span>
-                            <label class="theme-switch mb-0">
-                                <input type="checkbox" id="themeToggle">
-                                <span class="theme-slider"></span>
-                            </label>
-                        </div>
-
                         <a class="dropdown-item" th:href="@{/logout}">
-                            <svg class="icon me-2"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use></svg>
+                            <svg class="icon me-2">
+                                <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>
+                            </svg>
                             Logout
                         </a>
                     </div>
                 </li>
-            </ul>
 
+            </ul>
         </div>
     </header>
 
-    <main class="body flex-grow-1 px-4 py-3" layout:fragment="content">
-    </main>
+    <div class="body flex-grow-1 px-4 py-3">
+        <div layout:fragment="content"></div>
+    </div>
 
     <footer class="footer px-4">
         <div>HRM System © 2025</div>
-        <div class="ms-auto">Powered by CoreUI</div>
+
     </footer>
 
 </div>
 
 <script th:src="@{/vendors/@coreui/coreui/js/coreui.bundle.min.js}"></script>
 <script th:src="@{/vendors/simplebar/js/simplebar.min.js}"></script>
-<script th:src="@{/js/theme-toggle.js}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    loadNotifications();
-    setInterval(loadNotifications, 30000);
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        loadNotifications();
+        setInterval(loadNotifications, 30000);
+    });
 
-function loadNotifications() {
-    fetch('/api/notifications/unread')
-        .then(res => res.json())
-        .then(data => {
-            const badge = document.getElementById('notificationCount');
-            const totalBadge = document.getElementById('totalNotifications');
-            const list = document.getElementById('notificationList');
-            
-            if (data.length > 0) {
-                badge.textContent = data.length;
-                badge.style.display = 'block';
-                totalBadge.textContent = data.length;
-                
-                list.innerHTML = data.map(n => `
-                    <a class="dropdown-item d-flex align-items-start py-2 border-bottom" 
-                       href="${n.linkUrl}" 
-                       onclick="markAsRead(${n.notificationId}, event)">
-                        <div class="flex-shrink-0 me-2">
-                            <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px;"></span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="fw-semibold small">${n.title}</div>
-                            <div class="small text-muted">${n.message || ''}</div>
-                            <div class="tiny text-muted">${formatTime(n.createdAt)}</div>
-                        </div>
-                    </a>
-                `).join('');
-            } else {
-                badge.style.display = 'none';
-                totalBadge.textContent = '0';
-                list.innerHTML = '<div class="dropdown-item text-center text-muted py-3">No new notifications</div>';
-            }
-        })
-        .catch(err => console.error('Failed to load notifications:', err));
-}
+    function loadNotifications() {
+        fetch('/api/notifications/unread')
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.getElementById('notificationCount');
+                const totalBadge = document.getElementById('totalNotifications');
+                const list = document.getElementById('notificationList');
 
-function markAsRead(notificationId, event) {
-    fetch('/api/notifications/' + notificationId + '/mark-read', { method: 'POST' })
-        .then(() => loadNotifications())
-        .catch(err => console.error('Failed to mark as read:', err));
-}
+                if (data.length > 0) {
+                    badge.textContent = data.length;
+                    badge.style.display = 'block';
+                    totalBadge.textContent = data.length;
 
-function formatTime(dateStr) {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return diffMins + ' mins ago';
-    if (diffHours < 24) return diffHours + ' hours ago';
-    if (diffDays < 7) return diffDays + ' days ago';
-    return date.toLocaleDateString('vi-VN');
-}
+                    list.innerHTML = data.map(n => `
+                        <a class="dropdown-item d-flex align-items-start py-2 border-bottom"
+                           href="${n.linkUrl}"
+                           onclick="markAsRead(${n.notificationId}, event)">
+                            <div class="flex-shrink-0 me-2">
+                                <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px;"></span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold small">${n.title}</div>
+                                <div class="small text-muted">${n.message || ''}</div>
+                                <div class="tiny text-muted">${formatTime(n.createdAt)}</div>
+                            </div>
+                        </a>
+                    `).join('');
+                } else {
+                    badge.style.display = 'none';
+                    totalBadge.textContent = '0';
+                    list.innerHTML = '<div class="dropdown-item text-center text-muted py-3">No new notifications</div>';
+                }
+            })
+            .catch(err => console.error('Failed to load notifications:', err));
+    }
+
+    function markAsRead(notificationId, event) {
+        fetch('/api/notifications/' + notificationId + '/mark-read', { method: 'POST' })
+            .then(() => loadNotifications())
+            .catch(err => console.error('Failed to mark as read:', err));
+    }
+
+    function formatTime(dateStr) {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return diffMins + ' mins ago';
+        if (diffHours < 24) return diffHours + ' hours ago';
+        if (diffDays < 7) return diffDays + ' days ago';
+        return date.toLocaleDateString('vi-VN');
+    }
 </script>
 
 <!-- Toast Container -->
@@ -262,5 +414,6 @@ function formatTime(dateStr) {
     }
 </script>
 
+<div layout:fragment="scripts"></div>
 </body>
 </html>

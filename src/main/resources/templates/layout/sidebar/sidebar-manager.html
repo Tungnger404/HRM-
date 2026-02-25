@@ -1,9 +1,8 @@
 <div th:fragment="sidebar">
-    <div class="sidebar-brand d-none d-md-flex">
-        <span class="fw-bold text-white px-3">MANAGER</span>
-    </div>
 
     <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+
+        <!-- ================= DASHBOARD ================= -->
         <li class="nav-title">Manager</li>
 
         <li class="nav-item">
@@ -23,15 +22,85 @@
                 My Team
             </a>
         </li>
+        <!-- ================= Payroll ================= -->
+        <li class="nav-title">Payroll</li>
 
-        <li class="nav-item">
-            <a class="nav-link" th:href="@{/manager/requests}">
+        <li class="nav-group">
+            <a class="nav-link nav-group-toggle" href="#">
                 <svg class="nav-icon">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-check-circle"></use>
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-money"></use>
                 </svg>
-                Approvals
+                Payroll
+            </a>
+
+            <ul class="nav-group-items">
+
+                <!-- Payslips -->
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/payroll/payslips}">
+                        <span class="nav-icon"></span>
+                        Payslips
+                    </a>
+                </li>
+
+                <!-- Periods -->
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/payroll/periods}">
+                        <span class="nav-icon"></span>
+                        Periods
+                    </a>
+                </li>
+
+                <!-- Payroll Inquiries -->
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/inquiries}">
+                        <span class="nav-icon"></span>
+                        Payroll Inquiries
+                    </a>
+                </li>
+
+            </ul>
+        </li>
+
+        <li class="nav-divider"></li>
+
+        <!-- ================= RECRUITMENT ================= -->
+        <li class="nav-title">Recruitment</li>
+
+        <!-- 1. Recruitment Request Screen -->
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/recruitment-request/create}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user-follow"></use>
+                </svg>
+                Create Recruitment Request
             </a>
         </li>
+
+        <!-- My Requests -->
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/recruitment-request/my-requests}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+                </svg>
+                My Recruitment Requests
+            </a>
+        </li>
+
+        <!-- Candidate Evaluation (Manager side nếu có controller riêng) -->
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/manager/candidate/evaluation}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-star"></use>
+                </svg>
+                Candidate Evaluation
+            </a>
+        </li>
+
+        <li class="nav-divider"></li>
+
+        <!-- ================= REPORT & OTHER ================= -->
+        <li class="nav-title">Reports & Tools</li>
 
         <li class="nav-item">
             <a class="nav-link" th:href="@{/manager/reports}">
@@ -51,7 +120,10 @@
             </a>
         </li>
 
-        <li class="nav-title">Evaluation & Training</li>
+        <li class="nav-divider"></li>
+
+        <!-- ================= SYSTEM ================= -->
+        <li class="nav-title">System</li>
 
         <li class="nav-item">
             <a class="nav-link" th:href="@{/manager/evaluation/pending}">
@@ -65,28 +137,20 @@
         <li class="nav-item">
             <a class="nav-link" th:href="@{/evaluation/ranking/1}">
                 <svg class="nav-icon">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-star"></use>
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-chart-line"></use>
                 </svg>
                 Performance Ranking
             </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link" th:href="@{/evaluation/promotion-recommendations/1}">
+            <a class="nav-link" th:href="@{/logout}">
                 <svg class="nav-icon">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-arrow-circle-top"></use>
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>
                 </svg>
-                Promotion Recommendations
+                Logout
             </a>
         </li>
 
-        <li class="nav-item">
-            <a class="nav-link" th:href="@{/training/recommendations}">
-                <svg class="nav-icon">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-lightbulb"></use>
-                </svg>
-                Training Recommendations
-            </a>
-        </li>
     </ul>
 </div>

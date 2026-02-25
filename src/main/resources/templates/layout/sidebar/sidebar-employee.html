@@ -1,7 +1,5 @@
 <div th:fragment="sidebar">
-  <div class="sidebar-brand d-none d-md-flex">
-    <span class="fw-bold text-white px-3">EMPLOYEE</span>
-  </div>
+
 
   <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
     <li class="nav-title">Employee</li>
@@ -19,6 +17,7 @@
         My Profile
       </a>
     </li>
+
 
     <li class="nav-item">
       <a class="nav-link" th:href="@{/employee/request/new}">
@@ -41,6 +40,27 @@
         <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-folder-open"></use></svg>
        Leave Request
       </a>
+    </li>
+
+    <!-- ================= PAYROLL ================= -->
+    <li class="nav-title">Payroll</li>
+
+    <li class="nav-group">
+      <a class="nav-link nav-group-toggle" href="#">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-money"></use>
+        </svg>
+        Payroll
+      </a>
+
+      <ul class="nav-group-items compact">
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/employee/payslips}">
+            <span class="nav-icon"></span>
+            My Payslips
+          </a>
+        </li>
+      </ul>
     </li>
   
     <li class="nav-title">Evaluation & Training</li>

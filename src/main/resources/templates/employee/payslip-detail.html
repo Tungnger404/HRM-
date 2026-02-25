@@ -11,9 +11,20 @@
 
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h2 class="mb-0">Payslip Detail</h2>
-        <a class="btn btn-secondary btn-sm" th:href="@{/employee/payslips}">Back</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/employee/payslips/{id}/download(id=${p.payslipId})}">
+                Download PDF
+            </a>
+            <a class="btn btn-secondary btn-sm" th:href="@{/employee/payslips}">Back</a>
+        </div>
     </div>
 
+    <!-- Flash messages -->
+    <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+    <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+    <!-- Summary -->
     <div class="card mb-3">
         <div class="card-body">
             <p class="mb-1"><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
@@ -28,7 +39,8 @@
         </div>
     </div>
 
-    <div class="card">
+    <!-- Items -->
+    <div class="card mb-3">
         <div class="card-header"><b>Items</b></div>
         <div class="card-body table-responsive">
             <table class="table table-bordered table-hover align-middle">
@@ -51,6 +63,69 @@
                 </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Payroll Inquiries -->
+    <div class="card" id="inquiries">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <b>Payroll Inquiries</b>
+            <span class="text-body-secondary small">Ask questions about your payslip</span>
+        </div>
+
+        <div class="card-body">
+
+            <!-- Submit Inquiry Form -->
+            <form class="mb-3"
+                  th:action="@{/employee/payslips/{id}/inquiry(id=${p.payslipId})}"
+                  method="post"
+                  th:object="${inq}">
+
+                <input type="hidden" th:field="*{payslipId}"/>
+
+                <label class="form-label">Your question</label>
+                <textarea class="form-control" rows="3"
+                          th:field="*{question}"
+                          placeholder="Nhập thắc mắc về phiếu lương..."></textarea>
+
+                <div class="text-danger small"
+                     th:if="${#fields.hasErrors('question')}"
+                     th:errors="*{question}"></div>
+
+                <button class="btn btn-primary btn-sm mt-2">Submit Inquiry</button>
+            </form>
+
+            <!-- Inquiry List -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width:160px;">Created</th>
+                        <th>Question</th>
+                        <th style="width:120px;">Status</th>
+                        <th>Answer</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="i : ${inquiries}">
+                        <td th:text="${i.createdAt != null ? #temporals.format(i.createdAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                        <td th:text="${i.question}"></td>
+                        <td>
+                            <span class="badge bg-warning" th:if="${i.status == 'OPEN'}">OPEN</span>
+                            <span class="badge bg-success" th:if="${i.status == 'RESOLVED'}">RESOLVED</span>
+                            <span class="badge bg-secondary" th:if="${i.status != 'OPEN' and i.status != 'RESOLVED'}"
+                                  th:text="${i.status}"></span>
+                        </td>
+                        <td th:text="${i.answer != null ? i.answer : ''}"></td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(inquiries)}">
+                        <td colspan="4" class="text-center text-muted">No inquiries yet</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
     </div>
 

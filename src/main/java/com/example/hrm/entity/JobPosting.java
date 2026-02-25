@@ -49,4 +49,20 @@ public class JobPosting {
 
     @Column(nullable = false)
     private String status; // OPEN / CLOSED / EXPIRED
+    @Transient
+    private Long candidateCount;
+
+
+    // ================= NEW FIELDS =================
+
+    @Column(unique = true, length = 200)
+    private String slug;
+
+    @Column(name = "is_public", nullable = false)
+    @Builder.Default
+    private Boolean isPublic = true;
+
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private Integer viewCount = 0;
 }

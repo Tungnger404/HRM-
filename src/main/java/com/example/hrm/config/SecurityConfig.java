@@ -109,7 +109,7 @@ public class SecurityConfig {
 
                         // ===== MODULE PERMISSION =====
                         .requestMatchers("/hr/kpi/**").hasRole("HR")
-                        .requestMatchers("/hr/**").authenticated()
+                        .requestMatchers("/hr/**").hasRole("HR")
                         .requestMatchers("/manager/evaluation/**").hasAnyRole("MANAGER", "HR", "ADMIN")
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
                         .requestMatchers("/employee/**").hasRole("EMPLOYEE")

@@ -1,10 +1,7 @@
 <div th:fragment="sidebar">
-  <div class="sidebar-brand d-none d-md-flex">
-    <span class="fw-bold text-white px-3">HR</span>
-  </div>
 
   <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
-    <li class="nav-title">HR</li>
+
 
     <li class="nav-item">
       <a class="nav-link" th:href="@{/dashboard/hr}">
@@ -21,9 +18,9 @@
     </li>
 
     <li class="nav-item">
-      <a class="nav-link" th:href="@{/hr/requests}">
+      <a class="nav-link" th:href="@{/hr/change-requests}">
         <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-task"></use></svg>
-        Change Requests
+        Total Request
       </a>
     </li>
 
@@ -57,6 +54,35 @@
           </a>
         </li>
       </ul>
+    </li>
+
+    <li class="nav-title">RECRUITMENT MANAGEMENT</li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/hr/recruitment-request/list}">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+        </svg>
+        Recruitment Request List
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/hr/job-description}">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-description"></use>
+        </svg>
+        Job Description Management
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/hr/job-posting}">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-bullhorn"></use>
+        </svg>
+        Job Posting Management
+      </a>
     </li>
   </ul>
 </div>

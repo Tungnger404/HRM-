@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-hr'">
+
+<head>
+    <title>Candidate List</title>
+</head>
+
+<body>
+
+<div layout:fragment="content">
+
+    <h2>Candidate List</h2>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Score</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="c : ${candidates}">
+            <td th:text="${c.fullName}"></td>
+            <td th:text="${c.email}"></td>
+            <td th:text="${c.status}"></td>
+            <td th:text="${c.screeningScore}"></td>
+            <td>
+                <a th:href="@{/hr/candidates/detail/{id}(id=${c.candidateId}, postingId=${postingId})}"
+                   class="btn btn-sm btn-info">View</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+
+</body>
+</html>

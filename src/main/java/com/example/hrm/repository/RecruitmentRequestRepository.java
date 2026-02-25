@@ -29,4 +29,12 @@ public interface    RecruitmentRequestRepository
 
     List<RecruitmentRequest> findByCreatedBy_EmpId(Integer empId);
     List<RecruitmentRequest> findByStatus(RecruitmentRequestStatus status);
+    @Query("""
+        SELECT r
+        FROM RecruitmentRequest r
+        JOIN FETCH r.department
+        JOIN FETCH r.jobPosition
+        WHERE r.reqId = :id
+    """)
+    Optional<RecruitmentRequest> findByIdWithDetails(@Param("id") Integer id);
 }

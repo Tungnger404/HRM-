@@ -1,5 +1,6 @@
 package com.example.hrm.service;
 
+import java.time.format.DateTimeFormatter;
 import com.example.hrm.dto.*;
 import com.example.hrm.repository.BankAccountRepository;
 import com.example.hrm.entity.*;
@@ -29,6 +30,7 @@ public class PayrollService {
     private final PayslipRepository payslipRepo;
     private final PayslipItemRepository itemRepo;
     private final PayrollInquiryRepository inquiryRepo;
+    private final NotificationService notificationService;
 
     private final EmployeeRepository employeeRepo;
     private final ContractRepository contractRepo;
@@ -40,6 +42,9 @@ public class PayrollService {
     // =========================
     // MANAGER SIDE
     // =========================
+
+    private static final DateTimeFormatter VN_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
 
     @Transactional(readOnly = true)
     public List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds) {
@@ -392,8 +397,25 @@ public class PayrollService {
             BigDecimal overtimePay = hourly.multiply(otHours).multiply(BigDecimal.valueOf(1.5))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            BigDecimal totalIncome = salaryByDays.add(overtimePay);
-            BigDecimal totalDeduction = BigDecimal.ZERO; // bạn có thể thêm tax/insurance sau
+            // ===== BENEFITS (Phúc lợi) =====
+            // bạn đổi số tiền/ngày ở đây
+            BigDecimal mealAllowance = actualDays.multiply(new BigDecimal("30000"))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal transportAllowance = actualDays.multiply(new BigDecimal("20000"))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal totalIncome = salaryByDays
+                    .add(overtimePay)
+                    .add(mealAllowance)
+                    .add(transportAllowance);
+
+        // ===== DEDUCTION: BHYT/BHXH 3% (demo) =====
+            BigDecimal insuranceRate = new BigDecimal("0.03"); // 3%
+            BigDecimal insuranceDeduction = baseSalary.multiply(insuranceRate)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal totalDeduction = insuranceDeduction;
             BigDecimal net = totalIncome.subtract(totalDeduction);
 
             Payslip slip = Payslip.builder()
@@ -428,6 +450,39 @@ public class PayrollService {
                         .itemName("Overtime pay")
                         .amount(overtimePay)
                         .itemType("INCOME")
+                        .manualAdjustment(false)
+                        .build());
+            }
+
+            if (mealAllowance.compareTo(BigDecimal.ZERO) > 0) {
+                items.add(PayslipItem.builder()
+                        .payslip(slip)
+                        .itemCode("MEAL_ALLOW")
+                        .itemName("Meal allowance")
+                        .amount(mealAllowance)
+                        .itemType("INCOME")
+                        .manualAdjustment(false)
+                        .build());
+            }
+
+            if (transportAllowance.compareTo(BigDecimal.ZERO) > 0) {
+                items.add(PayslipItem.builder()
+                        .payslip(slip)
+                        .itemCode("TRANSPORT_ALLOW")
+                        .itemName("Transport allowance")
+                        .amount(transportAllowance)
+                        .itemType("INCOME")
+                        .manualAdjustment(false)
+                        .build());
+            }
+
+            if (insuranceDeduction.compareTo(BigDecimal.ZERO) > 0) {
+                items.add(PayslipItem.builder()
+                        .payslip(slip)
+                        .itemCode("BHYT")          // bạn đổi thành "BHXH" nếu muốn
+                        .itemName("BHYT (3%)")     // hiển thị
+                        .amount(insuranceDeduction)
+                        .itemType("DEDUCTION")
                         .manualAdjustment(false)
                         .build());
             }
@@ -541,6 +596,36 @@ public class PayrollService {
     // =========================
 
     @Transactional(readOnly = true)
+    public List<PayrollInquiryDTO> listInquiriesForEmployee(Integer empId, Integer payslipId) {
+        Payslip p = payslipRepo.findById(payslipId)
+                .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
+
+        // chỉ chủ payslip mới xem được
+        if (!p.getEmployee().getId().equals(empId)) {
+            throw new SecurityException("Not allowed");
+        }
+
+        // chỉ xem khi đã release
+        if (!Boolean.TRUE.equals(p.getSentToEmployee())) {
+            throw new IllegalStateException("Payslip not released yet");
+        }
+
+        return inquiryRepo.findByPayslip_IdOrderByCreatedAtDesc(payslipId).stream()
+                .filter(i -> i.getEmployee() != null && i.getEmployee().getId().equals(empId))
+                .map(i -> PayrollInquiryDTO.builder()
+                        .id(i.getId())
+                        .payslipId(payslipId)
+                        .empId(empId)
+                        .question(i.getQuestion())
+                        .answer(i.getAnswer())
+                        .status(i.getStatus())
+                        .createdAt(i.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+
+    @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForEmployee(Integer empId, Integer payslipId) {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
@@ -627,6 +712,13 @@ public class PayrollService {
                 .createdAt(LocalDateTime.now())
                 .build();
         inq = inquiryRepo.save(inq);
+        // ===== NOTIFY MANAGER when employee submitted inquiry =====
+        notificationService.createPayrollInquirySubmitted(
+                emp.getDirectManagerId(),   // manager emp_id
+                inq.getId(),                // inquiry_id
+                p.getId(),                  // payslip_id
+                empName(emp)                // employee name
+        );
 
         return PayrollInquiryDTO.builder()
                 .id(inq.getId())
@@ -797,6 +889,12 @@ public class PayrollService {
         i.setAnswer(answer);
         i.setStatus("RESOLVED");
         inquiryRepo.save(i);
+        // ===== NOTIFY EMPLOYEE when manager resolved inquiry =====
+        notificationService.createPayrollInquiryResolved(
+                i.getEmployee().getId(),    // employee emp_id
+                i.getId(),                  // inquiry_id
+                i.getPayslip().getId()      // payslip_id
+        );
     }
 
     private String empName(Employee e) {
@@ -809,8 +907,8 @@ public class PayrollService {
     }
 
     private String periodLabel(PayrollPeriod per) {
-        if (per == null)
-            return "";
+        if (per == null) return "";
+
         Integer m = per.getMonth();
         Integer y = per.getYear();
 
@@ -819,7 +917,9 @@ public class PayrollService {
                 : (per.getName() != null ? per.getName() : "");
 
         if (per.getStartDate() != null && per.getEndDate() != null) {
-            return mmYY + " (" + per.getStartDate() + " \u2192 " + per.getEndDate() + ")";
+            String s = per.getStartDate().format(VN_DATE);
+            String e = per.getEndDate().format(VN_DATE);
+            return mmYY + " (" + s + " \u2192 " + e + ")";
         }
         return mmYY;
     }

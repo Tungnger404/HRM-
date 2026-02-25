@@ -2,7 +2,9 @@ package com.example.hrm.controller;
 
 import com.example.hrm.dto.JobPostingCreateDTO;
 import com.example.hrm.entity.JobDescriptionStatus;
+import com.example.hrm.entity.JobPosting;
 import com.example.hrm.entity.RecruitmentRequestStatus;
+import com.example.hrm.repository.CandidateRepository;
 import com.example.hrm.repository.JobDescriptionRepository;
 import com.example.hrm.repository.RecruitmentRequestRepository;
 import com.example.hrm.service.JobPostingService;
@@ -10,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/hr/job-posting")
@@ -20,16 +24,31 @@ public class JobPostingController {
     private final RecruitmentRequestRepository reqRepo;
     private final JobDescriptionRepository jdRepo;
 
-    // LIST
+    // ✅ NEW
+    private final CandidateRepository candidateRepository;
+
+    // ================= LIST =================
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("list", service.getAll());
+
+        List<JobPosting> list = service.getAll();
+
+        // 🔥 Map số lượng candidate cho từng job
+        list.forEach(jp -> {
+            long count = candidateRepository
+                    .countByJobPosting_PostingId(jp.getPostingId());
+            jp.setCandidateCount(count);
+        });
+
+        model.addAttribute("list", list);
+
         return "job-posting/list";
     }
 
-    // CREATE FORM
+    // ================= CREATE FORM =================
     @GetMapping("/create")
     public String createForm(Model model) {
+
         model.addAttribute("dto", new JobPostingCreateDTO());
 
         model.addAttribute("requests",
@@ -41,15 +60,14 @@ public class JobPostingController {
         return "job-posting/create";
     }
 
-
-    // CREATE
+    // ================= CREATE =================
     @PostMapping("/create")
     public String create(@ModelAttribute JobPostingCreateDTO dto) {
         service.create(dto);
         return "redirect:/hr/job-posting?success";
     }
 
-    // CHANGE STATUS
+    // ================= CHANGE STATUS =================
     @GetMapping("/status/{id}/{status}")
     public String changeStatus(@PathVariable Integer id,
                                @PathVariable String status) {
@@ -57,7 +75,7 @@ public class JobPostingController {
         return "redirect:/hr/job-posting";
     }
 
-    // DELETE
+    // ================= DELETE =================
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id) {
         service.delete(id);

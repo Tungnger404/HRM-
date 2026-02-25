@@ -14393,6 +14393,11 @@ textarea.form-control-lg {
   align-items: center;
   min-height: calc(4rem + 1px);
 }
+/* Fix sidebar text cut off */
+.sidebar-nav .nav-link {
+    white-space: normal !important;
+    word-break: break-word;
+}
 
 .sidebar-narrow .sidebar-toggler,
 .sidebar-narrow-unfoldable:not(:hover) .sidebar-toggler {
@@ -14410,5 +14415,16 @@ textarea.form-control-lg {
 [data-coreui-theme=dark] .footer {
   --cui-footer-bg: var(--cui-body-bg);
 }
-
+.sidebar-brand-custom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, #4F8CFF, #7C83FD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 /*# sourceMappingURL=style.css.map */
