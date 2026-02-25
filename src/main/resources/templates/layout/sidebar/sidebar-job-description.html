@@ -1,0 +1,47 @@
+<div th:fragment="sidebar">
+
+    <div class="sidebar-header border-bottom">
+        <div class="sidebar-brand">
+            <span class="fw-bold">HR DASHBOARD</span>
+        </div>
+    </div>
+
+    <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+
+        <!-- Dashboard -->
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/dashboard/hr}">
+                <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use></svg>
+                Dashboard
+            </a>
+        </li>
+
+        <!-- ================= JOB DESCRIPTION ================= -->
+        <li class="nav-title">Job Description</li>
+
+        <!-- JD LIST -->
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/hr/job-description}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-file"></use>
+                </svg>
+                Job Description List
+            </a>
+        </li>
+
+        <!-- CREATE JD -->
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/hr/job-description/create}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-plus"></use>
+                </svg>
+                Create Job Description
+            </a>
+        </li>
+
+        <li class="nav-divider"></li>
+
+
+    </ul>
+
+</div>

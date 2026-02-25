@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface JobPostingService {
 
+    // ===== HR MANAGEMENT =====
     List<JobPosting> getAll();
 
     void create(JobPostingCreateDTO dto);
@@ -16,5 +17,13 @@ public interface JobPostingService {
     void delete(Integer id);
 
     void autoExpire();
+
+
+    // ===== PUBLIC CAREER PAGE =====
+    List<JobPosting> getPublicOpenJobs();
+
+    JobPosting getBySlug(String slug);
+
+    void increaseViewCount(String slug);
 
 }

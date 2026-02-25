@@ -41,6 +41,10 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
 
 		<!-- 🌐 Web / Spring MVC (Controller, RequestMapping, REST API) -->
 		<dependency>
