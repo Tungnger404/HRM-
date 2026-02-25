@@ -18,9 +18,6 @@
     </a>
   </div>
 
-  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
-  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
-
   <div class="row">
     <div class="col-lg-8">
       
@@ -37,6 +34,38 @@
             <strong>Verification note:</strong>
             <p style="white-space: pre-wrap;" th:text="${assignment.hrVerificationNote}"></p>
           </div>
+        </div>
+      </div>
+
+      <!-- NEW: Employee Self-Assessment Section -->
+      <div class="card mb-3" th:if="${assignment.selfAssessment != null}">
+        <div class="card-header bg-success text-white">
+          <strong>Employee Self-Assessment</strong>
+        </div>
+        <div class="card-body">
+          
+          <div class="mb-3">
+            <label class="fw-bold">Self Score:</label>
+            <div>
+              <span class="badge bg-primary fs-6" th:text="${assignment.selfScore} + '/100'"></span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="fw-bold">Overall Self-Assessment:</label>
+            <div class="border p-3 rounded bg-light" style="white-space: pre-wrap;" th:text="${assignment.selfAssessment}"></div>
+          </div>
+
+          <div class="mb-3" th:if="${assignment.challenges != null}">
+            <label class="fw-bold">Challenges Faced:</label>
+            <div class="border p-3 rounded bg-light" style="white-space: pre-wrap;" th:text="${assignment.challenges}"></div>
+          </div>
+
+          <div th:if="${assignment.developmentGoals != null}">
+            <label class="fw-bold">Development Goals:</label>
+            <div class="border p-3 rounded bg-light" style="white-space: pre-wrap;" th:text="${assignment.developmentGoals}"></div>
+          </div>
+
         </div>
       </div>
 
@@ -131,11 +160,18 @@
                 </label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="recommendTraining" id="checkTraining">
+                <input class="form-check-input" type="checkbox" name="recommendTraining" id="checkTraining" 
+                       onchange="document.getElementById('trainingField').style.display = this.checked ? 'block' : 'none';">
                 <label class="form-check-label" for="checkTraining">
                   Recommend for Training
                 </label>
               </div>
+            </div>
+
+            <div class="mb-3" id="trainingField" style="display: none;">
+              <label class="form-label">Training Program/Course:</label>
+              <textarea name="trainingRecommendation" class="form-control" rows="2"
+                        placeholder="e.g., Leadership Development, Technical Skills Training..."></textarea>
             </div>
 
             <button type="submit" class="btn btn-success w-100 mb-2">

@@ -79,6 +79,44 @@ public class KpiAssignment {
     @Column(name = "hr_verification_note", columnDefinition = "NVARCHAR(MAX)")
     private String hrVerificationNote;
 
+    // =====================================================
+    // EMPLOYEE SELF-ASSESSMENT DATA (Step 2)
+    // =====================================================
+    
+    @Column(name = "self_assessment", columnDefinition = "NVARCHAR(MAX)")
+    private String selfAssessment;
+
+    @Column(name = "self_score")
+    private Integer selfScore;
+
+    @Column(name = "challenges", columnDefinition = "NVARCHAR(MAX)")
+    private String challenges;
+
+    @Column(name = "development_goals", columnDefinition = "NVARCHAR(MAX)")
+    private String developmentGoals;
+
+    // =====================================================
+    // MANAGER REVIEW DATA
+    // =====================================================
+    
+    @Column(name = "manager_score")
+    private Integer managerScore;
+
+    @Column(name = "classification", length = 10)
+    private String classification; // A, B, C, D
+
+    @Column(name = "manager_comment", columnDefinition = "NVARCHAR(MAX)")
+    private String managerComment;
+
+    @Column(name = "promotion_recommendation")
+    private Boolean promotionRecommendation = false;
+
+    @Column(name = "training_recommendation", length = 500)
+    private String trainingRecommendation;
+
+    @Column(name = "manager_reviewed_at")
+    private LocalDateTime managerReviewedAt;
+
     // Constructors
     public KpiAssignment() {}
 
@@ -153,6 +191,38 @@ public class KpiAssignment {
 
     public String getHrVerificationNote() { return hrVerificationNote; }
     public void setHrVerificationNote(String hrVerificationNote) { this.hrVerificationNote = hrVerificationNote; }
+
+    // Employee Self-Assessment Getters and Setters
+    public String getSelfAssessment() { return selfAssessment; }
+    public void setSelfAssessment(String selfAssessment) { this.selfAssessment = selfAssessment; }
+
+    public Integer getSelfScore() { return selfScore; }
+    public void setSelfScore(Integer selfScore) { this.selfScore = selfScore; }
+
+    public String getChallenges() { return challenges; }
+    public void setChallenges(String challenges) { this.challenges = challenges; }
+
+    public String getDevelopmentGoals() { return developmentGoals; }
+    public void setDevelopmentGoals(String developmentGoals) { this.developmentGoals = developmentGoals; }
+
+    // Manager Review Getters and Setters
+    public Integer getManagerScore() { return managerScore; }
+    public void setManagerScore(Integer managerScore) { this.managerScore = managerScore; }
+
+    public String getClassification() { return classification; }
+    public void setClassification(String classification) { this.classification = classification; }
+
+    public String getManagerComment() { return managerComment; }
+    public void setManagerComment(String managerComment) { this.managerComment = managerComment; }
+
+    public Boolean getPromotionRecommendation() { return promotionRecommendation; }
+    public void setPromotionRecommendation(Boolean promotionRecommendation) { this.promotionRecommendation = promotionRecommendation; }
+
+    public String getTrainingRecommendation() { return trainingRecommendation; }
+    public void setTrainingRecommendation(String trainingRecommendation) { this.trainingRecommendation = trainingRecommendation; }
+
+    public LocalDateTime getManagerReviewedAt() { return managerReviewedAt; }
+    public void setManagerReviewedAt(LocalDateTime managerReviewedAt) { this.managerReviewedAt = managerReviewedAt; }
 
     @Override
     public String toString() {
