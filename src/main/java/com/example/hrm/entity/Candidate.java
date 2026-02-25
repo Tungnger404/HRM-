@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,7 +18,6 @@ public class Candidate {
     @Column(name = "candidate_id")
     private Integer candidateId;
 
-    // ===== RELATION TO JOB POSTING =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "posting_id", nullable = false)
     private JobPosting jobPosting;
@@ -35,8 +33,9 @@ public class Candidate {
     @Column(name = "cv_url")
     private String cvUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status; // APPLIED / SCREENING / INTERVIEW / OFFER / REJECTED
+    private CandidateStatus status;
 
     @Column(name = "applied_at")
     private LocalDateTime appliedAt;
@@ -44,7 +43,12 @@ public class Candidate {
     @Column(name = "screening_score")
     private Integer screeningScore;
 
-    // ===== NEW FIELD FROM YOUR DB UPDATE =====
+    @Column(name = "interview_date")
+    private LocalDateTime interviewDate;
+
+    @Column(name = "interview_location")
+    private String interviewLocation;
+
     @Column(nullable = false)
     @Builder.Default
     private String source = "WEBSITE";
