@@ -14415,5 +14415,16 @@ textarea.form-control-lg {
 [data-coreui-theme=dark] .footer {
   --cui-footer-bg: var(--cui-body-bg);
 }
-
+.sidebar-brand-custom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, #4F8CFF, #7C83FD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 /*# sourceMappingURL=style.css.map */

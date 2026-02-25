@@ -16,4 +16,5 @@ public class JobDescriptionResponseDTO {
     private String responsibilities;
     private String requirements;
     private String benefits;
+    private String description;
 }

@@ -3,7 +3,7 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}"
-      th:with="sidebar='sidebar-recruitment'">
+      th:with="sidebar='sidebar-hr.html'">
 
 <head>
     <title>Recruitment Requests (HR)</title>
@@ -11,7 +11,8 @@
 
 <body>
 
-<div class="container-fluid px-4" layout:fragment="content">
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
 
     <h2 class="mb-4 fw-bold">Recruitment Requests (HR)</h2>
 
@@ -76,6 +77,6 @@
     </div>
 
 </div>
-
+</div>
 </body>
 </html>
