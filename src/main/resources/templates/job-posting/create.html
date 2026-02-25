@@ -3,93 +3,172 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}"
-      th:with="sidebar='sidebar-job-posting'">
+      th:with="sidebar='sidebar-hr'">
 
 <head>
     <title>Create Job Posting</title>
-
 </head>
+
 <body>
 <main layout:fragment="content">
 
-<div class="container mt-4">
+    <div class="container mt-4">
 
-    <h2>Create Job Posting</h2>
+        <h2>Create Job Posting</h2>
 
-    <form th:action="@{/hr/job-posting/create}"
-          th:object="${dto}"
-          method="post">
+        <form th:action="@{/hr/job-posting/create}"
+              th:object="${dto}"
+              method="post">
 
-        <div class="mb-3">
-            <label class="form-label">Recruitment Request</label>
-            <select class="form-select" th:field="*{reqId}" required>
-                <option value="">-- Select Request --</option>
-                <option th:each="r : ${requests}"
-                        th:value="${r.reqId}"
-                        th:text="'Request #' + ${r.reqId}">
-                </option>
-            </select>
-        </div>
+            <!-- ================= Recruitment Request ================= -->
+            <div class="mb-3">
+                <label class="form-label">Recruitment Request</label>
+                <select class="form-select"
+                        th:field="*{reqId}"
+                        required>
+                    <option value="">-- Select Request --</option>
+                    <option th:each="r : ${requests}"
+                            th:value="${r.reqId}"
+                            th:text="'Request #' + ${r.reqId}">
+                    </option>
+                </select>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Job Description</label>
-            <select class="form-select" th:field="*{jdId}" required>
-                <option value="">-- Select JD --</option>
-                <option th:each="jd : ${descriptions}"
-                        th:value="${jd.id}"
-                        th:text="'JD #' + ${jd.id}">
-                </option>
-            </select>
-        </div>
+            <!-- ================= Job Description ================= -->
+            <div class="mb-3">
+                <label class="form-label">Job Description</label>
+                <select id="jdSelect"
+                        class="form-select"
+                        th:field="*{jdId}"
+                        required>
+                    <option value="">-- Select JD --</option>
+                    <option th:each="jd : ${descriptions}"
+                            th:value="${jd.id}"
+                            th:text="'JD #' + ${jd.id}">
+                    </option>
+                </select>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Title</label>
-            <input type="text" class="form-control"
-                   th:field="*{title}" required>
-        </div>
+            <!-- ================= Title ================= -->
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text"
+                       id="titleInput"
+                       class="form-control"
+                       th:field="*{title}"
+                       required>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea class="form-control"
-                      th:field="*{description}"></textarea>
-        </div>
+            <!-- ================= Description ================= -->
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea id="descriptionInput"
+                          class="form-control"
+                          rows="4"
+                          th:field="*{description}">
+            </textarea>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Requirements</label>
-            <textarea class="form-control"
-                      th:field="*{requirements}"></textarea>
-        </div>
+            <!-- ================= Requirements ================= -->
+            <div class="mb-3">
+                <label class="form-label">Requirements</label>
+                <textarea id="requirementsInput"
+                          class="form-control"
+                          rows="4"
+                          th:field="*{requirements}">
+            </textarea>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Benefits</label>
-            <textarea class="form-control"
-                      th:field="*{benefits}"></textarea>
-        </div>
+            <!-- ================= Benefits ================= -->
+            <div class="mb-3">
+                <label class="form-label">Benefits</label>
+                <textarea id="benefitsInput"
+                          class="form-control"
+                          rows="4"
+                          th:field="*{benefits}">
+            </textarea>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Publish Date</label>
-            <input type="date" class="form-control"
-                   th:field="*{publishDate}" required>
-        </div>
+            <!-- ================= Publish Date ================= -->
+            <div class="mb-3">
+                <label class="form-label">Publish Date</label>
+                <input type="date"
+                       class="form-control"
+                       th:field="*{publishDate}"
+                       required>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Expiry Date</label>
-            <input type="date" class="form-control"
-                   th:field="*{expiryDate}" required>
-        </div>
+            <!-- ================= Expiry Date ================= -->
+            <div class="mb-3">
+                <label class="form-label">Expiry Date</label>
+                <input type="date"
+                       class="form-control"
+                       th:field="*{expiryDate}"
+                       required>
+            </div>
 
-        <button type="submit" class="btn btn-success">
-            Create
-        </button>
+            <!-- ================= Buttons ================= -->
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success">
+                    Create
+                </button>
 
-        <a th:href="@{/hr/job-posting}"
-           class="btn btn-secondary">
-            Back
-        </a>
+                <a th:href="@{/hr/job-posting}"
+                   class="btn btn-secondary">
+                    Back
+                </a>
+            </div>
 
-    </form>
+        </form>
 
-</div>
+    </div>
 </main>
+
+
+<!-- ================= JAVASCRIPT AUTO FILL ================= -->
+<div layout:fragment="scripts">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const jdSelect = document.getElementById("jdSelect");
+
+            if (!jdSelect) {
+                console.log("jdSelect not found");
+                return;
+            }
+
+            jdSelect.addEventListener("change", function () {
+
+                const id = this.value;
+
+                if (!id) return;
+
+                fetch('/api/jd/' + id)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("API error");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+
+                        console.log("JD Data:", data);
+
+                        document.getElementById("titleInput").value = data.jobTitle || "";
+                        document.getElementById("descriptionInput").value = data.responsibilities || "";
+                        document.getElementById("requirementsInput").value = data.requirements || "";
+                        document.getElementById("benefitsInput").value = data.benefits || "";
+
+                    })
+                    .catch(error => {
+                        console.error("Error loading JD:", error);
+                    });
+
+            });
+
+        });
+    </script>
+</div>
+
 </body>
 </html>
