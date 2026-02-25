@@ -15,7 +15,7 @@
            th:text="'Request #' + ${r.id} + ' - Employee: ' + ${employee.fullName} + ' (#' + ${employee.id} + ')'">
       </div>
     </div>
-    <a class="btn btn-outline-secondary" th:href="@{/manager/change-requests}">Back to pending</a>
+    <a class="btn btn-outline-secondary" th:href="@{/hr/change-requests}">Back to pending</a>
   </div>
 
   <div class="card mb-3">
@@ -59,7 +59,7 @@
 
       <div class="row g-3">
         <div class="col-md-6">
-          <form th:action="@{/manager/change-requests/{id}/approve(id=${r.id})}" method="post">
+          <form th:action="@{/hr/change-requests/{id}/approve(id=${r.id})}" method="post">
             <label class="form-label">Decision note (optional)</label>
             <textarea class="form-control" name="decisionNote" rows="3"></textarea>
             <button class="btn btn-success mt-2"
@@ -70,7 +70,7 @@
         </div>
 
         <div class="col-md-6">
-          <form th:action="@{/manager/change-requests/{id}/reject(id=${r.id})}" method="post">
+          <form th:action="@{/hr/change-requests/{id}/reject(id=${r.id})}" method="post">
             <label class="form-label">Decision note (optional)</label>
             <textarea class="form-control" name="decisionNote" rows="3"></textarea>
             <button class="btn btn-danger mt-2"
