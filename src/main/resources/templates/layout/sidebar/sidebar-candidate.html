@@ -1,0 +1,31 @@
+<div th:fragment="sidebar">
+
+    <div class="sidebar-header border-bottom">
+        <div class="sidebar-brand">
+            <span class="fw-bold">HR DASHBOARD</span>
+        </div>
+    </div>
+
+    <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+
+        <!-- Candidate Management -->
+        <li class="nav-title">Candidate Management</li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/dashboard/hr}">
+                <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use></svg>
+                Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+    <span class="nav-link disabled">
+        Select Job Posting to view candidates
+    </span>
+        </li>
+
+        <li class="nav-divider"></li>
+
+
+
+    </ul>
+
+</div>

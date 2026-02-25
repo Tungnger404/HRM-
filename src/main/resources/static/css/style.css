@@ -14393,6 +14393,11 @@ textarea.form-control-lg {
   align-items: center;
   min-height: calc(4rem + 1px);
 }
+/* Fix sidebar text cut off */
+.sidebar-nav .nav-link {
+    white-space: normal !important;
+    word-break: break-word;
+}
 
 .sidebar-narrow .sidebar-toggler,
 .sidebar-narrow-unfoldable:not(:hover) .sidebar-toggler {

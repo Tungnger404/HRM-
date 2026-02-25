@@ -10,8 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -22,12 +24,18 @@ public class JobPostingServiceImpl implements JobPostingService {
     private final RecruitmentRequestRepository reqRepo;
     private final JobDescriptionRepository jdRepo;
 
+    // ================================
+    // 1️⃣ HR GET ALL
+    // ================================
     @Override
     public List<JobPosting> getAll() {
-        autoExpire(); // auto update status
+        autoExpire();
         return repository.findAll();
     }
 
+    // ================================
+    // 2️⃣ CREATE
+    // ================================
     @Override
     public void create(JobPostingCreateDTO dto) {
 
@@ -47,10 +55,11 @@ public class JobPostingServiceImpl implements JobPostingService {
             throw new RuntimeException("Job Description must be ACTIVE");
         }
 
-
         if (dto.getExpiryDate().isBefore(dto.getPublishDate())) {
             throw new RuntimeException("Expiry date must be after publish date");
         }
+
+        String slug = generateUniqueSlug(dto.getTitle());
 
         JobPosting posting = JobPosting.builder()
                 .recruitmentRequest(req)
@@ -62,11 +71,17 @@ public class JobPostingServiceImpl implements JobPostingService {
                 .publishDate(dto.getPublishDate())
                 .expiryDate(dto.getExpiryDate())
                 .status("OPEN")
+                .slug(slug)
+                .isPublic(true)
+                .viewCount(0)
                 .build();
 
         repository.save(posting);
     }
 
+    // ================================
+    // 3️⃣ CHANGE STATUS
+    // ================================
     @Override
     public void changeStatus(Integer id, String status) {
 
@@ -77,12 +92,17 @@ public class JobPostingServiceImpl implements JobPostingService {
         repository.save(posting);
     }
 
+    // ================================
+    // 4️⃣ DELETE
+    // ================================
     @Override
     public void delete(Integer id) {
         repository.deleteById(id);
     }
 
-    // ===== AUTO EXPIRE =====
+    // ================================
+    // 5️⃣ AUTO EXPIRE
+    // ================================
     @Override
     public void autoExpire() {
 
@@ -95,5 +115,59 @@ public class JobPostingServiceImpl implements JobPostingService {
                 jp.setStatus("EXPIRED");
             }
         }
+    }
+
+    // ================================
+    // 6️⃣ PUBLIC CAREER PAGE
+    // ================================
+    @Override
+    public List<JobPosting> getPublicOpenJobs() {
+        return repository.findByIsPublicTrueAndStatusAndExpiryDateAfter(
+                "OPEN",
+                LocalDate.now()
+        );
+    }
+
+    @Override
+    public JobPosting getBySlug(String slug) {
+        return repository.findBySlugAndIsPublicTrue(slug)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+    }
+
+    @Override
+    public void increaseViewCount(String slug) {
+
+        JobPosting job = repository.findBySlugAndIsPublicTrue(slug)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        job.setViewCount(job.getViewCount() + 1);
+    }
+
+    // ================================
+    // 7️⃣ SLUG GENERATOR
+    // ================================
+    private String generateUniqueSlug(String title) {
+
+        String baseSlug = toSlug(title);
+        String slug = baseSlug;
+        int counter = 1;
+
+        while (repository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+
+        return slug;
+    }
+
+    private String toSlug(String input) {
+
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD)
+                .replaceAll("[^\\p{ASCII}]", "");
+
+        return normalized.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-+", "-");
     }
 }
