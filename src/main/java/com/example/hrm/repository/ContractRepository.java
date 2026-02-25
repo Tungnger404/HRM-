@@ -41,4 +41,6 @@ public interface ContractRepository extends JpaRepository<Contract, Integer> {
         order by c.startDate desc
     """)
     List<Contract> findActiveContracts(@Param("empId") Integer empId);
+
+    long countByEndDateBetween(LocalDate start, LocalDate end);
 }

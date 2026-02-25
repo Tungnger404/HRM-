@@ -1,21 +1,39 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.repository.ContractRepository;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.time.LocalDate;
+
 @Controller
 public class DashbroadController {
+
+    private final EmployeeRepository employeeRepository;
+    private final ContractRepository contractRepository;
+
+    public DashbroadController(EmployeeRepository employeeRepository,
+                               ContractRepository contractRepository) {
+        this.employeeRepository = employeeRepository;
+        this.contractRepository = contractRepository;
+    }
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication auth) {
         if (auth == null) return "redirect:/login";
 
-        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean isHr = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_HR"));
-        boolean isManager = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
-        boolean isEmployee = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"));
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isHr = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_HR"));
+        boolean isManager = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
+        boolean isEmployee = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"));
 
         if (isAdmin) return "redirect:/dashboard/admin";
         if (isHr) return "redirect:/dashboard/hr";
@@ -31,9 +49,30 @@ public class DashbroadController {
         return "auth/AdminDashbroad";
     }
 
+    // ✅ CORE HR DASHBOARD
     @GetMapping("/dashboard/hr")
     public String hrDash(Model model) {
+
+        long totalEmployees = employeeRepository.count();
+
+        LocalDate today = LocalDate.now();
+        LocalDate next30Days = today.plusDays(30);
+
+        long expiringContracts =
+                contractRepository.countByEndDateBetween(today, next30Days);
+
+        long active = employeeRepository.countByStatus("ACTIVE");
+        long inactive = employeeRepository.countByStatus("INACTIVE");
+        long resigned = employeeRepository.countByStatus("RESIGNED");
+
         model.addAttribute("sidebar", "sidebar-hr.html");
+
+        model.addAttribute("totalEmployees", totalEmployees);
+        model.addAttribute("expiringContracts", expiringContracts);
+        model.addAttribute("active", active);
+        model.addAttribute("inactive", inactive);
+        model.addAttribute("resigned", resigned);
+
         return "auth/HrDashbroad";
     }
 

@@ -34,4 +34,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     """)
     List<Employee> search(@Param("q") String q,
                           @Param("status") String status);
+
+
+
+    long countByStatus(String status);
 }

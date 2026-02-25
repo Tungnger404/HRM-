@@ -13,8 +13,20 @@
     .actions{display:flex;gap:10px;flex-wrap:wrap}
     input,select{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
     input:focus,select:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
-    .btn{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-weight:700}
-    .btn-primary{background:#f5b400;border-color:#f5b400}
+    .btn{
+      height:42px;
+      padding:0 20px;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      background:#fff;
+      cursor:pointer;
+      font-weight:700;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }    .btn-primary{background:#f5b400;border-color:#f5b400}
     .table{width:100%;border-collapse:collapse;margin-top:12px}
     .table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:14px}
     .table th{color:#6b7280;font-weight:800}
@@ -79,6 +91,12 @@
       </tr>
       </tbody>
     </table>
+
+    <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+      <a th:href="@{/dashboard/hr}" class="btn">
+        ← Back to Dashboard
+      </a>
+    </div>
   </div>
 </div>
 </body>
