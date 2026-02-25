@@ -13,7 +13,7 @@
       <h3 class="mb-1">Pending Change Requests</h3>
       <div class="text-body-secondary">Approve or reject employee profile update requests</div>
     </div>
-    <a class="btn btn-outline-secondary" th:href="@{/dashboard/manager}">Back</a>
+    <a class="btn btn-outline-secondary" th:href="@{/dashboard/hr}">Back</a>
   </div>
 
   <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
@@ -45,7 +45,7 @@
           <td th:text="${r.reason}"></td>
           <td th:text="${#temporals.format(r.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
           <td>
-            <a class="btn btn-sm btn-primary" th:href="@{/manager/change-requests/{id}(id=${r.id})}">
+            <a class="btn btn-sm btn-primary" th:href="@{/hr/change-requests/{id}(id=${r.id})}">
               Review
             </a>
           </td>
