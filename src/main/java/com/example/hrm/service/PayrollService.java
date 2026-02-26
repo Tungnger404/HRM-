@@ -630,6 +630,22 @@ public class PayrollService {
     // =========================
 
     @Transactional(readOnly = true)
+    public List<PayrollInquiryDTO> listAllInquiriesForEmployee(Integer empId, String status) {
+        // dùng repo query riêng cho employee
+        return inquiryRepo.findForEmployee(empId, null, status).stream()
+                .map(i -> PayrollInquiryDTO.builder()
+                        .id(i.getId())
+                        .payslipId(i.getPayslip().getId())
+                        .empId(empId)
+                        .question(i.getQuestion())
+                        .answer(i.getAnswer())
+                        .status(i.getStatus())
+                        .createdAt(i.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<PayrollInquiryDTO> listInquiriesForEmployee(Integer empId, Integer payslipId) {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));

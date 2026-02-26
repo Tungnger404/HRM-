@@ -33,35 +33,8 @@ public class EmployeePayslipController {
     @GetMapping("/{payslipId}")
     public String detail(@PathVariable Integer payslipId, Model model, Principal principal) {
         Integer empId = currentEmployeeService.requireEmployee(principal).getId();
-
         model.addAttribute("p", payrollService.getPayslipDetailForEmployee(empId, payslipId));
-        model.addAttribute("inquiries", payrollService.listInquiriesForEmployee(empId, payslipId));
-        model.addAttribute("inq", new PayrollInquiryCreateDTO(payslipId, ""));
-
         return "employee/payslip-detail";
-    }
-
-    @PostMapping("/{payslipId}/inquiry")
-    public String submitInquiry(@PathVariable Integer payslipId,
-                                @ModelAttribute("inq") @Valid PayrollInquiryCreateDTO req,
-                                BindingResult br,
-                                Model model,
-                                Principal principal,
-                                RedirectAttributes ra) {
-
-        Integer empId = currentEmployeeService.requireEmployee(principal).getId();
-        req.setPayslipId(payslipId);
-
-        if (br.hasErrors()) {
-            // render lại detail + list inquiries + show errors
-            model.addAttribute("p", payrollService.getPayslipDetailForEmployee(empId, payslipId));
-            model.addAttribute("inquiries", payrollService.listInquiriesForEmployee(empId, payslipId));
-            return "employee/payslip-detail";
-        }
-
-        payrollService.submitInquiry(empId, req);
-        ra.addFlashAttribute("msg", "Đã gửi thắc mắc. Vui lòng chờ quản lý phản hồi.");
-        return "redirect:/employee/payslips/" + payslipId;
     }
 
     @GetMapping("/{payslipId}/download")

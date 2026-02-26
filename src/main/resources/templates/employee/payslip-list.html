@@ -9,46 +9,96 @@
 <body>
 <div layout:fragment="content">
 
-    <h1 class="mb-4">My Payslips</h1>
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">My Payslips</h2>
+
+            <!-- Hiển thị thông tin nhân viên (lấy từ dòng đầu tiên) -->
+            <div class="text-body-secondary small"
+                 th:if="${payslips != null and !#lists.isEmpty(payslips)}">
+                Employee:
+                <b th:text="${payslips[0].employeeName}"></b>
+                <span class="ms-2">| Code:</span>
+                <b th:text="${'NV' + payslips[0].empId}"></b>
+            </div>
+
+            <div class="text-body-secondary small"
+                 th:if="${payslips == null or #lists.isEmpty(payslips)}">
+                No payslips available
+            </div>
+        </div>
+    </div>
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-body table-responsive">
 
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered align-middle">
-                    <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>Period</th>
-                        <th class="text-end">Total Income</th>
-                        <th class="text-end">Total Deduction</th>
-                        <th class="text-end">Net</th>
-                        <th style="width:120px;">Action</th>
-                    </tr>
-                    </thead>
+            <table class="table table-hover table-bordered align-middle mb-0">
+                <thead>
+                <tr>
+                    <th style="width:120px;">Payslip No</th>
+                    <th>Period</th>
 
-                    <tbody>
-                    <tr th:each="p : ${payslips}">
-                        <td th:text="${p.employeeName}"></td>
-                        <td th:text="${p.period}"></td>
-                        <td class="text-end" th:text="${p.totalIncome}"></td>
-                        <td class="text-end" th:text="${p.totalDeduction}"></td>
-                        <td class="text-end" th:text="${p.netSalary}"></td>
+                    <th class="text-end" style="width:160px;">Gross</th>
+                    <th class="text-end" style="width:160px;">Deduction</th>
+                    <th class="text-end" style="width:160px;">Net</th>
 
-                        <td>
-                            <a class="btn btn-primary btn-sm"
-                               th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">
-                                View
-                            </a>
-                        </td>
-                    </tr>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:190px;">Actions</th>
+                </tr>
+                </thead>
 
-                    <tr th:if="${#lists.isEmpty(payslips)}">
-                        <td colspan="6" class="text-center text-muted">No data</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+                <tbody>
+                <tr th:each="p : ${payslips}"
+                    th:classappend="${(p.totalIncome == null or p.totalIncome == 0) and (p.netSalary == null or p.netSalary == 0)} ? 'text-muted' : ''">
+
+                    <td>
+                        <a th:href="@{/employee/payslips/{id}(id=${p.payslipId})}"
+                           th:text="${p.payslipId}"></a>
+                    </td>
+
+                    <td th:text="${p.period}"></td>
+
+                    <td class="text-end"
+                        th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                    <td class="text-end"
+                        th:text="${p.totalDeduction == null ? '0' : #numbers.formatDecimal(p.totalDeduction, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                    <td class="text-end fw-semibold"
+                        th:text="${p.netSalary == null ? '0' : #numbers.formatDecimal(p.netSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                    <td>
+                        <!-- Vì listEmployeePayslips() đang filter sentToEmployee=true => coi như Released -->
+                        <span class="badge bg-success"
+                              th:if="${p.netSalary != null and p.netSalary > 0}">
+                            Released
+                        </span>
+
+                        <!-- Nếu có dòng 0 (bị “rỗng”) thì gắn nhãn để user không hiểu nhầm -->
+                        <span class="badge bg-secondary"
+                              th:if="${p.netSalary == null or p.netSalary == 0}">
+                            Empty
+                        </span>
+                    </td>
+
+                    <td class="d-flex gap-2">
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:href="@{/employee/payslips/{id}(id=${p.payslipId})}">
+                            View
+                        </a>
+
+                        <a class="btn btn-sm btn-primary"
+                           th:href="@{/employee/payslips/{id}/download(id=${p.payslipId})}">
+                            PDF
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${payslips == null || #lists.isEmpty(payslips)}">
+                    <td colspan="7" class="text-center text-body-secondary">No data</td>
+                </tr>
+                </tbody>
+            </table>
 
         </div>
     </div>
