@@ -14,31 +14,150 @@
 <div layout:fragment="content">
 
     <h2>Candidate List</h2>
+    <form method="get"
+          th:action="@{/hr/candidates}"
+          class="row g-3 mb-3">
 
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Score</th>
-            <th>Action</th>
-        </tr>
-        </thead>
+        <input type="hidden"
+               name="postingId"
+               th:value="${postingId}" />
 
-        <tbody>
-        <tr th:each="c : ${candidates}">
-            <td th:text="${c.fullName}"></td>
-            <td th:text="${c.email}"></td>
-            <td th:text="${c.status}"></td>
-            <td th:text="${c.screeningScore}"></td>
-            <td>
-                <a th:href="@{/hr/candidates/detail/{id}(id=${c.candidateId}, postingId=${postingId})}"
-                   class="btn btn-sm btn-info">View</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+        <!-- 🔍 Search -->
+        <div class="col-md-4">
+            <input type="text"
+                   name="keyword"
+                   class="form-control"
+                   placeholder="Search by name or email..."
+                   th:value="${keyword}">
+        </div>
+
+        <!-- 📌 Status Filter -->
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Status</option>
+                <option th:each="s : ${statuses}"
+                        th:value="${s}"
+                        th:text="${s}"
+                        th:selected="${status == s}">
+                </option>
+            </select>
+        </div>
+
+        <!-- 🔎 Buttons -->
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                Filter
+            </button>
+        </div>
+
+        <div class="col-md-2">
+            <a th:href="@{/hr/candidates(postingId=${postingId})}"
+               class="btn btn-secondary w-100">
+                Reset
+            </a>
+        </div>
+
+    </form>
+    <form id="batchForm"
+          method="post"
+          th:action="@{/hr/candidates/batch-interview}">
+
+        <input type="hidden"
+               name="postingId"
+               th:value="${postingId}" />
+
+        <table class="table table-bordered align-middle text-center">
+            <thead class="table-light">
+            <tr>
+                <th style="width: 70px;">Select</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th style="width: 100px;">Action</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="c : ${candidates}">
+                <td class="text-center">
+                    <input type="checkbox"
+                           name="candidateIds"
+                           th:value="${c.candidateId}"
+                           th:if="${c.status == T(com.example.hrm.entity.CandidateStatus).INTERVIEW_SCHEDULED}"
+                           class="form-check-input"
+                           style="transform: scale(1.2);" />
+                </td>
+
+                <td th:text="${c.fullName}"></td>
+                <td th:text="${c.email}"></td>
+                <td th:text="${c.status}"></td>
+                <td th:text="${c.screeningScore}"></td>
+
+                <td>
+                    <a th:href="@{/hr/candidates/detail/{id}(id=${c.candidateId}, postingId=${postingId})}"
+                       class="btn btn-sm btn-primary">
+                        View
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <button type="button"
+                class="btn btn-warning mt-2"
+                data-bs-toggle="modal"
+                data-bs-target="#batchModal">
+            Schedule Interview (Batch)
+        </button>
+
+    </form>
+
+    <!-- 🔥 MOVE MODAL VÀO ĐÂY -->
+    <div class="modal fade" id="batchModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Batch Interview Schedule</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label>Date & Time</label>
+                        <input type="datetime-local"
+                               name="interviewDate"
+                               class="form-control"
+                               form="batchForm"
+                               required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Location</label>
+                        <input type="text"
+                               name="location"
+                               class="form-control"
+                               form="batchForm"
+                               required>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit"
+                            form="batchForm"
+                            class="btn btn-success">
+                        Confirm & Send
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 </div>
 
