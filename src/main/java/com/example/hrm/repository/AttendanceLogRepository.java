@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Long> {
@@ -23,4 +24,5 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
 
     // ✅ lịch sử điểm danh theo nhân viên
     List<AttendanceLog> findByEmployee_EmpId(Integer empId);
+    Optional<AttendanceLog> findByEmployee_EmpIdAndWorkDate(Integer empId, LocalDate workDate);
 }

@@ -47,6 +47,7 @@ public class AuthService {
         session.setAttribute("USER_ID", user.getUserId());
         session.setAttribute("USERNAME", user.getUsername());
         session.setAttribute("ROLE_ID", user.getRoleId());
+
     }
 
     // ================= REGISTER =================
