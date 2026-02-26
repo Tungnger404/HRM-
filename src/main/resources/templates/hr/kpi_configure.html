@@ -15,9 +15,6 @@
     </div>
   </div>
 
-  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
-  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
-
   <div class="card mb-4">
     <div class="card-header">
       <strong>Send KPI Template</strong>
@@ -29,10 +26,14 @@
           <label class="form-label">Evaluation Cycle <span class="text-danger">*</span></label>
           <select name="cycleId" class="form-select" required>
             <option value="">-- Select Cycle --</option>
-            <option value="1">Q1 2026</option>
-            <option value="2">Q2 2026</option>
-            <option value="3">H1 2026</option>
+            <option th:each="cycle : ${cycles}"
+                    th:value="${cycle.cycleId}"
+                    th:text="${cycle.cycleName}">
+            </option>
           </select>
+          <small class="text-muted" th:if="${#lists.isEmpty(cycles)}">
+            No active evaluation cycles found. Please create one first.
+          </small>
         </div>
 
         <div class="mb-3">

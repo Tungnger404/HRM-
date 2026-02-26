@@ -60,11 +60,20 @@ public class ManagerEvaluationViewController {
             @RequestParam(required = false) String managerComment,
             @RequestParam(defaultValue = "false") boolean recommendPromotion,
             @RequestParam(defaultValue = "false") boolean recommendTraining,
+            @RequestParam(required = false) String trainingRecommendation,
             RedirectAttributes ra) {
         
         try {
             KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
                     .orElseThrow(() -> new RuntimeException("Assignment not found"));
+            
+            // Save manager review data (NEW!)
+            assignment.setManagerScore(managerScore);
+            assignment.setClassification(classification);
+            assignment.setManagerComment(managerComment);
+            assignment.setPromotionRecommendation(recommendPromotion);
+            assignment.setTrainingRecommendation(trainingRecommendation);
+            assignment.setManagerReviewedAt(LocalDateTime.now());
             
             assignment.setStatus(KpiAssignment.AssignmentStatus.COMPLETED);
             kpiAssignmentRepository.save(assignment);
@@ -75,10 +84,10 @@ public class ManagerEvaluationViewController {
                     managerScore + "/100"
             );
             
-            if (recommendTraining) {
+            if (recommendTraining && trainingRecommendation != null) {
                 notificationService.createTrainingRecommendationNotification(
                         assignment.getEmpId(),
-                        "Leadership Development"
+                        trainingRecommendation
                 );
             }
             
