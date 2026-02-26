@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-hr'">
+
+<head>
+    <title>Interview Management</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <h2 class="mb-4">Interview Management</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+
+            <table class="table table-bordered table-hover mb-0 text-center">
+                <thead class="table-light">
+                <tr>
+                    <th>Candidate</th>
+                    <th>Round</th>
+                    <th>Scheduled Time</th>
+                    <th>Location</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="i : ${interviews}">
+                    <td th:text="${i.candidate.fullName}"></td>
+                    <td th:text="${i.roundNumber}"></td>
+                    <td th:text="${i.scheduledTime}"></td>
+                    <td th:text="${i.location}"></td>
+                    <td>
+                        <a th:href="@{/interview/evaluation/{id}(id=${i.candidate.candidateId})}"
+                           class="btn btn-sm btn-primary">
+                            Evaluate
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(interviews)}">
+                    <td colspan="5" class="text-muted">No interviews found</td>
+                </tr>
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

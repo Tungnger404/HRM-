@@ -1,0 +1,98 @@
+package com.example.hrm.controller;
+
+import com.example.hrm.entity.Candidate;
+import com.example.hrm.entity.Interview;
+import com.example.hrm.entity.InterviewResult;
+import com.example.hrm.repository.CandidateRepository;
+import com.example.hrm.repository.InterviewRepository;
+import com.example.hrm.service.InterviewService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/interview")
+public class InterviewController {
+
+    private final CandidateRepository candidateRepository;
+    private final InterviewRepository interviewRepository;
+    private final InterviewService interviewService;
+
+    // ==========================
+    // 1️⃣ INTERVIEW LIST PAGE
+    // ==========================
+    @GetMapping("")
+    public String interviewList(Model model) {
+
+        List<Interview> interviews = interviewRepository.findAll();
+        model.addAttribute("interviews", interviews);
+
+        return "interview/list";
+    }
+
+    // ==========================
+    // 2️⃣ EVALUATION PAGE
+    // ==========================
+    @GetMapping("/evaluation/{id}")
+    public String viewEvaluation(@PathVariable Integer id,
+                                 Model model) {
+
+        Candidate candidate = candidateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+        List<Interview> interviews =
+                interviewRepository.findByCandidateCandidateId(id);
+
+        model.addAttribute("candidate", candidate);
+        model.addAttribute("interviews", interviews);
+
+        return "interview/evaluation";
+    }
+
+    // ==========================
+    // 3️⃣ HR SUBMIT ROUND 1
+    // ==========================
+    @PreAuthorize("hasRole('HR')")
+    @PostMapping("/submit-hr")
+    public String submitHr(@RequestParam Integer candidateId,
+                           @RequestParam Integer score,
+                           @RequestParam String feedback,
+                           @RequestParam InterviewResult result) {
+
+        interviewService.submitEvaluation(
+                candidateId,
+                1,
+                score,
+                feedback,
+                result
+        );
+
+        return "redirect:/interview/evaluation/" + candidateId;
+    }
+
+    // ==========================
+    // 4️⃣ MANAGER SUBMIT ROUND 2
+    // ==========================
+    @PreAuthorize("hasRole('MANAGER')")
+    @PostMapping("/submit-manager")
+    public String submitManager(@RequestParam Integer candidateId,
+                                @RequestParam Integer score,
+                                @RequestParam String feedback,
+                                @RequestParam InterviewResult result) {
+
+        interviewService.submitEvaluation(
+                candidateId,
+                2,
+                score,
+                feedback,
+                result
+        );
+
+        return "redirect:/interview/evaluation/" + candidateId;
+    }
+}
