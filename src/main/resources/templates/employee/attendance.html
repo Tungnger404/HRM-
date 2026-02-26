@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<div layout:fragment="content">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Attendance</h5>
+        </div>
+
+        <div class="card-body">
+
+            <!-- Success -->
+            <div th:if="${message}" class="alert alert-success">
+                <span th:text="${message}"></span>
+            </div>
+
+            <!-- Error -->
+            <div th:if="${error}" class="alert alert-danger">
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mb-4 d-flex gap-2">
+
+                <form th:action="@{/employee/attendance/check-in}" method="post">
+                    <button type="submit" class="btn btn-success">
+                        Check In
+                    </button>
+                </form>
+
+                <form th:action="@{/employee/attendance/check-out}" method="post">
+                    <button type="submit" class="btn btn-danger">
+                        Check Out
+                    </button>
+                </form>
+
+            </div>
+
+            <hr>
+
+            <!-- Attendance History -->
+            <h6 class="fw-bold mb-3">Attendance History</h6>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="log : ${logs}">
+                        <td th:text="${log.workDate}"></td>
+                        <td th:text="${log.checkIn} ?: '-'"></td>
+                        <td th:text="${log.checkOut} ?: '-'"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="
+                                        ${log.status} == 'LATE' ? ' bg-warning' :
+                                        (${log.status} == 'ON_TIME' ? ' bg-success' :
+                                        ' bg-secondary')"
+                                  th:text="${log.status}">
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(logs)}">
+                        <td colspan="4" class="text-center text-muted">
+                            No attendance records found.
+                        </td>
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</html>
