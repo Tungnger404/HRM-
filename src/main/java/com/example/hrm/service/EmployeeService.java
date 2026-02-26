@@ -1,8 +1,10 @@
 package com.example.hrm.service;
 
 import com.example.hrm.dto.EmployeeAdd;
+import com.example.hrm.entity.Candidate;
 import com.example.hrm.entity.Employee;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface EmployeeService {
@@ -14,4 +16,7 @@ public interface EmployeeService {
     void delete(Integer id);
 
     EmployeeAdd toForm(Employee e);
+
+    void createFromCandidate(Candidate candidate,
+                             LocalDate startDate);
 }

@@ -31,6 +31,17 @@
       </a>
     </li>
 
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/job-positions}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-briefcase"></use>
+        </svg>
+        Job Positions
+      </a>
+    </li>
+
     <li class="nav-title">Evaluation & KPI</li>
 
     <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/hr/kpi')} ? 'show' : ''">
@@ -58,39 +69,59 @@
 
     <li class="nav-title">RECRUITMENT MANAGEMENT</li>
 
-    <li class="nav-item">
-      <a class="nav-link" th:href="@{/hr/recruitment-request/list}">
+    <li class="nav-group">
+      <a class="nav-link nav-group-toggle" href="#">
         <svg class="nav-icon">
-          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-people"></use>
         </svg>
-        Recruitment Request List
+        Recruitment Management
       </a>
-    </li>
 
-    <li class="nav-item">
-      <a class="nav-link" th:href="@{/hr/job-description}">
-        <svg class="nav-icon">
-          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-description"></use>
-        </svg>
-        Job Description Management
-      </a>
-    </li>
+      <ul class="nav-group-items">
 
-    <li class="nav-item">
-      <a class="nav-link" th:href="@{/hr/job-posting}">
-        <svg class="nav-icon">
-          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-bullhorn"></use>
-        </svg>
-        Job Posting Management
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" th:href="@{/interview}">
-        <svg class="nav-icon">
-          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-calendar-check"></use>
-        </svg>
-        Interview Management
-      </a>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/hr/recruitment-request/list}">
+            <span class="nav-icon"></span>
+            Recruitment Request List
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/hr/job-description}">
+            <span class="nav-icon"></span>
+            Job Description Management
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/hr/job-posting}">
+            <span class="nav-icon"></span>
+            Job Posting Management
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/interview}">
+            <span class="nav-icon"></span>
+            Interview Management
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/offer/list}">
+            <span class="nav-icon"></span>
+            Offer Pipeline
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/offer/manage}">
+            <span class="nav-icon"></span>
+            Offer Management
+          </a>
+        </li>
+
+      </ul>
     </li>
   </ul>
 </div>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml"
       layout:decorate="~{layout/layout}"
-      th:with="sidebar='sidebar-hr'">
+      th:with="sidebar=${#authorization.expression('hasRole(''MANAGER'')')} ? 'sidebar-manager' : 'sidebar-hr'">
 
 <head>
     <title>Interview Management</title>

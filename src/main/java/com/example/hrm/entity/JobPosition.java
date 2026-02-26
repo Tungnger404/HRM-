@@ -1,9 +1,15 @@
 package com.example.hrm.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "job_positions")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class JobPosition {
 
     @Id
@@ -11,22 +17,15 @@ public class JobPosition {
     @Column(name = "job_id")
     private Integer jobId;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false, length = 200)
     private String title;
 
-    public Integer getJobId() {
-        return jobId;
-    }
+    @Column(name = "job_level")
+    private Integer jobLevel;
 
-    public void setJobId(Integer jobId) {
-        this.jobId = jobId;
-    }
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    private String description;
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
 }

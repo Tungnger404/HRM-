@@ -27,7 +27,6 @@ public class InterviewServiceImpl implements InterviewService {
         Candidate candidate = candidateRepository.findById(candidateId)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-
         if (candidate.getStatus() == CandidateStatus.REJECTED) {
             throw new RuntimeException("Candidate already rejected.");
         }
@@ -36,7 +35,7 @@ public class InterviewServiceImpl implements InterviewService {
                 .findByCandidateCandidateIdAndRoundNumber(candidateId, roundNumber)
                 .orElseThrow(() -> new RuntimeException("Interview round not found"));
 
-
+        // Manager round check
         if (roundNumber == 2) {
 
             Interview hrInterview = interviewRepository
@@ -52,13 +51,34 @@ public class InterviewServiceImpl implements InterviewService {
             }
         }
 
-
+        // Save evaluation
         interview.setScore(score);
         interview.setFeedback(feedback);
         interview.setResult(result);
         interviewRepository.save(interview);
 
-        // Update status
+        // =========================
+        // AUTO CREATE ROUND 2
+        // =========================
+        if (roundNumber == 1 && result == InterviewResult.PASS) {
+
+            boolean round2Exists = interviewRepository
+                    .existsByCandidateCandidateIdAndRoundNumber(candidateId, 2);
+
+            if (!round2Exists) {
+                Interview managerInterview = new Interview();
+                managerInterview.setCandidate(candidate);
+                managerInterview.setRoundNumber(2);
+                managerInterview.setScheduledTime(LocalDateTime.now().plusDays(2));
+                managerInterview.setLocation("Manager Interview");
+
+                interviewRepository.save(managerInterview);
+            }
+        }
+
+        // =========================
+        // UPDATE STATUS
+        // =========================
         if (result == InterviewResult.FAIL) {
             candidate.setStatus(CandidateStatus.REJECTED);
         } else {

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HR - Job Position Form</title>
+
+  <style>
+    .wrap{max-width:900px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .title{font-size:20px;font-weight:800}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    input,textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
+    input:focus,textarea:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
+    textarea{min-height:130px;resize:vertical}
+    .btn{height:38px;padding:0 12px;border:1px solid #9da0a5;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center}
+    .btn-primary{background:#f5b400;border-color:#f5b400}
+    .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
+    .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:block;font-weight:800;color:#6b7280;font-size:12px;margin:10px 0 6px}
+    .fieldErr{color:#991b1b;font-size:13px;margin-top:6px}
+  </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+  <div class="wrap">
+    <div class="card">
+
+      <div class="top">
+        <div class="title" th:text="${mode == 'create' ? 'Create Job Position' : 'Edit Job Position'}"></div>
+        <div class="actions">
+          <a class="btn" th:href="@{/hr/job-positions}">← Back</a>
+        </div>
+      </div>
+
+      <div class="msg msg-err" th:if="${error != null and error != ''}" th:text="${error}"></div>
+
+      <form th:object="${f}"
+            method="post"
+            th:action="${mode == 'create'} ? @{/hr/job-positions/new} : @{/hr/job-positions/{id}/edit(id=${f.jobId})}">
+
+        <label>Title</label>
+        <input th:field="*{title}" placeholder="e.g. Developer"/>
+        <div class="fieldErr" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+
+        <div class="grid">
+          <div>
+            <label>Job level (1-10)</label>
+            <input type="number" min="1" max="10" th:field="*{jobLevel}" />
+            <div class="fieldErr" th:if="${#fields.hasErrors('jobLevel')}" th:errors="*{jobLevel}"></div>
+          </div>
+          <div>
+            <label>Status</label>
+            <input disabled th:value="${mode == 'create' ? 'ACTIVE (default)' : (f.active ? 'ACTIVE' : 'INACTIVE')}">
+          </div>
+        </div>
+
+        <label>Description</label>
+        <textarea th:field="*{description}" placeholder="Short description..."></textarea>
+        <div class="fieldErr" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+          <button class="btn btn-primary" type="submit" th:text="${mode == 'create' ? 'Create' : 'Save'}"></button>
+          <a class="btn" th:href="@{/hr/job-positions}">Cancel</a>
+        </div>
+      </form>
+
+      <!-- Activate/Deactivate buttons (edit mode only) -->
+      <div th:if="${mode == 'edit'}" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+        <form th:if="${f.active}" method="post"
+              th:action="@{/hr/job-positions/{id}/deactivate(id=${f.jobId})}"
+              onsubmit="return confirm('Deactivate this position?');">
+          <button class="btn" type="submit">Deactivate</button>
+        </form>
+
+        <form th:if="${!f.active}" method="post"
+              th:action="@{/hr/job-positions/{id}/activate(id=${f.jobId})}">
+          <button class="btn btn-primary" type="submit">Activate</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
