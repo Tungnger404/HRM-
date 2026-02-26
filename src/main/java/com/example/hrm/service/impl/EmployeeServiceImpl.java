@@ -1,12 +1,14 @@
 package com.example.hrm.service.impl;
 
 import com.example.hrm.dto.EmployeeAdd;
+import com.example.hrm.entity.Candidate;
 import com.example.hrm.entity.Employee;
 import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.service.EmployeeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -124,5 +126,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (f.getEmpId() != null && f.getDirectManagerId() != null && f.getEmpId().equals(f.getDirectManagerId())) {
             throw new IllegalArgumentException("directManagerId cannot be itself");
         }
+    }
+    @Override
+    public void createFromCandidate(Candidate candidate,
+                                    LocalDate startDate) {
+
+        Employee employee = Employee.builder()
+                .fullName(candidate.getFullName())
+                .phone(candidate.getPhone())
+                .status("PROBATION")
+                .joinDate(startDate != null ? startDate : LocalDate.now())
+                .build();
+
+        repo.save(employee);
     }
 }
