@@ -29,9 +29,14 @@ public class GlobalModelAdvice {
         if (uri.startsWith("/manager/") || uri.equals("/manager")) {
             return "sidebar-manager.html";
         }
-        if (uri.startsWith("/employee/") || uri.equals("/employee")) {
+        
+        // ---- KHU VỰC EMPLOYEE (bao gồm Evaluation & Training) ----
+        if (uri.startsWith("/employee/") || uri.equals("/employee")
+                || uri.startsWith("/evaluation/") || uri.equals("/evaluation")
+                || uri.startsWith("/training/") || uri.equals("/training")) {
             return "sidebar-employee.html";
         }
+        
         if (uri.startsWith("/bank/") || uri.equals("/bank")) {
             return "sidebar-bank.html";
         }

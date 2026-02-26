@@ -122,26 +122,48 @@
 
         <li class="nav-divider"></li>
 
+        <!-- ================= EVALUATION & TRAINING ================= -->
+        <li class="nav-title">Evaluation & Training</li>
+
+        <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/manager/evaluation') or #strings.startsWith(currentUri, '/evaluation') or #strings.startsWith(currentUri, '/training')} ? 'show' : ''">
+          <a class="nav-link nav-group-toggle" href="#">
+            <svg class="nav-icon">
+              <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-star"></use>
+            </svg>
+            Evaluation & Training
+          </a>
+
+          <ul class="nav-group-items compact">
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/manager/evaluation/pending}"
+                 th:classappend="${#strings.contains(currentUri, '/manager/evaluation')} ? 'active' : ''">
+                <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                Pending Evaluations
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/evaluation/ranking/1}"
+                 th:classappend="${#strings.contains(currentUri, '/evaluation/ranking')} ? 'active' : ''">
+                <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                Performance Ranking
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/training/assign}"
+                 th:classappend="${#strings.contains(currentUri, '/training/assign')} ? 'active' : ''">
+                <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                Assign Training
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-divider"></li>
+
         <!-- ================= SYSTEM ================= -->
         <li class="nav-title">System</li>
-
-        <li class="nav-item">
-            <a class="nav-link" th:href="@{/manager/evaluation/pending}">
-                <svg class="nav-icon">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-task"></use>
-                </svg>
-                Pending Evaluations
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link" th:href="@{/evaluation/ranking/1}">
-                <svg class="nav-icon">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-chart-line"></use>
-                </svg>
-                Performance Ranking
-            </a>
-        </li>
 
         <li class="nav-item">
             <a class="nav-link" th:href="@{/logout}">
