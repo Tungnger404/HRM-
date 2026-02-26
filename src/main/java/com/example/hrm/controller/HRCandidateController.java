@@ -7,6 +7,7 @@ import com.example.hrm.entity.Candidate;
 import com.example.hrm.entity.CandidateStatus;
 import com.example.hrm.service.CandidateService;
 
+import com.example.hrm.service.InterviewService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,10 +20,14 @@ import java.util.List;
 @RequestMapping("/hr/candidates")
 public class HRCandidateController {
 
-    private final CandidateService service;
 
-    public HRCandidateController(CandidateService service) {
+    private final CandidateService service;
+    private final InterviewService interviewService;
+
+    public HRCandidateController(CandidateService service,
+                                 InterviewService interviewService) {
         this.service = service;
+        this.interviewService = interviewService;
     }
 
     @GetMapping
