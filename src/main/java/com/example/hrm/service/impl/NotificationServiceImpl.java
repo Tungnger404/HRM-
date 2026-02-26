@@ -72,7 +72,7 @@ public class NotificationServiceImpl implements NotificationService {
         create(empId, "KPI_REJECTED",
                 "Your KPI submission needs revision",
                 reason,
-                "/evaluation/submit-kpi/" + assignmentId + "/edit");
+                "/evaluation/submit-kpi");
     }
 
     @Override
@@ -100,6 +100,15 @@ public class NotificationServiceImpl implements NotificationService {
                 "You have been recommended for training",
                 "Program: " + programName,
                 "/training/recommendations");
+    }
+
+    @Override
+    @Transactional
+    public void createKpiSubmittedNotification(Integer hrStaffId, Integer assignmentId, String employeeName) {
+        create(hrStaffId, "KPI_SUBMITTED",
+                "New KPI submission to verify",
+                employeeName + " has submitted KPI and evidence for review",
+                "/hr/kpi/pending-verification");
     }
 
     // ===== Read/Mark =====

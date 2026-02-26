@@ -204,11 +204,12 @@ public class EvaluationViewController {
             assignment.setEmployeeSubmittedAt(LocalDateTime.now());
             kpiAssignmentRepository.save(assignment);
             
-            Integer hrStaffId = 1;
-            notificationService.createEvaluationPendingNotification(
+            // Notify HR staff about new KPI submission
+            Integer hrStaffId = 2; // TODO: Get actual HR staff ID from assignment or config
+            notificationService.createKpiSubmittedNotification(
                     hrStaffId,
                     assignment.getAssignmentId(),
-                    "Employee ID " + employeeId
+                    "Employee #" + employeeId
             );
             
             ra.addFlashAttribute("msg", "Evaluation submitted successfully! Waiting for HR verification.");

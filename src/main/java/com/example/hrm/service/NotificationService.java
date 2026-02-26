@@ -16,6 +16,9 @@ public interface NotificationService {
     
     void createTrainingRecommendationNotification(Integer empId, String programName);
 
+    // ===== NEW: KPI submission notification for HR =====
+    void createKpiSubmittedNotification(Integer hrStaffId, Integer assignmentId, String employeeName);
+
     // ===== NEW: generic helper (optional but rất tiện) =====
     void create(Integer empId, String type, String title, String message, String linkUrl);
 
