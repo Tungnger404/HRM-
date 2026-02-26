@@ -24,7 +24,7 @@
             <a class="btn btn-outline-primary"
                th:classappend="${status == 'OPEN'} ? ' active' : ''"
                th:href="@{/manager/inquiries(status='OPEN')}">
-                OPEN
+                PENDING
             </a>
             <a class="btn btn-outline-primary"
                th:classappend="${status == 'RESOLVED'} ? ' active' : ''"
