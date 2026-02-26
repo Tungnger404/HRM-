@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employees in Job</title>
+
+  <style>
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .title{font-size:20px;font-weight:800}
+    .btn{height:38px;padding:0 12px;border:1px solid #9da0a5;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center}
+    .table{width:100%;border-collapse:collapse;margin-top:12px}
+    .table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:14px}
+    .table th{color:#6b7280;font-weight:800}
+    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;border:1px solid #ced3d3;background:#4c4f50;color:#fff}
+  </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+  <div class="wrap">
+    <div class="card">
+
+      <div class="top">
+        <div class="title">
+          Employees in Job:
+          <span th:text="${jp.title}"></span>
+          (Level <span th:text="${jp.jobLevel}"></span>)
+        </div>
+        <a class="btn" th:href="@{/hr/job-positions}">← Back</a>
+      </div>
+
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Emp ID</th>
+          <th>Full Name</th>
+          <th>Phone</th>
+          <th>Dept ID</th>
+          <th>Status</th>
+          <th style="width:160px">Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:if="${employees == null or #lists.isEmpty(employees)}">
+          <td colspan="6" style="color:#6b7280;padding:14px;">No employees in this job.</td>
+        </tr>
+
+        <tr th:each="e : ${employees}">
+          <td th:text="${e.empId}"></td>
+          <td th:text="${e.fullName}"></td>
+          <td th:text="${e.phone}"></td>
+          <td th:text="${e.deptId}"></td>
+          <td><span class="badge" th:text="${e.status}"></span></td>
+          <td>
+            <a class="btn" th:href="@{'/hr/employees/' + ${e.empId}}">View / Edit</a>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

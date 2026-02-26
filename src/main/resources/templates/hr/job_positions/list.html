@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HR - Job Position Management</title>
+
+  <style>
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .title{font-size:20px;font-weight:800}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    input,select{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
+    input:focus,select:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
+    .btn{height:38px;padding:0 12px;border:1px solid #9da0a5;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center}
+    .btn-primary{background:#f5b400;border-color:#f5b400}
+    .table{width:100%;border-collapse:collapse;margin-top:12px}
+    .table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:14px;vertical-align:top}
+    .table th{color:#6b7280;font-weight:800}
+    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;border:1px solid #ced3d3;background:#4c4f50;color:#fff}
+    .badge-off{background:#ef4444;border-color:#ef4444}
+    .badge-on{background:#16a34a;border-color:#16a34a}
+    .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
+    .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
+    a{color:#111;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .emp-link{font-weight:800}
+  </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+  <div class="wrap">
+    <div class="card">
+
+      <div class="top">
+        <div class="title">HR - Job Position Management</div>
+
+        <div class="actions">
+          <a class="btn btn-primary" th:href="@{/hr/job-positions/new}">+ New Position</a>
+
+          <form method="get" th:action="@{/hr/job-positions}" style="display:flex;gap:10px;flex-wrap:wrap;">
+            <input type="text" name="q" placeholder="Search title..." th:value="${q}">
+            <input type="number" name="level" min="1" max="10" placeholder="Level" th:value="${level}">
+            <select name="active">
+              <option th:value="${null}" th:selected="${active == null}">All</option>
+              <option th:value="true" th:selected="${active == true}">Active</option>
+              <option th:value="false" th:selected="${active == false}">Inactive</option>
+            </select>
+
+            <!-- ✅ thêm size để pagination không bị mất -->
+            <input type="number" name="size" min="5" max="50" style="width:80px" th:value="${size}"/>
+
+            <button class="btn" type="submit">Filter</button>
+            <a class="btn" th:href="@{/hr/job-positions}">Reset</a>
+          </form>
+        </div>
+      </div>
+
+      <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
+      <div class="msg msg-err" th:if="${error != null and error != ''}" th:text="${error}"></div>
+
+      <table class="table">
+        <thead>
+        <tr>
+          <th style="width:80px">ID</th>
+          <th>Title</th>
+          <th style="width:90px">Level</th>
+          <th style="width:110px">Status</th>
+          <th style="width:120px">Employees</th> <!-- ✅ mới -->
+          <th>Description</th>
+          <th style="width:260px">Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:if="${data == null or data.totalElements == 0}">
+          <td colspan="7" style="color:#6b7280;padding:14px;">No job positions found.</td>
+        </tr>
+
+        <tr th:each="jp : ${data.content}">
+          <td th:text="${jp.jobId}"></td>
+          <td th:text="${jp.title}"></td>
+          <td th:text="${jp.jobLevel}"></td>
+
+          <td>
+            <span class="badge badge-on" th:if="${jp.active}">ACTIVE</span>
+            <span class="badge badge-off" th:if="${!jp.active}">INACTIVE</span>
+          </td>
+
+          <!-- ✅ hiển thị số nhân viên + link xem -->
+          <td>
+            <a class="emp-link"
+               th:href="@{/hr/job-positions/{id}/employees(id=${jp.jobId})}">
+              <span th:text="${empCountMap != null && empCountMap[jp.jobId] != null ? empCountMap[jp.jobId] : 0}"></span>
+            </a>
+          </td>
+
+          <td th:text="${jp.description}"></td>
+
+          <td>
+            <div class="row-actions">
+              <a class="btn" th:href="@{/hr/job-positions/{id}/edit(id=${jp.jobId})}">Edit</a>
+
+              <form th:if="${jp.active}" method="post"
+                    th:action="@{/hr/job-positions/{id}/deactivate(id=${jp.jobId})}"
+                    onsubmit="return confirm('Deactivate this position?');">
+                <button class="btn" type="submit">Deactivate</button>
+              </form>
+
+              <form th:if="${!jp.active}" method="post"
+                    th:action="@{/hr/job-positions/{id}/activate(id=${jp.jobId})}">
+                <button class="btn btn-primary" type="submit">Activate</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div th:if="${data != null and data.totalPages > 1}"
+           style="display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:12px;flex-wrap:wrap;">
+        <a class="btn"
+           th:if="${data.hasPrevious()}"
+           th:href="@{/hr/job-positions(q=${q},level=${level},active=${active},page=${data.number-1},size=${size})}">
+          Prev
+        </a>
+
+        <span style="color:#6b7280;">
+          Page <b th:text="${data.number + 1}"></b> / <b th:text="${data.totalPages}"></b>
+        </span>
+
+        <a class="btn"
+           th:if="${data.hasNext()}"
+           th:href="@{/hr/job-positions(q=${q},level=${level},active=${active},page=${data.number+1},size=${size})}">
+          Next
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
