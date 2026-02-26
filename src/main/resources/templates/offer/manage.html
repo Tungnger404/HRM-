@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-hr.html'">
+
+<head>
+    <title>Offer Management</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+
+        <h2 class="mb-4 fw-bold">Offer Management</h2>
+
+        <!-- 🔍 SEARCH -->
+        <form class="row mb-3"
+              th:action="@{/offer/manage}"
+              method="get">
+
+            <div class="col-md-4">
+                <input type="text"
+                       name="keyword"
+                       th:value="${keyword}"
+                       class="form-control"
+                       placeholder="Search candidate name...">
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100">
+                    Search
+                </button>
+            </div>
+        </form>
+
+        <div class="table-responsive shadow-sm rounded-3"
+             style="background: #1e1e2f; padding: 20px;">
+
+            <table class="table table-hover align-middle table-bordered table-dark">
+
+                <thead class="table-light text-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Candidate</th>
+                    <th>Position</th>
+                    <th>Salary</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="offer : ${offers}">
+
+                    <td th:text="${offer.offerId}"></td>
+
+                    <td th:text="${offer.candidate.fullName}"></td>
+
+                    <td th:text="${offer.candidate.jobPosting.title}"></td>
+
+                    <td th:text="${offer.salaryOffered}"></td>
+
+                    <td>
+                        <span class="badge bg-secondary"
+                              th:text="${offer.status}">
+                        </span>
+                    </td>
+
+                    <td>
+
+                        <a class="btn btn-info btn-sm"
+                           th:href="@{/offer/detail/{id}(id=${offer.offerId})}">
+                            Detail
+                        </a>
+
+                        <form th:if="${offer.status.name() == 'DRAFT'}"
+                              th:action="@{/offer/send/{id}(id=${offer.offerId})}"
+                              method="post"
+                              style="display:inline">
+                            <button class="btn btn-warning btn-sm">
+                                Send
+                            </button>
+                        </form>
+
+                        <form th:if="${offer.status.name() == 'SENT'}"
+                              th:action="@{/offer/accept/{id}(id=${offer.offerId})}"
+                              method="post"
+                              style="display:inline">
+                            <button class="btn btn-success btn-sm">
+                                Accept
+                            </button>
+                        </form>
+
+                        <form th:if="${offer.status.name() == 'SENT'}"
+                              th:action="@{/offer/reject/{id}(id=${offer.offerId})}"
+                              method="post"
+                              style="display:inline">
+                            <button class="btn btn-danger btn-sm">
+                                Reject
+                            </button>
+                        </form>
+
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(offers)}">
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        No offers found.
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
