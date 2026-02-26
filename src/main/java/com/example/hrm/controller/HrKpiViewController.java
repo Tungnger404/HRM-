@@ -19,6 +19,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +30,8 @@ import java.util.List;
 @Controller
 @RequestMapping("/hr/kpi")
 public class HrKpiViewController {
+
+    private static final Logger log = LoggerFactory.getLogger(HrKpiViewController.class);
 
     private final KpiAssignmentRepository kpiAssignmentRepository;
     private final KpiEvidenceRepository kpiEvidenceRepository;
@@ -219,16 +223,19 @@ public class HrKpiViewController {
         try {
             KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
                     .orElse(null);
-            if (assignment == null || assignment.getEmployeeExcelPath() == null) {
+            if (assignment == null || assignment.getEmployeeExcelPath() == null
+                    || assignment.getEmployeeExcelPath().isBlank()) {
                 return ResponseEntity.notFound().build();
             }
-            Resource resource = documentStorageService.loadAsResource(assignment.getEmployeeExcelPath());
+            String path = assignment.getEmployeeExcelPath().trim();
+            Resource resource = documentStorageService.loadAsResource(path);
             String filename = "KPI_Employee_" + assignment.getEmpId() + ".xlsx";
             String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
                     .body(resource);
         } catch (Exception e) {
+            log.warn("Download employee Excel failed for assignment {}: {}", assignmentId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
