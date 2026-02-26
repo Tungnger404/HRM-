@@ -1,6 +1,12 @@
 package com.example.hrm.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.Normalizer;
+import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+
+import org.springframework.core.io.ClassPathResource;
 
 import com.example.hrm.dto.PayrollRowDTO;
 import com.example.hrm.dto.*;
@@ -10,6 +16,8 @@ import com.example.hrm.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -43,6 +51,36 @@ public class PayrollService {
     // MANAGER SIDE
     // =========================
     private final BankAccountRepository bankAccountRepo;
+
+    private static String ascii(String s) {
+        if (s == null)
+            return "";
+        String n = Normalizer.normalize(s, Normalizer.Form.NFD);
+        n = n.replaceAll("\\p{M}+", ""); // bỏ dấu
+        n = n.replace("đ", "d").replace("Đ", "D");
+        return n;
+    }
+
+    private static float writeLine(PDPageContentStream cs, PDFont font, int size, float x, float y, String text) throws IOException {
+        cs.beginText();
+        cs.setFont(font, size);
+        cs.newLineAtOffset(x, y);
+        cs.showText(text == null ? "" : text);
+        cs.endText();
+        return y - 16;
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static String money(BigDecimal v) {
+        BigDecimal val = (v == null ? BigDecimal.ZERO : v);
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        nf.setMaximumFractionDigits(0);
+        nf.setRoundingMode(java.math.RoundingMode.HALF_UP);
+        return nf.format(val);
+    }
 
     @Transactional(readOnly = true)
     public List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds) {
@@ -219,7 +257,6 @@ public class PayrollService {
             return BigDecimal.ZERO;
         }
     }
-
 
     private int toInt(Object v) {
         if (v == null)
@@ -537,6 +574,10 @@ public class PayrollService {
         return batch.getId();
     }
 
+    // =========================
+    // EMPLOYEE SIDE
+    // =========================
+
     @Transactional
     public void submitBatchForApproval(Integer batchId) {
         PayrollBatch batch = batchRepo.findById(batchId)
@@ -625,10 +666,6 @@ public class PayrollService {
         }
     }
 
-    // =========================
-    // EMPLOYEE SIDE
-    // =========================
-
     @Transactional(readOnly = true)
     public List<PayrollInquiryDTO> listAllInquiriesForEmployee(Integer empId, String status) {
         // dùng repo query riêng cho employee
@@ -674,6 +711,8 @@ public class PayrollService {
                 .toList();
     }
 
+
+    // PDF download for payslip
 
     @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForEmployee(Integer empId, Integer payslipId) {
@@ -842,52 +881,86 @@ public class PayrollService {
         }
     }
 
-
-    // PDF download for payslip
     @Transactional(readOnly = true)
     public byte[] buildPayslipPdf(Integer empId, Integer payslipId) {
         PayslipDetailDTO dto = getPayslipDetailForEmployee(empId, payslipId);
 
-        try (PDDocument doc = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (PDDocument doc = new PDDocument();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
+        // ✅ check font có tồn tại trong classpath không
+            System.out.println("FONT arial.ttf exists? " +
+                    new ClassPathResource("static/fonts/arial.ttf").exists());
+            System.out.println("FONT arialbd.ttf exists? " +
+                    new ClassPathResource("static/fonts/arialbd.ttf").exists());
+
+        // ✅ load font
+            PDType0Font font = tryLoadTtf(doc, "static/fonts/arial.ttf");
+            PDType0Font fontBold = tryLoadTtf(doc, "static/fonts/arialbd.ttf");
+            final boolean unicodeOk = (font != null && fontBold != null);
+
+            final PDFont f = unicodeOk ? font : PDType1Font.HELVETICA;
+            final PDFont fb = unicodeOk ? fontBold : PDType1Font.HELVETICA_BOLD;
+
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
-                cs.beginText();
-                cs.setFont(PDType1Font.HELVETICA_BOLD, 16);
-                cs.newLineAtOffset(50, 770);
-                cs.showText("PAYSLIP");
-                cs.endText();
+                float x = 50;
+                float y = 770;
 
-                float y = 740;
+                String title = unicodeOk ? "PHIẾU LƯƠNG / PAYSLIP" : "PAYSLIP";
+                y = writeLine(cs, fb, 16, x, y, unicodeOk ? title : ascii(title));
+                y -= 8;
 
-                y = writeLine(cs, "Employee: " + dto.getEmployeeName(), y);
-                y = writeLine(cs, "Payslip ID: " + dto.getPayslipId(), y);
-                y = writeLine(cs, "Net Salary: " + dto.getNetSalary(), y);
-                y = writeLine(cs, "---------------------------------------", y);
+                String empName = safe(dto.getEmployeeName());
+                String period = safe(dto.getPeriod());
 
-                y = writeLine(cs, "Items:", y);
-                for (PayslipItemDTO it : dto.getItems()) {
-                    y = writeLine(cs, "- [" + it.getType() + "] " + it.getName() + ": " + it.getAmount(), y);
-                    if (y < 80)
-                        break;
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Nhân viên: " : "Employee: ")
+                        + (unicodeOk ? empName : ascii(empName)));
+
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Kỳ lương: " : "Period: ")
+                        + (unicodeOk ? period : ascii(period)));
+
+                y = writeLine(cs, f, 11, x, y, "Payslip ID: " + dto.getPayslipId());
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Tổng thu nhập: " : "Total income: ") + money(dto.getTotalIncome()));
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Khấu trừ: " : "Deduction: ") + money(dto.getTotalDeduction()));
+                y = writeLine(cs, fb, 12, x, y, (unicodeOk ? "Thực nhận (Net): " : "Net: ") + money(dto.getNetSalary()));
+
+                y -= 10;
+                y = writeLine(cs, fb, 12, x, y, unicodeOk ? "Chi tiết khoản mục:" : "Items:");
+
+                List<PayslipItemDTO> items = Optional.ofNullable(dto.getItems()).orElse(List.of());
+                if (items.isEmpty()) {
+                    y = writeLine(cs, f, 11, x, y, unicodeOk ? "- (Không có khoản mục)" : "- (No items)");
+                } else {
+                    for (PayslipItemDTO it : items) {
+                        String line = String.format("- [%s] %s: %s",
+                                safe(it.getType()),
+                                safe(it.getName()),
+                                money(it.getAmount())
+                        );
+                        y = writeLine(cs, f, 11, x, y, unicodeOk ? line : ascii(line));
+                        if (y < 60)
+                            break;
+                    }
                 }
             }
 
             doc.save(out);
             return out.toByteArray();
+
         } catch (Exception e) {
             throw new RuntimeException("Build PDF failed", e);
         }
     }
 
-    private float writeLine(PDPageContentStream cs, String text, float y) throws Exception {
-        cs.beginText();
-        cs.setFont(PDType1Font.HELVETICA, 11);
-        cs.newLineAtOffset(50, y);
-        cs.showText(text);
-        cs.endText();
-        return y - 18;
+    private PDType0Font tryLoadTtf(PDDocument doc, String classpathLocation) {
+        try (InputStream in = new ClassPathResource(classpathLocation).getInputStream()) {
+            return PDType0Font.load(doc, in, true);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private BigDecimal nz(BigDecimal v) {
