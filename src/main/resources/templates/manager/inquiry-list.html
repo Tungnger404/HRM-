@@ -9,36 +9,71 @@
 <body>
 <div layout:fragment="content">
 
-    <h2 class="mb-3">Payroll Inquiries</h2>
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">Payroll Inquiries</h2>
+            <div class="text-body-secondary small">Manage employee questions about payslips</div>
+        </div>
 
-    <div class="mb-3">
-        Filter:
-        <a th:href="@{/manager/inquiries}">All</a> |
-        <a th:href="@{/manager/inquiries(status='OPEN')}">OPEN</a> |
-        <a th:href="@{/manager/inquiries(status='RESOLVED')}">RESOLVED</a>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Filter">
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == null or status == ''} ? ' active' : ''"
+               th:href="@{/manager/inquiries}">
+                All
+            </a>
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == 'OPEN'} ? ' active' : ''"
+               th:href="@{/manager/inquiries(status='OPEN')}">
+                OPEN
+            </a>
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == 'RESOLVED'} ? ' active' : ''"
+               th:href="@{/manager/inquiries(status='RESOLVED')}">
+                RESOLVED
+            </a>
+        </div>
     </div>
 
     <div class="card">
         <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle">
+            <table class="table table-bordered table-hover align-middle mb-0">
                 <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Payslip</th>
-                    <th>EmpId</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Action</th>
+                    <th style="width:70px;">STT</th>
+                    <th style="width:110px;">Payslip</th>
+                    <th style="width:120px;">Mã NV</th>
+                    <th>Tên nhân viên</th>
+                    <th style="width:140px;">Status</th>
+                    <th style="width:180px;">Created</th>
+                    <th style="width:110px;">Action</th>
                 </tr>
                 </thead>
 
                 <tbody>
-                <tr th:each="i : ${inquiries}">
-                    <td th:text="${i.id}"></td>
-                    <td th:text="${i.payslipId}"></td>
-                    <td th:text="${i.empId}"></td>
-                    <td th:text="${i.status}"></td>
-                    <td th:text="${i.createdAt}"></td>
+                <tr th:each="i,st : ${inquiries}">
+                    <td th:text="${st.index + 1}"></td>
+
+                    <!-- payslip link -->
+                    <td>
+                        <a th:href="@{/manager/payroll/payslips/{id}(id=${i.payslipId})}"
+                           th:text="${i.payslipId}"></a>
+                    </td>
+
+                    <!-- Mã NV = NV + empId -->
+                    <td th:text="${'NV' + i.empId}"></td>
+
+                    <td th:text="${i.employeeName}"></td>
+
+                    <td>
+                        <span class="badge bg-warning" th:if="${i.status == 'OPEN'}">OPEN</span>
+                        <span class="badge bg-success" th:if="${i.status == 'RESOLVED'}">RESOLVED</span>
+                        <span class="badge bg-secondary" th:if="${i.status != 'OPEN' and i.status != 'RESOLVED'}"
+                              th:text="${i.status}"></span>
+                    </td>
+
+                    <!-- ✅ format dd/MM/yyyy HH:mm -->
+                    <td th:text="${i.createdAt != null ? #temporals.format(i.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></td>
+
                     <td>
                         <a class="btn btn-sm btn-primary"
                            th:href="@{/manager/inquiries/{id}(id=${i.id})}">
@@ -48,7 +83,7 @@
                 </tr>
 
                 <tr th:if="${#lists.isEmpty(inquiries)}">
-                    <td colspan="6" class="text-center text-body-secondary">No data</td>
+                    <td colspan="8" class="text-center text-body-secondary">No data</td>
                 </tr>
                 </tbody>
             </table>

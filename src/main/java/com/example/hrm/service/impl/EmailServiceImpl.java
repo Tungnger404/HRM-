@@ -24,35 +24,54 @@ public class EmailServiceImpl implements EmailService {
                                   String location) {
 
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("lebanhatnam996@gmail.com");
         message.setTo(to);
-        message.setSubject("Interview Invitation - " + jobTitle);
+        message.setSubject("Invitation to Interview – " + jobTitle);
 
         message.setText(
                 "Dear " + name + ",\n\n" +
-                        "You are invited to interview for: " + jobTitle + "\n\n" +
-                        "Time: " + date + "\n" +
+                        "Thank you for your interest in joining Software House.\n\n" +
+                        "We are pleased to inform you that your application for the position of "
+                        + jobTitle + " has been shortlisted by our recruitment team.\n\n" +
+                        "You are invited to attend an interview with us. Please find the details below:\n\n" +
+                        "Position: " + jobTitle + "\n" +
+                        "Date & Time: " + date + "\n" +
                         "Location: " + location + "\n\n" +
-                        "Best regards,\nHR Team"
+                        "Kindly confirm your availability by replying to this email.\n\n" +
+                        "If you have any questions, please feel free to contact the HR Department via the HRM System.\n\n" +
+                        "We look forward to meeting you and discussing your potential contribution to Software House.\n\n" +
+                        "Best regards,\n" +
+                        "Human Resources Department\n" +
+                        "Software House\n" +
+                        "HRM System"
         );
 
         mailSender.send(message);
     }
+
     @Override
     public void sendRejectMail(String to,
                                String name,
                                String jobTitle) {
 
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("lebanhatnam996@gmail.com");
         message.setTo(to);
-        message.setSubject("Application Result - " + jobTitle);
+        message.setSubject("Recruitment Update – " + jobTitle);
 
         message.setText(
                 "Dear " + name + ",\n\n" +
-                        "Thank you for applying for the position: " + jobTitle + ".\n\n" +
+                        "Thank you for your interest in the position of " + jobTitle +
+                        " at Software House and for participating in our recruitment process.\n\n" +
                         "After careful consideration, we regret to inform you that " +
-                        "you were not selected for this role.\n\n" +
-                        "We wish you success in your future career.\n\n" +
-                        "Best regards,\nHR Team"
+                        "we will not be moving forward with your application at this time.\n\n" +
+                        "We sincerely appreciate the effort you have put into your application. " +
+                        "We encourage you to follow future opportunities at Software House through our HRM System.\n\n" +
+                        "We wish you continued success in your career journey.\n\n" +
+                        "Best regards,\n" +
+                        "Human Resources Department\n" +
+                        "Software House\n" +
+                        "HRM System"
         );
 
         mailSender.send(message);

@@ -71,15 +71,24 @@
                         <th style="width:60px">Stt</th>
                         <th>Mã NV</th>
                         <th>Name</th>
-
                         <th>Vị trí</th>
-                        <th class="text-end">Lương vị trí</th>
-                        <th class="text-end">Lương ngày</th>
+
+                        <th class="text-end">Lương cơ bản</th>
+                        <th class="text-end">Ngày công</th>
+                        <th class="text-end">OT (giờ)</th>
+
+                        <th class="text-end">Tổng thu nhập (Gross)</th>
+                        <th class="text-end">Khấu trừ</th>
+                        <th class="text-end">Thực nhận (Net)</th>
 
                         <th>Kỳ lương</th>
                         <th>Thời gian</th>
-                        <th class="text-end">Tổng lương (Net)</th>
+
+                        <th>Batch</th>
                         <th>Trạng thái</th>
+                        <th>Release</th>
+                        <th>Bank</th>
+
                         <th style="width:90px">Xem</th>
                     </tr>
                     </thead>
@@ -87,11 +96,12 @@
                     <tbody id="payrollTbody">
                     <tr th:each="r,st : ${rows}"
                         th:attr="data-clickable='1'"
-                        th:classappend="${r.batchStatus == 'APPROVED' or r.batchStatus == 'PAID'} ? 'text-muted' : ''">
+                        th:classappend="
+                        ${(r.batchStatus == 'APPROVED' or r.batchStatus == 'PAID') ? 'text-muted' : ''}
+                        + ' ' + ${(r.bankMissing) ? 'table-warning' : ''}">
 
                         <td class="text-center">
                             <div class="form-check d-flex justify-content-center m-0">
-                                <!-- ✅ QUAN TRỌNG: checkbox gửi payslipIds (không gửi batchIds nữa) -->
                                 <input type="checkbox"
                                        class="row-check form-check-input"
                                        name="payslipIds"
@@ -104,14 +114,22 @@
                         <td th:text="${st.index + 1}"></td>
                         <td th:text="${r.empCode}"></td>
                         <td th:text="${r.fullName}"></td>
-
                         <td th:text="${r.jobTitle}"></td>
 
                         <td class="text-end"
                             th:text="${r.baseSalary == null ? '0' : #numbers.formatDecimal(r.baseSalary, 1, 'COMMA', 0, 'POINT')}"></td>
 
+                        <td class="text-end" th:text="${r.actualWorkDays == null ? '0' : r.actualWorkDays}"></td>
+                        <td class="text-end" th:text="${r.otHours == null ? '0' : r.otHours}"></td>
+
                         <td class="text-end"
-                            th:text="${r.dailySalary == null ? '0' : #numbers.formatDecimal(r.dailySalary, 1, 'COMMA', 0, 'POINT')}"></td>
+                            th:text="${r.totalIncome == null ? '0' : #numbers.formatDecimal(r.totalIncome, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                        <td class="text-end"
+                            th:text="${r.totalDeduction == null ? '0' : #numbers.formatDecimal(r.totalDeduction, 1, 'COMMA', 0, 'POINT')}"></td>
+
+                        <td class="text-end"
+                            th:text="${r.netSalary == null ? '0' : #numbers.formatDecimal(r.netSalary, 1, 'COMMA', 0, 'POINT')}"></td>
 
                         <td>
                             <span th:text="${r.month}"></span>/<span th:text="${r.year}"></span>
@@ -123,10 +141,19 @@
                             <span th:text="${r.endDate != null ? #temporals.format(r.endDate, 'dd/MM/yyyy') : ''}"></span>
                         </td>
 
-                        <td class="text-end"
-                            th:text="${r.netSalary == null ? '0' : #numbers.formatDecimal(r.netSalary, 1, 'COMMA', 0, 'POINT')}"></td>
-
+                        <td th:text="${r.batchName}"></td>
                         <td th:text="${r.statusLabel}"></td>
+
+                        <td>
+                            <span class="badge bg-success" th:if="${r.sentToEmployee}">Released</span>
+                            <span class="badge bg-secondary" th:unless="${r.sentToEmployee}">Not sent</span>
+                        </td>
+
+                        <td>
+                            <span class="badge bg-danger" th:if="${r.bankMissing}">Missing</span>
+                            <span class="badge bg-success" th:unless="${r.bankMissing}">OK</span>
+                        </td>
+
                         <td>
                             <a class="btn btn-sm btn-outline-primary view-link"
                                th:href="@{/manager/payroll/payslips/{id}(id=${r.payslipId})}">
@@ -136,8 +163,9 @@
                     </tr>
 
                     <tr th:if="${#lists.isEmpty(rows)}" id="emptyRow">
-                        <td colspan="12" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
+                        <td colspan="18" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
                     </tr>
+
                     </tbody>
                 </table>
             </div>
@@ -182,7 +210,7 @@
                     if (!empty) {
                         const tr = document.createElement("tr");
                         tr.id = "emptyRow";
-                        tr.innerHTML = `<td colspan="12" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>`;
+                        tr.innerHTML = `<td colspan="18" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>`;
                         tbody.appendChild(tr);
                     }
                 } else {

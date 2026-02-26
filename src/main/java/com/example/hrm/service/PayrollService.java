@@ -1,6 +1,7 @@
 package com.example.hrm.service;
 
 import java.time.format.DateTimeFormatter;
+
 import com.example.hrm.dto.PayrollRowDTO;
 import com.example.hrm.dto.*;
 import com.example.hrm.repository.BankAccountRepository;
@@ -26,26 +27,22 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PayrollService {
 
+    private static final DateTimeFormatter VN_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final PayrollPeriodRepository periodRepo;
     private final PayrollBatchRepository batchRepo;
     private final PayslipRepository payslipRepo;
     private final PayslipItemRepository itemRepo;
     private final PayrollInquiryRepository inquiryRepo;
     private final NotificationService notificationService;
-
     private final EmployeeRepository employeeRepo;
     private final ContractRepository contractRepo;
     private final AttendanceLogRepository attendanceRepo;
     private final RequestRepository requestRepo;
 
-    private final BankAccountRepository bankAccountRepo;
-
     // =========================
     // MANAGER SIDE
     // =========================
-
-    private static final DateTimeFormatter VN_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
+    private final BankAccountRepository bankAccountRepo;
 
     @Transactional(readOnly = true)
     public List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds) {
@@ -101,18 +98,22 @@ public class PayrollService {
 
         Integer empId = null;
         if (q != null) {
-            String t = q.trim();
-            if (t.matches("\\d+")) {
-                try {
-                    empId = Integer.parseInt(t);
-                } catch (Exception ignored) {
-                }
+            String t = q.trim().toUpperCase();
+
+            // ✅ hỗ trợ NV1, NV-1, NV 1
+            t = t.replaceAll("\\s+", "");     // remove spaces: "NV 1" -> "NV1"
+            t = t.replaceAll("-", "");        // remove hyphen: "NV-1" -> "NV1"
+
+            if (t.matches("^NV\\d+$")) {
+                empId = Integer.parseInt(t.substring(2));
+            } else if (t.matches("^\\d+$")) {
+                empId = Integer.parseInt(t);
             }
         }
 
         List<Object[]> rows = payslipRepo.findPayrollRowsRaw(managerEmpId, status, q, empId);
 
-        return rows.stream().map(r -> {
+        List<PayrollRowDTO> result = rows.stream().map(r -> {
             int payslipId = toInt(r[0]);
             int batchId = toInt(r[1]);
             int eId = toInt(r[2]);
@@ -124,13 +125,20 @@ public class PayrollService {
             LocalDate start = toLocalDate(r[6]);
             LocalDate end = toLocalDate(r[7]);
 
-            BigDecimal net = toBigDecimal(r[8]);
-            String batchStatus = (String) r[9];
+            BigDecimal totalIncome = toBigDecimal(r[8]);
+            BigDecimal totalDeduction = toBigDecimal(r[9]);
+            BigDecimal net = toBigDecimal(r[10]);
 
-            // ✅ ĐÚNG index theo query
-            BigDecimal baseSalary = toBigDecimal(r[10]);
-            BigDecimal standardDays = toBigDecimal(r[11]);
-            String jobTitle = (String) r[12];
+            String batchStatus = (String) r[11];
+            String batchName = (String) r[12];
+
+            BigDecimal baseSalary = toBigDecimal(r[13]);
+            BigDecimal standardDays = toBigDecimal(r[14]);
+            BigDecimal actualDays = toBigDecimal(r[15]);
+            BigDecimal otHours = toBigDecimal(r[16]);
+
+            String jobTitle = (String) r[17];
+            Boolean sentToEmployee = (r[18] instanceof Boolean b) ? b : Boolean.FALSE;
 
             BigDecimal dailySalary = BigDecimal.ZERO;
             if (standardDays != null && standardDays.compareTo(BigDecimal.ZERO) > 0) {
@@ -150,17 +158,42 @@ public class PayrollService {
                     .year(year)
                     .startDate(start)
                     .endDate(end)
-                    .netSalary(net)
-                    .statusLabel(label)
-                    .batchStatus(batchStatus)
 
                     .jobTitle(jobTitle == null ? "" : jobTitle)
+                    .batchName(batchName == null ? "" : batchName)
+
                     .baseSalary(baseSalary)
+                    .standardWorkDays(standardDays)
+                    .actualWorkDays(actualDays)
+                    .otHours(otHours)
                     .dailySalary(dailySalary)
+
+                    .totalIncome(totalIncome)
+                    .totalDeduction(totalDeduction)
+                    .netSalary(net)
+
+                    .batchStatus(batchStatus)
+                    .statusLabel(label)
+
+                    .sentToEmployee(Boolean.TRUE.equals(sentToEmployee))
+                    .bankMissing(false) // set sau
                     .build();
         }).toList();
-    }
 
+        // ===== CHECK BANK ACCOUNT PRIMARY (enterprise check) =====
+        List<Integer> empIds = result.stream()
+                .map(PayrollRowDTO::getEmpId)
+                .distinct()
+                .toList();
+
+        Set<Integer> hasBank = bankAccountRepo.findByEmpIdInAndIsPrimaryTrue(empIds).stream()
+                .map(BankAccount::getEmpId)
+                .collect(Collectors.toSet());
+
+        result.forEach(dto -> dto.setBankMissing(!hasBank.contains(dto.getEmpId())));
+
+        return result;
+    }
 
     private BigDecimal toBd(Object v) {
         if (v == null)
@@ -411,7 +444,7 @@ public class PayrollService {
                     .add(mealAllowance)
                     .add(transportAllowance);
 
-        // ===== DEDUCTION: BHYT/BHXH 3% (demo) =====
+            // ===== DEDUCTION: BHYT/BHXH 3% (demo) =====
             BigDecimal insuranceRate = new BigDecimal("0.03"); // 3%
             BigDecimal insuranceDeduction = baseSalary.multiply(insuranceRate)
                     .setScale(2, RoundingMode.HALF_UP);
@@ -853,6 +886,7 @@ public class PayrollService {
                         .id(i.getId())
                         .payslipId(i.getPayslip().getId())
                         .empId(i.getEmployee().getId())
+                        .employeeName(empName(i.getEmployee())) // ✅ NEW
                         .question(i.getQuestion())
                         .answer(i.getAnswer())
                         .status(i.getStatus())
@@ -865,10 +899,12 @@ public class PayrollService {
     public PayrollInquiryDTO getInquiry(Integer inquiryId) {
         var i = inquiryRepo.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("Inquiry not found"));
+
         return PayrollInquiryDTO.builder()
                 .id(i.getId())
                 .payslipId(i.getPayslip().getId())
                 .empId(i.getEmployee().getId())
+                .employeeName(empName(i.getEmployee())) // ✅ NEW
                 .question(i.getQuestion())
                 .answer(i.getAnswer())
                 .status(i.getStatus())
@@ -908,7 +944,8 @@ public class PayrollService {
     }
 
     private String periodLabel(PayrollPeriod per) {
-        if (per == null) return "";
+        if (per == null)
+            return "";
 
         Integer m = per.getMonth();
         Integer y = per.getYear();

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-hr'">
+
+<head>
+    <title>Candidate Evaluation</title>
+</head>
+
+<body>
+
+<div layout:fragment="content">
+
+    <h2 class="mb-4">Candidate Evaluation</h2>
+
+    <!-- ================= Candidate Info ================= -->
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Name:</strong>
+                    <span th:text="${candidate.fullName}"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Email:</strong>
+                    <span th:text="${candidate.email}"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Status:</strong>
+                    <span class="badge"
+                          th:classappend="
+                                ${candidate.status.name() == 'REJECTED'} ? 'bg-danger' :
+                                (${candidate.status.name() == 'EVALUATED'} ? 'bg-success' :
+                                'bg-secondary')"
+                          th:text="${candidate.status}">
+                    </span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ================= Interview History ================= -->
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <strong>Interview History</strong>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-bordered align-middle text-center mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Round</th>
+                    <th>Scheduled Time</th>
+                    <th>Location</th>
+                    <th>Score</th>
+                    <th>Result</th>
+                    <th>Feedback</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="i : ${interviews}">
+                    <td th:text="${i.roundNumber}"></td>
+                    <td th:text="${i.scheduledTime}"></td>
+                    <td th:text="${i.location}"></td>
+                    <td th:text="${i.score}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="
+                                    ${i.result == 'PASS'} ? 'bg-success' : 'bg-danger'"
+                              th:text="${i.result}">
+                        </span>
+                    </td>
+                    <td th:text="${i.feedback}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- ================= HR Evaluation ================= -->
+
+    <div class="card mb-4 shadow-sm"
+         sec:authorize="hasRole('HR')"
+         th:if="${candidate.status != T(com.example.hrm.entity.CandidateStatus).REJECTED}">
+
+        <div class="card-header bg-warning">
+            <strong>HR Evaluation (Round 1)</strong>
+        </div>
+
+        <div class="card-body">
+
+            <form th:action="@{/interview/submit-hr}" method="post">
+
+                <input type="hidden"
+                       name="candidateId"
+                       th:value="${candidate.candidateId}"/>
+
+                <div class="mb-3">
+                    <label class="form-label">Score</label>
+                    <input type="number"
+                           name="score"
+                           min="0"
+                           max="10"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Feedback</label>
+                    <textarea name="feedback"
+                              class="form-control"
+                              rows="3"
+                              required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Result</label>
+                    <select name="result" class="form-select">
+                        <option value="PASS">PASS</option>
+                        <option value="FAIL">FAIL</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Submit HR Evaluation
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- ================= Manager Evaluation ================= -->
+
+    <div class="card mb-4 shadow-sm"
+         sec:authorize="hasRole('MANAGER')"
+         th:if="${candidate.status == T(com.example.hrm.entity.CandidateStatus).INTERVIEWED}">
+
+        <div class="card-header bg-info text-white">
+            <strong>Manager Evaluation (Round 2)</strong>
+        </div>
+
+        <div class="card-body">
+
+            <form th:action="@{/interview/submit-manager}" method="post">
+
+                <input type="hidden"
+                       name="candidateId"
+                       th:value="${candidate.candidateId}"/>
+
+                <div class="mb-3">
+                    <label class="form-label">Score</label>
+                    <input type="number"
+                           name="score"
+                           min="0"
+                           max="10"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Feedback</label>
+                    <textarea name="feedback"
+                              class="form-control"
+                              rows="3"
+                              required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Result</label>
+                    <select name="result" class="form-select">
+                        <option value="PASS">PASS</option>
+                        <option value="FAIL">FAIL</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    Submit Manager Evaluation
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
