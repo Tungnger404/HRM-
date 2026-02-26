@@ -105,9 +105,19 @@
             fill: rgba(255,255,255,0.85);
         }
 
-        /* =========================
-           CONTENT
-        ========================= */
+
+        .sidebar .nav-group-toggle {
+            pointer-events: auto !important;
+        }
+        
+
+        @media (min-width: 992px) {
+            .sidebar {
+                display: block !important;
+            }
+        }
+
+
         .body {
             background-color: var(--bg-body);
             padding: 30px;
@@ -182,28 +192,21 @@
             z-index: 2000 !important;
         }
 
-        /* =========================
-           MOBILE
-        ========================= */
-        @media (max-width: 991.98px) {
-            .sidebar {
-                position: fixed;
-                top: 72px;
-                left: -260px;
-                height: calc(100vh - 72px);
-                z-index: 1050;
-            }
-
-            .sidebar.show {
-                left: 0;
-            }
+        /* Force sidebar always expanded, never narrow */
+        .sidebar {
+            width: var(--cui-sidebar-width) !important;
+        }
+        
+        .sidebar.sidebar-narrow,
+        .sidebar.sidebar-minimize {
+            width: var(--cui-sidebar-width) !important;
         }
 
     </style>
 </head>
 <body>
 
-<div class="sidebar sidebar-fixed border-end" id="sidebar">
+<div class="sidebar sidebar-fixed sidebar-lg border-end" id="sidebar" data-coreui-narrow="false">
     <div class="sidebar-brand d-flex align-items-center gap-3 px-4 py-4">
         <div class="sidebar-logo">
             <svg class="icon icon-lg text-white">
@@ -310,7 +313,34 @@
 <script th:src="@{/vendors/@coreui/coreui/js/coreui.bundle.min.js}"></script>
 <script th:src="@{/vendors/simplebar/js/simplebar.min.js}"></script>
 <script>
+    // Disable sidebar narrow/minimize + prevent # navigation
     document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            // Remove narrow class if added
+            sidebar.classList.remove('sidebar-narrow');
+            
+            // Prevent CoreUI from minimizing sidebar
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        if (sidebar.classList.contains('sidebar-narrow')) {
+                            sidebar.classList.remove('sidebar-narrow');
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(sidebar, { attributes: true });
+        }
+        
+        // Prevent nav-group-toggle href="#" from scrolling to top
+        document.querySelectorAll('.nav-group-toggle[href="#"]').forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+            });
+        });
+        
         loadNotifications();
         setInterval(loadNotifications, 30000);
     });
@@ -413,6 +443,7 @@
         toast.show();
     }
 </script>
+
 
 <div layout:fragment="scripts"></div>
 </body>
