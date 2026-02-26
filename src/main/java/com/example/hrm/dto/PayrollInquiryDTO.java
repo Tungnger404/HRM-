@@ -11,7 +11,10 @@ import java.time.LocalDateTime;
 public class PayrollInquiryDTO {
     private Integer id;
     private Integer payslipId;
+
     private Integer empId;
+    private String employeeName;   // ✅ NEW
+
     private String question;
     private String answer;
     private String status;

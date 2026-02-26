@@ -9,14 +9,47 @@
 <body>
 <div layout:fragment="content">
 
-    <h2 class="mb-3">Inquiry Detail</h2>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">Inquiry Detail</h2>
+            <div class="text-body-secondary small">Employee inquiry about payslip</div>
+        </div>
+        <a class="btn btn-secondary btn-sm" th:href="@{/manager/inquiries}">Back</a>
+    </div>
 
     <div class="card mb-3">
         <div class="card-body">
-            <p class="mb-1"><b>ID:</b> <span th:text="${inq.id}"></span></p>
-            <p class="mb-1"><b>Payslip:</b> <span th:text="${inq.payslipId}"></span></p>
-            <p class="mb-1"><b>Employee:</b> <span th:text="${inq.empId}"></span></p>
-            <p class="mb-1"><b>Status:</b> <span th:text="${inq.status}"></span></p>
+
+            <p class="mb-1">
+                <b>Payslip:</b>
+                <a th:href="@{/manager/payroll/payslips/{id}(id=${inq.payslipId})}"
+                   th:text="${inq.payslipId}"></a>
+            </p>
+
+            <p class="mb-1">
+                <b>Mã nhân viên:</b>
+                <span th:text="${'NV' + inq.empId}"></span>
+            </p>
+
+            <p class="mb-1">
+                <b>Tên nhân viên:</b>
+                <span th:text="${inq.employeeName}"></span>
+            </p>
+
+            <p class="mb-1">
+                <b>Status:</b>
+                <span class="badge bg-warning" th:if="${inq.status == 'OPEN'}">OPEN</span>
+                <span class="badge bg-success" th:if="${inq.status == 'RESOLVED'}">RESOLVED</span>
+                <span class="badge bg-secondary"
+                      th:if="${inq.status != 'OPEN' and inq.status != 'RESOLVED'}"
+                      th:text="${inq.status}"></span>
+            </p>
+
+            <p class="mb-0">
+                <b>Created:</b>
+                <span th:text="${inq.createdAt != null ? #temporals.format(inq.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></span>
+            </p>
+
         </div>
     </div>
 

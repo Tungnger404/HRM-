@@ -23,11 +23,21 @@ public interface PayslipRepository extends JpaRepository<Payslip, Integer> {
                     per.year,
                     per.startDate,
                     per.endDate,
+            
+                    s.totalIncome,
+                    s.totalDeduction,
                     s.netSalary,
+            
                     b.status,
+                    b.name,
+            
                     s.baseSalary,
                     s.standardWorkDays,
-                    jp.title
+                    s.actualWorkDays,
+                    s.otHours,
+            
+                    jp.title,
+                    s.sentToEmployee
                 from Payslip s
                 join s.batch b
                 join b.period per
@@ -49,9 +59,9 @@ public interface PayslipRepository extends JpaRepository<Payslip, Integer> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-        delete from Payslip p
-        where p.batch.id = :batchId
-    """)
+                delete from Payslip p
+                where p.batch.id = :batchId
+            """)
     int deleteByBatchId(@Param("batchId") Integer batchId);
 
     @Query("select s.batch.id from Payslip s where s.id in :payslipIds")
