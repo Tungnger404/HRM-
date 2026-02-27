@@ -18,9 +18,6 @@
     </a>
   </div>
 
-  <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
-  <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
-
   <div class="row">
     <div class="col-lg-8">
       
@@ -42,11 +39,14 @@
           <div class="mb-3">
             <label class="fw-bold">KPI Excel:</label>
             <div>
-              <a th:href="@{/hr/kpi/download-employee/{id}(id=${assignment.assignmentId})}" 
+              <a th:if="${assignment.employeeExcelPath != null and !#strings.isEmpty(assignment.employeeExcelPath)}"
+                 th:href="@{/hr/kpi/download-employee/{id}(id=${assignment.assignmentId})}" 
                  class="btn btn-sm btn-success">
                 <i class="cil-cloud-download"></i> Download KPI Excel
               </a>
-              <small class="text-muted ms-2">Submitted at: <span th:text="${#temporals.format(assignment.employeeSubmittedAt, 'dd/MM/yyyy HH:mm')}"></span></small>
+              <span th:if="${assignment.employeeExcelPath == null or #strings.isEmpty(assignment.employeeExcelPath)}" 
+                    class="text-muted fst-italic">No Excel file submitted</span>
+              <small class="text-muted ms-2" th:if="${assignment.employeeSubmittedAt != null}">Submitted at: <span th:text="${#temporals.format(assignment.employeeSubmittedAt, 'dd/MM/yyyy HH:mm')}"></span></small>
             </div>
           </div>
 

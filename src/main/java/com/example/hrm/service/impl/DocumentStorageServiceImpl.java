@@ -50,11 +50,23 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
 
     @Override
     public Resource loadAsResource(String storedPath) {
+        if (!StringUtils.hasText(storedPath)) {
+            throw new IllegalArgumentException("Stored path is empty");
+        }
+        // Normalize: use only filename to handle paths like "uploads/hrm-docs/uuid.xlsx" or "uuid.xlsx"
+        String safePath = storedPath.trim();
+        int lastSlash = Math.max(safePath.lastIndexOf('/'), safePath.lastIndexOf('\\'));
+        if (lastSlash >= 0) {
+            safePath = safePath.substring(lastSlash + 1);
+        }
         try {
-            Path file = this.root.resolve(storedPath).normalize();
+            Path file = this.root.resolve(safePath).normalize();
+            if (!file.startsWith(this.root)) {
+                throw new IllegalArgumentException("Path traversal not allowed: " + storedPath);
+            }
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists() && resource.isReadable()) return resource;
-            throw new IllegalArgumentException("File not found: " + storedPath);
+            throw new IllegalArgumentException("File not found: " + storedPath + " (resolved: " + file + ")");
         } catch (MalformedURLException e) {
             throw new RuntimeException("Bad file path: " + storedPath, e);
         }

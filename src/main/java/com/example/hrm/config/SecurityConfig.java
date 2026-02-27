@@ -1,9 +1,6 @@
 package com.example.hrm.config;
 
 import jakarta.servlet.DispatcherType;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,74 +8,25 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-
-import java.io.IOException;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    // =========================
-    // PASSWORD ENCODER
-    // =========================
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // =========================
-    // LOGIN SUCCESS HANDLER
-    // =========================
-    @Bean
-    public AuthenticationSuccessHandler roleBasedSuccessHandler() {
-        return new AuthenticationSuccessHandler() {
-            @Override
-            public void onAuthenticationSuccess(
-                    HttpServletRequest request,
-                    HttpServletResponse response,
-                    org.springframework.security.core.Authentication authentication
-            ) throws IOException, ServletException {
-
-                String ctx = request.getContextPath();
-
-                boolean isAdmin = authentication.getAuthorities()
-                        .stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-                boolean isHr = authentication.getAuthorities()
-                        .stream().anyMatch(a -> a.getAuthority().equals("ROLE_HR"));
-                boolean isManager = authentication.getAuthorities()
-                        .stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
-                boolean isEmployee = authentication.getAuthorities()
-                        .stream().anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"));
-
-                if (isAdmin) {
-                    response.sendRedirect(ctx + "/dashboard/admin");
-                } else if (isHr) {
-                    response.sendRedirect(ctx + "/dashboard/hr");
-                } else if (isManager) {
-                    response.sendRedirect(ctx + "/dashboard/manager");
-                } else if (isEmployee) {
-                    response.sendRedirect(ctx + "/dashboard/employee");
-                } else {
-                    response.sendRedirect(ctx + "/login");
-                }
-            }
-        };
-    }
-
-    // =========================
-    // SECURITY FILTER CHAIN
-    // =========================
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // Tắt CSRF nếu dùng thuần MVC thì có thể bật lại
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow forward & error
+                        // Forward & error
                         .dispatcherTypeMatchers(
                                 DispatcherType.FORWARD,
                                 DispatcherType.ERROR
@@ -99,33 +47,49 @@ public class SecurityConfig {
                                 "/offer/reject/**"// For testing KPI workflow
                         ).permitAll()
 
-                        // ===== DASHBOARD =====
-                        .requestMatchers("/dashboard").authenticated()
-                        .requestMatchers("/dashboard/admin").hasRole("ADMIN")
-                        .requestMatchers("/dashboard/hr").hasRole("HR")
-                        .requestMatchers("/dashboard/manager").hasRole("MANAGER")
-                        .requestMatchers("/dashboard/employee").hasRole("EMPLOYEE")
+                        // ===== DASHBOARD (DEMO: mở hết) =====
+                        .requestMatchers("/dashboard").permitAll()
+                        .requestMatchers("/dashboard/admin").permitAll()
+                        .requestMatchers("/dashboard/hr").permitAll()
+                        .requestMatchers("/dashboard/manager").permitAll()
+                        .requestMatchers("/dashboard/employee").permitAll()
 
-                        // ===== NOTIFICATION API =====
-                        .requestMatchers("/api/notifications/**").authenticated()
-
-                        // ===== MODULE PERMISSION =====
-                        .requestMatchers("/hr/kpi/**").hasRole("HR")
-                        .requestMatchers("/hr/**").hasRole("HR")
-                        .requestMatchers("/manager/evaluation/**").hasAnyRole("MANAGER", "HR", "ADMIN")
-                        .requestMatchers("/manager/**").hasAnyRole("MANAGER", "HR", "ADMIN")
-                        .requestMatchers("/employee/**").hasRole("EMPLOYEE")
-                        .requestMatchers("/bank/**").hasAnyRole("MANAGER", "HR", "ADMIN")
+                        // ===== MODULE PERMISSION (DEMO: mở hết) =====
+                        .requestMatchers("/hr/**").permitAll()
+                        .requestMatchers("/manager/**").permitAll()
+                        .requestMatchers("/employee/**").permitAll()
+                        .requestMatchers("/bank/**").permitAll()
 
                         // ===== DEFAULT =====
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
 
-                // ===== LOGIN =====
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .successHandler(roleBasedSuccessHandler())
+                        .successHandler((request, response, authentication) -> {
+
+                            boolean isAdmin = authentication.getAuthorities()
+                                    .stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                            boolean isHr = authentication.getAuthorities()
+                                    .stream().anyMatch(a -> a.getAuthority().equals("ROLE_HR"));
+                            boolean isManager = authentication.getAuthorities()
+                                    .stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
+                            boolean isEmployee = authentication.getAuthorities()
+                                    .stream().anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"));
+
+                            if (isAdmin) {
+                                response.sendRedirect("/dashboard/admin");
+                            } else if (isHr) {
+                                response.sendRedirect("/dashboard/hr");
+                            } else if (isManager) {
+                                response.sendRedirect("/dashboard/manager");
+                            } else if (isEmployee) {
+                                response.sendRedirect("/dashboard/employee");
+                            } else {
+                                response.sendRedirect("/login");
+                            }
+                        })
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )

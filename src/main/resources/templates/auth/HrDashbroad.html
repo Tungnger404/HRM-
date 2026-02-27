@@ -11,42 +11,86 @@
 <body>
 <main layout:fragment="content">
 
-    <div class="mb-3">
+    <!-- Page Title -->
+    <div class="mb-4">
         <h3 class="mb-1">HR Dashboard</h3>
-        <div class="text-body-secondary">Core HR & recruitment operations</div>
+        <div class="text-body-secondary">Core HR Overview & Statistics</div>
     </div>
 
-    <div class="row g-3 mb-4">
+    <!-- KPI Cards -->
+    <div class="row g-4 mb-4">
+
         <div class="col-md-4">
-            <div class="card">
+            <div class="card text-white bg-primary shadow-sm">
                 <div class="card-body">
-                    <div class="text-body-secondary">Employee Profiles</div>
-                    <div class="fs-4 fw-semibold">Manage Employees</div>
-                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/employees}">Open list</a>
+                    <h6>Total Employees</h6>
+                    <h2 th:text="${totalEmployees}">0</h2>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card">
+            <div class="card text-white bg-danger shadow-sm">
                 <div class="card-body">
-                    <div class="text-body-secondary">Payroll</div>
-                    <div class="fs-4 fw-semibold">Support</div>
-                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/manager/payroll/payslips}">View payroll</a>
+                    <h6>Contracts Expiring (30 Days)</h6>
+                    <h2 th:text="${expiringContracts}">0</h2>
                 </div>
             </div>
         </div>
+
+        <div class="col-md-4">
+            <div class="card text-white bg-success shadow-sm">
+                <div class="card-body">
+                    <h6>Active Employees</h6>
+                    <h2 th:text="${active}">0</h2>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card">
-        <div class="card-header fw-semibold">HR Notes</div>
+    <!-- Status Distribution -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+            Employee Status Distribution
+        </div>
         <div class="card-body">
             <ul class="mb-0">
-                <li>Review employee info updates</li>
-                <li>Track recruitment pipeline</li>
-                <li>Support payroll inquiries</li>
+                <li>Active: <strong th:text="${active}">0</strong></li>
+                <li>Inactive: <strong th:text="${inactive}">0</strong></li>
+                <li>Resigned: <strong th:text="${resigned}">0</strong></li>
             </ul>
         </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-body-secondary">Employee Profiles</div>
+                    <div class="fs-5 fw-semibold">Manage Employees</div>
+                    <a class="btn btn-sm btn-primary mt-2" th:href="@{/employees}">
+                        Open List
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-body-secondary">Payroll</div>
+                    <div class="fs-5 fw-semibold">Support</div>
+                    <a class="btn btn-sm btn-primary mt-2"
+                       th:href="@{/manager/payroll/payslips}">
+                        View Payroll
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 </main>

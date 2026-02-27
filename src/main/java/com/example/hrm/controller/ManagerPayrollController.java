@@ -89,15 +89,18 @@ public class ManagerPayrollController {
 
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
 
-        // Allow Admin/HR to view all
         boolean isAdminOrHr = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
-        if (isAdminOrHr) {
+        if (isAdminOrHr)
             managerEmpId = null;
-        }
 
-        model.addAttribute("p", payrollService.getPayslipDetailForManager(managerEmpId, payslipId));
-        return "manager/payslip-detail";
+        try {
+            model.addAttribute("p", payrollService.getPayslipDetailForManager(managerEmpId, payslipId));
+            return "manager/payslip-detail";
+        } catch (org.springframework.security.access.AccessDeniedException ex) {
+            model.addAttribute("err", ex.getMessage());
+            return "error/403"; // hoặc trang lỗi bạn đang dùng
+        }
     }
 
     @GetMapping("/payslips")

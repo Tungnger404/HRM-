@@ -1,20 +1,26 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.entity.EvalCycle;
 import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.KpiEvidence;
+import com.example.hrm.repository.EvalCycleRepository;
 import com.example.hrm.repository.KpiAssignmentRepository;
+import com.example.hrm.repository.KpiEvidenceRepository;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.FileValidationService;
 import com.example.hrm.service.KpiEvidenceService;
 import com.example.hrm.service.NotificationService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -25,18 +31,26 @@ import java.util.List;
 @RequestMapping("/hr/kpi")
 public class HrKpiViewController {
 
+    private static final Logger log = LoggerFactory.getLogger(HrKpiViewController.class);
+
     private final KpiAssignmentRepository kpiAssignmentRepository;
+    private final KpiEvidenceRepository kpiEvidenceRepository;
+    private final EvalCycleRepository evalCycleRepository;
     private final DocumentStorageService documentStorageService;
     private final FileValidationService fileValidationService;
     private final NotificationService notificationService;
     private final KpiEvidenceService kpiEvidenceService;
 
     public HrKpiViewController(KpiAssignmentRepository kpiAssignmentRepository,
+                              KpiEvidenceRepository kpiEvidenceRepository,
+                              EvalCycleRepository evalCycleRepository,
                               DocumentStorageService documentStorageService,
                               FileValidationService fileValidationService,
                               NotificationService notificationService,
                               KpiEvidenceService kpiEvidenceService) {
         this.kpiAssignmentRepository = kpiAssignmentRepository;
+        this.kpiEvidenceRepository = kpiEvidenceRepository;
+        this.evalCycleRepository = evalCycleRepository;
         this.documentStorageService = documentStorageService;
         this.fileValidationService = fileValidationService;
         this.notificationService = notificationService;
@@ -47,6 +61,8 @@ public class HrKpiViewController {
     public String showConfigurePage(Model model,
                                    @ModelAttribute("msg") String msg,
                                    @ModelAttribute("err") String err) {
+        List<EvalCycle> cycles = evalCycleRepository.findAllByOrderByStartDateDesc();
+        model.addAttribute("cycles", cycles);
         return "hr/kpi_configure";
     }
 
@@ -80,11 +96,13 @@ public class HrKpiViewController {
             if (empId != null) {
                 KpiAssignment assignment = new KpiAssignment();
                 assignment.setCycleId(cycleId);
+                assignment.setKpiId(1); // Default KPI template ID (fix: was NULL)
                 assignment.setEmpId(empId);
                 assignment.setHrExcelTemplatePath(storedPath);
                 assignment.setHrComment(hrComment);
                 assignment.setStatus(KpiAssignment.AssignmentStatus.ASSIGNED);
                 assignment.setAssignedAt(LocalDateTime.now());
+                assignment.setAssignedBy(2); // HR Staff emp_id (fix: was NULL)
                 
                 kpiAssignmentRepository.save(assignment);
                 
@@ -183,52 +201,60 @@ public class HrKpiViewController {
 
     @GetMapping("/download-template/{assignmentId}")
     public ResponseEntity<Resource> downloadHrTemplate(@PathVariable Integer assignmentId) {
-        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("Assignment not found"));
-        
-        Resource resource = documentStorageService.loadAsResource(assignment.getHrExcelTemplatePath());
-        
-        String filename = "KPI_Template.xlsx";
-        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
-        
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
-                .body(resource);
+        try {
+            KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                    .orElse(null);
+            if (assignment == null || assignment.getHrExcelTemplatePath() == null) {
+                return ResponseEntity.notFound().build();
+            }
+            Resource resource = documentStorageService.loadAsResource(assignment.getHrExcelTemplatePath());
+            String filename = "KPI_Template_" + assignmentId + ".xlsx";
+            String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @GetMapping("/download-employee/{assignmentId}")
     public ResponseEntity<Resource> downloadEmployeeSubmission(@PathVariable Integer assignmentId) {
-        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("Assignment not found"));
-        
-        if (assignment.getEmployeeExcelPath() == null) {
-            throw new RuntimeException("Employee has not submitted file yet");
+        try {
+            KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                    .orElse(null);
+            if (assignment == null || assignment.getEmployeeExcelPath() == null
+                    || assignment.getEmployeeExcelPath().isBlank()) {
+                return ResponseEntity.notFound().build();
+            }
+            String path = assignment.getEmployeeExcelPath().trim();
+            Resource resource = documentStorageService.loadAsResource(path);
+            String filename = "KPI_Employee_" + assignment.getEmpId() + ".xlsx";
+            String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                    .body(resource);
+        } catch (Exception e) {
+            log.warn("Download employee Excel failed for assignment {}: {}", assignmentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        
-        Resource resource = documentStorageService.loadAsResource(assignment.getEmployeeExcelPath());
-        
-        String filename = "KPI_Employee_" + assignment.getEmpId() + ".xlsx";
-        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
-        
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
-                .body(resource);
     }
 
     @GetMapping("/download-evidence/{evidenceId}")
     public ResponseEntity<Resource> downloadEvidence(@PathVariable Integer evidenceId) {
-        KpiEvidence evidence = kpiEvidenceService.getEvidencesByAssignment(0).stream()
-                .filter(e -> e.getEvidenceId().equals(evidenceId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Evidence not found"));
-        
-        Resource resource = documentStorageService.loadAsResource(evidence.getStoredPath());
-        
-        String filename = evidence.getFileName();
-        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
-        
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
-                .body(resource);
+        try {
+            KpiEvidence evidence = kpiEvidenceRepository.findById(evidenceId).orElse(null);
+            if (evidence == null || evidence.getStoredPath() == null) {
+                return ResponseEntity.notFound().build();
+            }
+            Resource resource = documentStorageService.loadAsResource(evidence.getStoredPath());
+            String filename = evidence.getFileName() != null ? evidence.getFileName() : "evidence_" + evidenceId;
+            String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 }

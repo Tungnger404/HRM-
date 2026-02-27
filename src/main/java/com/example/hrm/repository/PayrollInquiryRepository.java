@@ -22,12 +22,25 @@ public interface PayrollInquiryRepository extends JpaRepository<PayrollInquiry, 
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-        delete from PayrollInquiry i
-        where i.payslip.batch.id = :batchId
-    """)
+                delete from PayrollInquiry i
+                where i.payslip.batch.id = :batchId
+            """)
     int deleteByBatchId(@Param("batchId") Integer batchId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from PayrollInquiry i where i.payslip.id = :payslipId")
     int deleteByPayslipId(@Param("payslipId") Integer payslipId);
+
+    //employee
+
+    @Query("""
+    select i from PayrollInquiry i
+    where i.employee.id = :empId
+      and (:payslipId is null or i.payslip.id = :payslipId)
+      and (:status is null or :status = '' or i.status = :status)
+    order by i.createdAt desc
+""")
+    List<PayrollInquiry> findForEmployee(@Param("empId") Integer empId,
+                                         @Param("payslipId") Integer payslipId,
+                                         @Param("status") String status);
 }

@@ -1,4 +1,4 @@
-HELP.md
+ HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -39,3 +39,6 @@ application-local.properties
 ### Junk files ###
 *oft Corporation*
 *tash branch*
+
+### Uploaded files (runtime data, not source code) ###
+uploads/

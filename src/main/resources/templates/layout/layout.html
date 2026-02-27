@@ -48,6 +48,30 @@
             box-shadow: 4px 0 20px rgba(0,0,0,0.2);
             transition: left 0.3s ease;
             border-right: none !important;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar for sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         /* Sidebar Brand */
@@ -105,12 +129,31 @@
             fill: rgba(255,255,255,0.85);
         }
 
-        /* =========================
-           CONTENT
-        ========================= */
+
+        .sidebar .nav-group-toggle {
+            pointer-events: auto !important;
+        }
+        
+
+        @media (min-width: 992px) {
+            .sidebar {
+                display: block !important;
+            }
+        }
+
+
         .body {
             background-color: var(--bg-body);
             padding: 30px;
+            margin-left: var(--cui-sidebar-width);
+            margin-top: 72px;
+            min-height: calc(100vh - 72px);
+        }
+
+        @media (max-width: 991px) {
+            .body {
+                margin-left: 0;
+            }
         }
 
         .card {
@@ -129,8 +172,17 @@
             display: flex;
             align-items: center;
             box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: var(--cui-sidebar-width);
+            right: 0;
             z-index: 1100;
+        }
+
+        @media (max-width: 991px) {
+            .header {
+                left: 0;
+            }
         }
 
         /* Subtle bottom line */
@@ -182,28 +234,21 @@
             z-index: 2000 !important;
         }
 
-        /* =========================
-           MOBILE
-        ========================= */
-        @media (max-width: 991.98px) {
-            .sidebar {
-                position: fixed;
-                top: 72px;
-                left: -260px;
-                height: calc(100vh - 72px);
-                z-index: 1050;
-            }
-
-            .sidebar.show {
-                left: 0;
-            }
+        /* Force sidebar always expanded, never narrow */
+        .sidebar {
+            width: var(--cui-sidebar-width) !important;
+        }
+        
+        .sidebar.sidebar-narrow,
+        .sidebar.sidebar-minimize {
+            width: var(--cui-sidebar-width) !important;
         }
 
     </style>
 </head>
 <body>
 
-<div class="sidebar sidebar-fixed border-end" id="sidebar">
+<div class="sidebar sidebar-fixed sidebar-lg border-end" id="sidebar" data-coreui-narrow="false">
     <div class="sidebar-brand d-flex align-items-center gap-3 px-4 py-4">
         <div class="sidebar-logo">
             <svg class="icon icon-lg text-white">
@@ -310,7 +355,34 @@
 <script th:src="@{/vendors/@coreui/coreui/js/coreui.bundle.min.js}"></script>
 <script th:src="@{/vendors/simplebar/js/simplebar.min.js}"></script>
 <script>
+    // Disable sidebar narrow/minimize + prevent # navigation
     document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            // Remove narrow class if added
+            sidebar.classList.remove('sidebar-narrow');
+            
+            // Prevent CoreUI from minimizing sidebar
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        if (sidebar.classList.contains('sidebar-narrow')) {
+                            sidebar.classList.remove('sidebar-narrow');
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(sidebar, { attributes: true });
+        }
+        
+        // Prevent nav-group-toggle href="#" from scrolling to top
+        document.querySelectorAll('.nav-group-toggle[href="#"]').forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+            });
+        });
+        
         loadNotifications();
         setInterval(loadNotifications, 30000);
     });
@@ -372,7 +444,48 @@
         return date.toLocaleDateString('vi-VN');
     }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="successToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-coreui-dismiss="toast"></button>
+        </div>
+    </div>
+    <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="errorToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-coreui-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Show toast notifications from flash attributes
+    /*[# th:if="${msg}"]*/
+    const successMsg = /*[[${msg}]]*/ '';
+    if (successMsg) {
+        showToast('success', successMsg);
+    }
+    /*[/]*/
+    
+    /*[# th:if="${err}"]*/
+    const errorMsg = /*[[${err}]]*/ '';
+    if (errorMsg) {
+        showToast('error', errorMsg);
+    }
+    /*[/]*/
+    
+    function showToast(type, message) {
+        const toastEl = document.getElementById(type === 'success' ? 'successToast' : 'errorToast');
+        const messageEl = document.getElementById(type === 'success' ? 'successToastMessage' : 'errorToastMessage');
+        messageEl.textContent = message;
+        const toast = new coreui.Toast(toastEl, { delay: 4000 });
+        toast.show();
+    }
+</script>
+
+
 <div layout:fragment="scripts"></div>
 </body>
 </html>

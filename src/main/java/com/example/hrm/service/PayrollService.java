@@ -1,6 +1,18 @@
 package com.example.hrm.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.Normalizer;
+import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+
+import org.springframework.security.access.AccessDeniedException;
+
+import java.util.Objects;
+
+import org.springframework.core.io.ClassPathResource;
+
+import com.example.hrm.dto.PayrollRowDTO;
 import com.example.hrm.dto.*;
 import com.example.hrm.repository.BankAccountRepository;
 import com.example.hrm.entity.*;
@@ -8,6 +20,8 @@ import com.example.hrm.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -25,26 +39,52 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PayrollService {
 
+    private static final DateTimeFormatter VN_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final PayrollPeriodRepository periodRepo;
     private final PayrollBatchRepository batchRepo;
     private final PayslipRepository payslipRepo;
     private final PayslipItemRepository itemRepo;
     private final PayrollInquiryRepository inquiryRepo;
     private final NotificationService notificationService;
-
     private final EmployeeRepository employeeRepo;
     private final ContractRepository contractRepo;
     private final AttendanceLogRepository attendanceRepo;
     private final RequestRepository requestRepo;
 
-    private final BankAccountRepository bankAccountRepo;
-
     // =========================
     // MANAGER SIDE
     // =========================
+    private final BankAccountRepository bankAccountRepo;
 
-    private static final DateTimeFormatter VN_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static String ascii(String s) {
+        if (s == null)
+            return "";
+        String n = Normalizer.normalize(s, Normalizer.Form.NFD);
+        n = n.replaceAll("\\p{M}+", ""); // bỏ dấu
+        n = n.replace("đ", "d").replace("Đ", "D");
+        return n;
+    }
 
+    private static float writeLine(PDPageContentStream cs, PDFont font, int size, float x, float y, String text) throws IOException {
+        cs.beginText();
+        cs.setFont(font, size);
+        cs.newLineAtOffset(x, y);
+        cs.showText(text == null ? "" : text);
+        cs.endText();
+        return y - 16;
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static String money(BigDecimal v) {
+        BigDecimal val = (v == null ? BigDecimal.ZERO : v);
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        nf.setMaximumFractionDigits(0);
+        nf.setRoundingMode(java.math.RoundingMode.HALF_UP);
+        return nf.format(val);
+    }
 
     @Transactional(readOnly = true)
     public List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds) {
@@ -100,18 +140,22 @@ public class PayrollService {
 
         Integer empId = null;
         if (q != null) {
-            String t = q.trim();
-            if (t.matches("\\d+")) {
-                try {
-                    empId = Integer.parseInt(t);
-                } catch (Exception ignored) {
-                }
+            String t = q.trim().toUpperCase();
+
+            // ✅ hỗ trợ NV1, NV-1, NV 1
+            t = t.replaceAll("\\s+", "");     // remove spaces: "NV 1" -> "NV1"
+            t = t.replaceAll("-", "");        // remove hyphen: "NV-1" -> "NV1"
+
+            if (t.matches("^NV\\d+$")) {
+                empId = Integer.parseInt(t.substring(2));
+            } else if (t.matches("^\\d+$")) {
+                empId = Integer.parseInt(t);
             }
         }
 
         List<Object[]> rows = payslipRepo.findPayrollRowsRaw(managerEmpId, status, q, empId);
 
-        return rows.stream().map(r -> {
+        List<PayrollRowDTO> result = rows.stream().map(r -> {
             int payslipId = toInt(r[0]);
             int batchId = toInt(r[1]);
             int eId = toInt(r[2]);
@@ -123,13 +167,20 @@ public class PayrollService {
             LocalDate start = toLocalDate(r[6]);
             LocalDate end = toLocalDate(r[7]);
 
-            BigDecimal net = toBigDecimal(r[8]);
-            String batchStatus = (String) r[9];
+            BigDecimal totalIncome = toBigDecimal(r[8]);
+            BigDecimal totalDeduction = toBigDecimal(r[9]);
+            BigDecimal net = toBigDecimal(r[10]);
 
-            // ✅ ĐÚNG index theo query
-            BigDecimal baseSalary = toBigDecimal(r[10]);
-            BigDecimal standardDays = toBigDecimal(r[11]);
-            String jobTitle = (String) r[12];
+            String batchStatus = (String) r[11];
+            String batchName = (String) r[12];
+
+            BigDecimal baseSalary = toBigDecimal(r[13]);
+            BigDecimal standardDays = toBigDecimal(r[14]);
+            BigDecimal actualDays = toBigDecimal(r[15]);
+            BigDecimal otHours = toBigDecimal(r[16]);
+
+            String jobTitle = (String) r[17];
+            Boolean sentToEmployee = (r[18] instanceof Boolean b) ? b : Boolean.FALSE;
 
             BigDecimal dailySalary = BigDecimal.ZERO;
             if (standardDays != null && standardDays.compareTo(BigDecimal.ZERO) > 0) {
@@ -149,17 +200,42 @@ public class PayrollService {
                     .year(year)
                     .startDate(start)
                     .endDate(end)
-                    .netSalary(net)
-                    .statusLabel(label)
-                    .batchStatus(batchStatus)
 
                     .jobTitle(jobTitle == null ? "" : jobTitle)
+                    .batchName(batchName == null ? "" : batchName)
+
                     .baseSalary(baseSalary)
+                    .standardWorkDays(standardDays)
+                    .actualWorkDays(actualDays)
+                    .otHours(otHours)
                     .dailySalary(dailySalary)
+
+                    .totalIncome(totalIncome)
+                    .totalDeduction(totalDeduction)
+                    .netSalary(net)
+
+                    .batchStatus(batchStatus)
+                    .statusLabel(label)
+
+                    .sentToEmployee(Boolean.TRUE.equals(sentToEmployee))
+                    .bankMissing(false) // set sau
                     .build();
         }).toList();
-    }
 
+        // ===== CHECK BANK ACCOUNT PRIMARY (enterprise check) =====
+        List<Integer> empIds = result.stream()
+                .map(PayrollRowDTO::getEmpId)
+                .distinct()
+                .toList();
+
+        Set<Integer> hasBank = bankAccountRepo.findByEmpIdInAndIsPrimaryTrue(empIds).stream()
+                .map(BankAccount::getEmpId)
+                .collect(Collectors.toSet());
+
+        result.forEach(dto -> dto.setBankMissing(!hasBank.contains(dto.getEmpId())));
+
+        return result;
+    }
 
     private BigDecimal toBd(Object v) {
         if (v == null)
@@ -185,7 +261,6 @@ public class PayrollService {
             return BigDecimal.ZERO;
         }
     }
-
 
     private int toInt(Object v) {
         if (v == null)
@@ -289,11 +364,16 @@ public class PayrollService {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
 
-        // chỉ manager trực tiếp mới xem được (nếu managerEmpId != null)
+        // ✅ quyền: manager xem được payslip của chính mình hoặc nhân viên thuộc quyền
         if (managerEmpId != null) {
-            Integer direct = p.getEmployee().getDirectManagerId();
-            if (direct == null || !direct.equals(managerEmpId)) {
-                throw new SecurityException("Not allowed to view this payslip");
+            Integer ownerEmpId = p.getEmployee() != null ? p.getEmployee().getId() : null;
+            Integer direct = p.getEmployee() != null ? p.getEmployee().getDirectManagerId() : null;
+
+            boolean ok = Objects.equals(ownerEmpId, managerEmpId)
+                    || Objects.equals(direct, managerEmpId);
+
+            if (!ok) {
+                throw new AccessDeniedException("Not allowed to view this payslip");
             }
         }
 
@@ -313,7 +393,7 @@ public class PayrollService {
                 .batchId(p.getBatch().getId())
                 .empId(p.getEmployee().getId())
                 .employeeName(empName(p.getEmployee()))
-                .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null)) // ✅ ADD
+                .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null))
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
                 .actualWorkDays(nz(p.getActualWorkDays()))
@@ -399,18 +479,16 @@ public class PayrollService {
 
             // ===== BENEFITS (Phúc lợi) =====
             // bạn đổi số tiền/ngày ở đây
-            BigDecimal mealAllowance = actualDays.multiply(new BigDecimal("30000"))
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            BigDecimal transportAllowance = actualDays.multiply(new BigDecimal("20000"))
-                    .setScale(2, RoundingMode.HALF_UP);
+            // ===== BENEFITS (cố định mỗi tháng) =====
+            BigDecimal mealAllowance = new BigDecimal("50000");       // 50,000 / tháng
+            BigDecimal transportAllowance = new BigDecimal("100000"); // 100,000 / tháng
 
             BigDecimal totalIncome = salaryByDays
                     .add(overtimePay)
                     .add(mealAllowance)
                     .add(transportAllowance);
 
-        // ===== DEDUCTION: BHYT/BHXH 3% (demo) =====
+            // ===== DEDUCTION: BHYT/BHXH 3% (demo) =====
             BigDecimal insuranceRate = new BigDecimal("0.03"); // 3%
             BigDecimal insuranceDeduction = baseSalary.multiply(insuranceRate)
                     .setScale(2, RoundingMode.HALF_UP);
@@ -503,6 +581,10 @@ public class PayrollService {
         return batch.getId();
     }
 
+    // =========================
+    // EMPLOYEE SIDE
+    // =========================
+
     @Transactional
     public void submitBatchForApproval(Integer batchId) {
         PayrollBatch batch = batchRepo.findById(batchId)
@@ -591,9 +673,21 @@ public class PayrollService {
         }
     }
 
-    // =========================
-    // EMPLOYEE SIDE
-    // =========================
+    @Transactional(readOnly = true)
+    public List<PayrollInquiryDTO> listAllInquiriesForEmployee(Integer empId, String status) {
+        // dùng repo query riêng cho employee
+        return inquiryRepo.findForEmployee(empId, null, status).stream()
+                .map(i -> PayrollInquiryDTO.builder()
+                        .id(i.getId())
+                        .payslipId(i.getPayslip().getId())
+                        .empId(empId)
+                        .question(i.getQuestion())
+                        .answer(i.getAnswer())
+                        .status(i.getStatus())
+                        .createdAt(i.getCreatedAt())
+                        .build())
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public List<PayrollInquiryDTO> listInquiriesForEmployee(Integer empId, Integer payslipId) {
@@ -624,6 +718,8 @@ public class PayrollService {
                 .toList();
     }
 
+
+    // PDF download for payslip
 
     @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForEmployee(Integer empId, Integer payslipId) {
@@ -792,52 +888,86 @@ public class PayrollService {
         }
     }
 
-
-    // PDF download for payslip
     @Transactional(readOnly = true)
     public byte[] buildPayslipPdf(Integer empId, Integer payslipId) {
         PayslipDetailDTO dto = getPayslipDetailForEmployee(empId, payslipId);
 
-        try (PDDocument doc = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (PDDocument doc = new PDDocument();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
+            // ✅ check font có tồn tại trong classpath không
+            System.out.println("FONT arial.ttf exists? " +
+                    new ClassPathResource("static/fonts/arial.ttf").exists());
+            System.out.println("FONT arialbd.ttf exists? " +
+                    new ClassPathResource("static/fonts/arialbd.ttf").exists());
+
+            // ✅ load font
+            PDType0Font font = tryLoadTtf(doc, "static/fonts/arial.ttf");
+            PDType0Font fontBold = tryLoadTtf(doc, "static/fonts/arialbd.ttf");
+            final boolean unicodeOk = (font != null && fontBold != null);
+
+            final PDFont f = unicodeOk ? font : PDType1Font.HELVETICA;
+            final PDFont fb = unicodeOk ? fontBold : PDType1Font.HELVETICA_BOLD;
+
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
-                cs.beginText();
-                cs.setFont(PDType1Font.HELVETICA_BOLD, 16);
-                cs.newLineAtOffset(50, 770);
-                cs.showText("PAYSLIP");
-                cs.endText();
+                float x = 50;
+                float y = 770;
 
-                float y = 740;
+                String title = unicodeOk ? "PHIẾU LƯƠNG / PAYSLIP" : "PAYSLIP";
+                y = writeLine(cs, fb, 16, x, y, unicodeOk ? title : ascii(title));
+                y -= 8;
 
-                y = writeLine(cs, "Employee: " + dto.getEmployeeName(), y);
-                y = writeLine(cs, "Payslip ID: " + dto.getPayslipId(), y);
-                y = writeLine(cs, "Net Salary: " + dto.getNetSalary(), y);
-                y = writeLine(cs, "---------------------------------------", y);
+                String empName = safe(dto.getEmployeeName());
+                String period = safe(dto.getPeriod());
 
-                y = writeLine(cs, "Items:", y);
-                for (PayslipItemDTO it : dto.getItems()) {
-                    y = writeLine(cs, "- [" + it.getType() + "] " + it.getName() + ": " + it.getAmount(), y);
-                    if (y < 80)
-                        break;
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Nhân viên: " : "Employee: ")
+                        + (unicodeOk ? empName : ascii(empName)));
+
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Kỳ lương: " : "Period: ")
+                        + (unicodeOk ? period : ascii(period)));
+
+                y = writeLine(cs, f, 11, x, y, "Payslip ID: " + dto.getPayslipId());
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Tổng thu nhập: " : "Total income: ") + money(dto.getTotalIncome()));
+                y = writeLine(cs, f, 11, x, y, (unicodeOk ? "Khấu trừ: " : "Deduction: ") + money(dto.getTotalDeduction()));
+                y = writeLine(cs, fb, 12, x, y, (unicodeOk ? "Thực nhận (Net): " : "Net: ") + money(dto.getNetSalary()));
+
+                y -= 10;
+                y = writeLine(cs, fb, 12, x, y, unicodeOk ? "Chi tiết khoản mục:" : "Items:");
+
+                List<PayslipItemDTO> items = Optional.ofNullable(dto.getItems()).orElse(List.of());
+                if (items.isEmpty()) {
+                    y = writeLine(cs, f, 11, x, y, unicodeOk ? "- (Không có khoản mục)" : "- (No items)");
+                } else {
+                    for (PayslipItemDTO it : items) {
+                        String line = String.format("- [%s] %s: %s",
+                                safe(it.getType()),
+                                safe(it.getName()),
+                                money(it.getAmount())
+                        );
+                        y = writeLine(cs, f, 11, x, y, unicodeOk ? line : ascii(line));
+                        if (y < 60)
+                            break;
+                    }
                 }
             }
 
             doc.save(out);
             return out.toByteArray();
+
         } catch (Exception e) {
             throw new RuntimeException("Build PDF failed", e);
         }
     }
 
-    private float writeLine(PDPageContentStream cs, String text, float y) throws Exception {
-        cs.beginText();
-        cs.setFont(PDType1Font.HELVETICA, 11);
-        cs.newLineAtOffset(50, y);
-        cs.showText(text);
-        cs.endText();
-        return y - 18;
+    private PDType0Font tryLoadTtf(PDDocument doc, String classpathLocation) {
+        try (InputStream in = new ClassPathResource(classpathLocation).getInputStream()) {
+            return PDType0Font.load(doc, in, true);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private BigDecimal nz(BigDecimal v) {
@@ -852,6 +982,7 @@ public class PayrollService {
                         .id(i.getId())
                         .payslipId(i.getPayslip().getId())
                         .empId(i.getEmployee().getId())
+                        .employeeName(empName(i.getEmployee())) // ✅ NEW
                         .question(i.getQuestion())
                         .answer(i.getAnswer())
                         .status(i.getStatus())
@@ -864,10 +995,12 @@ public class PayrollService {
     public PayrollInquiryDTO getInquiry(Integer inquiryId) {
         var i = inquiryRepo.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("Inquiry not found"));
+
         return PayrollInquiryDTO.builder()
                 .id(i.getId())
                 .payslipId(i.getPayslip().getId())
                 .empId(i.getEmployee().getId())
+                .employeeName(empName(i.getEmployee())) // ✅ NEW
                 .question(i.getQuestion())
                 .answer(i.getAnswer())
                 .status(i.getStatus())
@@ -907,7 +1040,8 @@ public class PayrollService {
     }
 
     private String periodLabel(PayrollPeriod per) {
-        if (per == null) return "";
+        if (per == null)
+            return "";
 
         Integer m = per.getMonth();
         Integer y = per.getYear();

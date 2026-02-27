@@ -21,20 +21,22 @@ public class LeaveOrOtRequest {
     @Column(name = "emp_id", nullable = false)
     private Integer empId;
 
-    @Column(name = "request_type", length = 20)
-    private String requestType; // LEAVE / OVERTIME
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_type", length = 20, nullable = false)
+    private RequestType requestType;
 
-    @Column(name = "start_time", nullable = false)
+    @Column(name = "start_time")
     private LocalDateTime startTime;
 
-    @Column(name = "end_time", nullable = false)
+    @Column(name = "end_time")
     private LocalDateTime endTime;
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String reason;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private String status; // PENDING / APPROVED / REJECTED
+    private RequestStatus status;
 
     @Column(name = "approver_id")
     private Integer approverId;
@@ -45,9 +47,17 @@ public class LeaveOrOtRequest {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "attachment_path")
+    private String attachmentPath;
+
     @PrePersist
     public void prePersist() {
-        if (this.createdAt == null) this.createdAt = LocalDateTime.now();
-        if (this.status == null) this.status = "PENDING";
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+
+        if (this.status == null) {
+            this.status = RequestStatus.PENDING;
+        }
     }
 }

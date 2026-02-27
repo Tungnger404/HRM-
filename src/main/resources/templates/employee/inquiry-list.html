@@ -1,0 +1,126 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Payroll Inquiries</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">Payroll Inquiries</h2>
+            <div class="text-body-secondary small">Your questions about payslips</div>
+        </div>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="Filter">
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == null or status == ''} ? ' active' : ''"
+               th:href="@{/employee/inquiries}">
+                All
+            </a>
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == 'OPEN'} ? ' active' : ''"
+               th:href="@{/employee/inquiries(status='OPEN')}">
+                OPEN
+            </a>
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == 'RESOLVED'} ? ' active' : ''"
+               th:href="@{/employee/inquiries(status='RESOLVED')}">
+                RESOLVED
+            </a>
+        </div>
+    </div>
+
+    <!-- FORM hỏi -->
+    <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+    <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Ask a question</div>
+        <div class="card-body">
+            <form method="post" th:action="@{/employee/inquiries}" th:object="${inq}">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Payslip</label>
+                        <select class="form-select" th:field="*{payslipId}">
+                            <option value="">-- Select payslip --</option>
+                            <option th:each="p : ${payslips}"
+                                    th:value="${p.payslipId}"
+                                    th:text="${'Payslip #' + p.payslipId + ' - ' + p.period}">
+                            </option>
+                        </select>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('payslipId')}" th:errors="*{payslipId}"></div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label">Question</label>
+                        <textarea class="form-control" rows="2"
+                                  th:field="*{question}"
+                                  placeholder="Nhập thắc mắc về phiếu lương..."></textarea>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('question')}" th:errors="*{question}"></div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-sm mt-2">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LIST Q/A -->
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th style="width:70px;">STT</th>
+                    <th style="width:90px;">Payslip</th>
+                    <th style="width:180px;">Created</th>
+                    <th style="width:130px;">Status</th>
+                    <th>Question</th>
+                    <th>Answer</th>
+                    <th style="width:140px;">Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="i,st : ${inquiries}">
+                    <td th:text="${st.index + 1}"></td>
+
+                    <!-- ❌ KHÔNG link về payslip detail ở đây -->
+                    <td th:text="${i.payslipId}"></td>
+
+                    <td th:text="${i.createdAt != null ? #temporals.format(i.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></td>
+
+                    <td>
+                        <span class="badge bg-warning" th:if="${i.status == 'OPEN'}">OPEN</span>
+                        <span class="badge bg-success" th:if="${i.status == 'RESOLVED'}">RESOLVED</span>
+                        <span class="badge bg-secondary" th:if="${i.status != 'OPEN' and i.status != 'RESOLVED'}"
+                              th:text="${i.status}"></span>
+                    </td>
+
+                    <td th:text="${i.question}"></td>
+                    <td th:text="${i.answer != null ? i.answer : ''}"></td>
+
+                    <!-- Nếu muốn mở payslip thì để nút riêng -->
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:href="@{/employee/payslips/{id}(id=${i.payslipId})}">
+                            Open Payslip
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${inquiries == null || #lists.isEmpty(inquiries)}">
+                    <td colspan="7" class="text-center text-body-secondary">No inquiries</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

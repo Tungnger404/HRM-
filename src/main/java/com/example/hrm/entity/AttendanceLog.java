@@ -22,8 +22,8 @@ public class AttendanceLog {
     @Column(name = "log_id")
     private Long logId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "emp_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "emp_id")
     private Employee employee;
 
     @Column(name = "work_date", nullable = false)
