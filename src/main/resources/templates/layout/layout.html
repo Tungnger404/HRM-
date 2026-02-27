@@ -48,6 +48,30 @@
             box-shadow: 4px 0 20px rgba(0,0,0,0.2);
             transition: left 0.3s ease;
             border-right: none !important;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar for sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         /* Sidebar Brand */
@@ -121,6 +145,15 @@
         .body {
             background-color: var(--bg-body);
             padding: 30px;
+            margin-left: var(--cui-sidebar-width);
+            margin-top: 72px;
+            min-height: calc(100vh - 72px);
+        }
+
+        @media (max-width: 991px) {
+            .body {
+                margin-left: 0;
+            }
         }
 
         .card {
@@ -139,8 +172,17 @@
             display: flex;
             align-items: center;
             box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: var(--cui-sidebar-width);
+            right: 0;
             z-index: 1100;
+        }
+
+        @media (max-width: 991px) {
+            .header {
+                left: 0;
+            }
         }
 
         /* Subtle bottom line */
