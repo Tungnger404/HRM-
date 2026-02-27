@@ -32,21 +32,6 @@ public class OfferController {
         return "redirect:/offer/list";
     }
 
-
-    @PostMapping("/send/{id}")
-    public void sendOffer(@PathVariable Integer id) {
-        offerService.sendOffer(id);
-    }
-
-    @PostMapping("/accept/{id}")
-    public void acceptOffer(@PathVariable Integer id) {
-        offerService.acceptOffer(id);
-    }
-
-    @PostMapping("/reject/{id}")
-    public void rejectOffer(@PathVariable Integer id) {
-        offerService.rejectOffer(id);
-    }
     @GetMapping("/offer/detail/{id}")
     public String showDetail(@PathVariable Integer id, Model model) {
 
@@ -68,4 +53,5 @@ public class OfferController {
 
         return "redirect:/offer/manage";
     }
+
 }

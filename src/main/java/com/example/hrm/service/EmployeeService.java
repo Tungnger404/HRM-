@@ -17,6 +17,5 @@ public interface EmployeeService {
 
     EmployeeAdd toForm(Employee e);
 
-    void createFromCandidate(Candidate candidate,
-                             LocalDate startDate);
+    void createEmployeeFromCandidate(Integer candidateId, LocalDate joinDate);
 }

@@ -38,4 +38,6 @@ public class Offer {
 
     @Column(name = "offer_letter_url")
     private String offerLetterUrl;
+
+    private String responseToken;
 }

@@ -41,11 +41,10 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                "/evaluation/**",
-                                "/training/**",
-                                "/hr/kpi/**",
-                                "/manager/evaluation/**",
-                                "/api/notifications/**"
+                                "/evaluation/**", "/training/**", // For testing without login
+                                "/hr/kpi/**", "/manager/evaluation/**", "/api/notifications/**",
+                                "/offer/accept/**",
+                                "/offer/reject/**"// For testing KPI workflow
                         ).permitAll()
 
                         // ===== DASHBOARD (DEMO: mở hết) =====
