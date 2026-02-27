@@ -2,42 +2,64 @@ package com.example.hrm.service.impl;
 
 import com.example.hrm.dto.EmployeeAdd;
 import com.example.hrm.entity.Candidate;
+import com.example.hrm.entity.CandidateStatus;
 import com.example.hrm.entity.Employee;
+import com.example.hrm.entity.User;
+import com.example.hrm.repository.CandidateRepository;
 import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.repository.UserRepository;
 import com.example.hrm.service.EmployeeService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Transactional
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository repo;
+    private final CandidateRepository candidateRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public EmployeeServiceImpl(EmployeeRepository repo) {
+    // ✅ Constructor injection đầy đủ
+    public EmployeeServiceImpl(EmployeeRepository repo,
+                               CandidateRepository candidateRepository,
+                               UserRepository userRepository,
+                               PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.candidateRepository = candidateRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    // ✅ HR list: search + filter status
+    // ==============================
+    // LIST
+    // ==============================
     @Override
     public List<Employee> list(String q, String status) {
         String qq = (q == null) ? "" : q.trim();
         String st = (status == null) ? "" : status.trim();
-
-        // Nếu repo có method search(q,status) (mình đã sửa repo cho bạn)
         return repo.search(qq, st);
     }
 
+    // ==============================
+    // GET BY ID
+    // ==============================
     @Override
     public Employee getById(Integer id) {
         return repo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + id));
     }
 
+    // ==============================
+    // CREATE
+    // ==============================
     @Override
-    @Transactional
     public Employee create(EmployeeAdd form) {
         validate(form, false);
 
@@ -48,14 +70,17 @@ public class EmployeeServiceImpl implements EmployeeService {
             e.setStatus("PROBATION");
         }
 
-        // Nếu joinDate null thì set mặc định hôm nay (tuỳ bạn muốn)
-        // if (e.getJoinDate() == null) e.setJoinDate(java.time.LocalDate.now());
+        if (e.getJoinDate() == null) {
+            e.setJoinDate(LocalDate.now());
+        }
 
         return repo.save(e);
     }
 
+    // ==============================
+    // UPDATE
+    // ==============================
     @Override
-    @Transactional
     public Employee update(EmployeeAdd form) {
         validate(form, true);
 
@@ -69,16 +94,20 @@ public class EmployeeServiceImpl implements EmployeeService {
         return repo.save(e);
     }
 
+    // ==============================
+    // DELETE
+    // ==============================
     @Override
-    @Transactional
     public void delete(Integer id) {
         if (!repo.existsById(id)) {
             throw new IllegalArgumentException("Employee not found: " + id);
         }
-        // Nếu employee đang được tham chiếu (direct_manager_id, dept.manager_id, ...), DB sẽ chặn delete.
         repo.deleteById(id);
     }
 
+    // ==============================
+    // MAP ENTITY → FORM
+    // ==============================
     @Override
     public EmployeeAdd toForm(Employee e) {
         EmployeeAdd f = new EmployeeAdd();
@@ -99,6 +128,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         return f;
     }
 
+    // ==============================
+    // APPLY FORM → ENTITY
+    // ==============================
     private void applyForm(Employee e, EmployeeAdd f) {
         e.setUserId(f.getUserId());
         e.setFullName(f.getFullName());
@@ -115,29 +147,65 @@ public class EmployeeServiceImpl implements EmployeeService {
         e.setJoinDate(f.getJoinDate());
     }
 
+    // ==============================
+    // VALIDATION
+    // ==============================
     private void validate(EmployeeAdd f, boolean requireId) {
+
         if (requireId && f.getEmpId() == null) {
             throw new IllegalArgumentException("Missing empId");
         }
+
         if (f.getFullName() == null || f.getFullName().trim().isEmpty()) {
             throw new IllegalArgumentException("Full name is required");
         }
-        // chặn tự làm manager của chính mình
-        if (f.getEmpId() != null && f.getDirectManagerId() != null && f.getEmpId().equals(f.getDirectManagerId())) {
+
+        if (f.getEmpId() != null
+                && f.getDirectManagerId() != null
+                && f.getEmpId().equals(f.getDirectManagerId())) {
             throw new IllegalArgumentException("directManagerId cannot be itself");
         }
     }
-    @Override
-    public void createFromCandidate(Candidate candidate,
-                                    LocalDate startDate) {
 
+    // ============================================================
+    // CREATE EMPLOYEE FROM CANDIDATE (ONBOARDING → HIRED)
+    // ============================================================
+    @Override
+    public void createEmployeeFromCandidate(Integer candidateId,
+                                            LocalDate joinDate) {
+
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+        if (candidate.getStatus() != CandidateStatus.ONBOARDING) {
+            throw new RuntimeException("Candidate not in onboarding stage");
+        }
+
+        // 1️⃣ Create User
+        User user = User.builder()
+                .username(candidate.getEmail())
+                .passwordHash(passwordEncoder.encode("123456"))
+                .email(candidate.getEmail())
+                .roleId(3) // Employee role
+                .isActive(true)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        user = userRepository.save(user);
+
+        // 2️⃣ Create Employee
         Employee employee = Employee.builder()
+                .userId(user.getUserId())
                 .fullName(candidate.getFullName())
                 .phone(candidate.getPhone())
                 .status("PROBATION")
-                .joinDate(startDate != null ? startDate : LocalDate.now())
+                .joinDate(joinDate != null ? joinDate : LocalDate.now())
                 .build();
 
         repo.save(employee);
+
+        // 3️⃣ Update Candidate status
+        candidate.setStatus(CandidateStatus.HIRED);
+        candidateRepository.save(candidate);
     }
 }

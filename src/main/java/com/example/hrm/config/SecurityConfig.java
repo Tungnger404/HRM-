@@ -94,7 +94,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**", "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/evaluation/**", "/training/**", // For testing without login
-                                "/hr/kpi/**", "/manager/evaluation/**", "/api/notifications/**" // For testing KPI workflow
+                                "/hr/kpi/**", "/manager/evaluation/**", "/api/notifications/**",
+                                "/offer/accept/**",
+                                "/offer/reject/**"// For testing KPI workflow
                         ).permitAll()
 
                         // ===== DASHBOARD =====

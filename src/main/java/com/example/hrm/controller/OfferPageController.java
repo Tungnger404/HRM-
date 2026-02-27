@@ -1,15 +1,13 @@
 package com.example.hrm.controller;
 
-import com.example.hrm.entity.Candidate;
-import com.example.hrm.entity.Interview;
-import com.example.hrm.entity.InterviewResult;
-import com.example.hrm.entity.Offer;
+import com.example.hrm.entity.*;
 import com.example.hrm.repository.CandidateRepository;
 import com.example.hrm.repository.InterviewRepository;
 import com.example.hrm.repository.OfferRepository;
 import com.example.hrm.service.OfferService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -135,22 +133,47 @@ public class OfferPageController {
     // =====================================================
     // 7️⃣ ACCEPT OFFER
     // =====================================================
-    @PostMapping("/accept/{offerId}")
+    @GetMapping("/accept/{offerId}")
     public String acceptOffer(@PathVariable Integer offerId) {
 
         offerService.acceptOffer(offerId);
 
-        return "redirect:/offer/manage";
-    }
+        Offer offer = offerRepository.findById(offerId)
+                .orElseThrow(() -> new RuntimeException("Offer not found"));
 
+        Integer candidateId = offer.getCandidate().getCandidateId();
+
+        // 🔥 Redirect sang onboarding
+        return "redirect:/offer/onboarding/" + candidateId;
+    }
     // =====================================================
     // 8️⃣ REJECT OFFER
     // =====================================================
-    @PostMapping("/reject/{offerId}")
+    @GetMapping("/reject/{offerId}")
     public String rejectOffer(@PathVariable Integer offerId) {
 
         offerService.rejectOffer(offerId);
 
-        return "redirect:/offer/manage";
+        return "offer/reject-success";
     }
+    @GetMapping("/onboarding/{candidateId}")
+    public String showOnboarding(@PathVariable Integer candidateId,
+                                 Model model) {
+
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+        if (candidate.getStatus() != CandidateStatus.OFFER_ACCEPTED) {
+            throw new RuntimeException("Candidate not ready for onboarding");
+        }
+
+        candidate.setStatus(CandidateStatus.ONBOARDING);
+        candidateRepository.save(candidate);
+
+        model.addAttribute("candidate", candidate);
+
+        return "onboarding/form";
+    }
+
+
 }
