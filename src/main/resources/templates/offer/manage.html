@@ -71,11 +71,13 @@
 
                     <td>
 
+                        <!-- Detail luôn hiển thị -->
                         <a class="btn btn-info btn-sm"
                            th:href="@{/offer/detail/{id}(id=${offer.offerId})}">
                             Detail
                         </a>
 
+                        <!-- DRAFT → hiện Send -->
                         <form th:if="${offer.status.name() == 'DRAFT'}"
                               th:action="@{/offer/send/{id}(id=${offer.offerId})}"
                               method="post"
@@ -85,23 +87,23 @@
                             </button>
                         </form>
 
-                        <form th:if="${offer.status.name() == 'SENT'}"
-                              th:action="@{/offer/accept/{id}(id=${offer.offerId})}"
-                              method="post"
-                              style="display:inline">
-                            <button class="btn btn-success btn-sm">
-                                Accept
-                            </button>
-                        </form>
+                        <!-- SENT → chỉ hiện tick xanh -->
+                        <span th:if="${offer.status.name() == 'SENT'}"
+                              class="text-success fw-bold ms-2">
+        ✔ Sent
+    </span>
 
-                        <form th:if="${offer.status.name() == 'SENT'}"
-                              th:action="@{/offer/reject/{id}(id=${offer.offerId})}"
-                              method="post"
-                              style="display:inline">
-                            <button class="btn btn-danger btn-sm">
-                                Reject
-                            </button>
-                        </form>
+                        <!-- OFFER_ACCEPTED -->
+                        <span th:if="${offer.status.name() == 'OFFER_ACCEPTED'}"
+                              class="badge bg-success ms-2">
+        Accepted
+    </span>
+
+                        <!-- OFFER_REJECTED -->
+                        <span th:if="${offer.status.name() == 'OFFER_REJECTED'}"
+                              class="badge bg-danger ms-2">
+        Rejected
+    </span>
 
                     </td>
                 </tr>
