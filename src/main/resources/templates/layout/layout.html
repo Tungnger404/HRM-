@@ -48,30 +48,10 @@
             box-shadow: 4px 0 20px rgba(0,0,0,0.2);
             transition: left 0.3s ease;
             border-right: none !important;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
 
-        /* Custom scrollbar for sidebar */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.3);
+            height: 100vh;          /* full màn hình */
+            overflow-y: auto;       /* ✅ cho phép cuộn */
+            overflow-x: hidden;     /* tránh scroll ngang */
         }
 
         /* Sidebar Brand */
@@ -133,7 +113,7 @@
         .sidebar .nav-group-toggle {
             pointer-events: auto !important;
         }
-        
+
 
         @media (min-width: 992px) {
             .sidebar {
@@ -145,15 +125,6 @@
         .body {
             background-color: var(--bg-body);
             padding: 30px;
-            margin-left: var(--cui-sidebar-width);
-            margin-top: 72px;
-            min-height: calc(100vh - 72px);
-        }
-
-        @media (max-width: 991px) {
-            .body {
-                margin-left: 0;
-            }
         }
 
         .card {
@@ -172,17 +143,8 @@
             display: flex;
             align-items: center;
             box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-            position: fixed;
-            top: 0;
-            left: var(--cui-sidebar-width);
-            right: 0;
+            position: relative;
             z-index: 1100;
-        }
-
-        @media (max-width: 991px) {
-            .header {
-                left: 0;
-            }
         }
 
         /* Subtle bottom line */
@@ -238,7 +200,7 @@
         .sidebar {
             width: var(--cui-sidebar-width) !important;
         }
-        
+
         .sidebar.sidebar-narrow,
         .sidebar.sidebar-minimize {
             width: var(--cui-sidebar-width) !important;
@@ -361,7 +323,7 @@
         if (sidebar) {
             // Remove narrow class if added
             sidebar.classList.remove('sidebar-narrow');
-            
+
             // Prevent CoreUI from minimizing sidebar
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
@@ -372,17 +334,17 @@
                     }
                 });
             });
-            
+
             observer.observe(sidebar, { attributes: true });
         }
-        
+
         // Prevent nav-group-toggle href="#" from scrolling to top
         document.querySelectorAll('.nav-group-toggle[href="#"]').forEach(function(el) {
             el.addEventListener('click', function(e) {
                 e.preventDefault();
             });
         });
-        
+
         loadNotifications();
         setInterval(loadNotifications, 30000);
     });
@@ -468,14 +430,14 @@
         showToast('success', successMsg);
     }
     /*[/]*/
-    
+
     /*[# th:if="${err}"]*/
     const errorMsg = /*[[${err}]]*/ '';
     if (errorMsg) {
         showToast('error', errorMsg);
     }
     /*[/]*/
-    
+
     function showToast(type, message) {
         const toastEl = document.getElementById(type === 'success' ? 'successToast' : 'errorToast');
         const messageEl = document.getElementById(type === 'success' ? 'successToastMessage' : 'errorToastMessage');
