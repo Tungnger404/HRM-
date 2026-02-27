@@ -6,6 +6,10 @@ import java.text.Normalizer;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.security.access.AccessDeniedException;
+
+import java.util.Objects;
+
 import org.springframework.core.io.ClassPathResource;
 
 import com.example.hrm.dto.PayrollRowDTO;
@@ -360,11 +364,16 @@ public class PayrollService {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
 
-        // chỉ manager trực tiếp mới xem được (nếu managerEmpId != null)
+        // ✅ quyền: manager xem được payslip của chính mình hoặc nhân viên thuộc quyền
         if (managerEmpId != null) {
-            Integer direct = p.getEmployee().getDirectManagerId();
-            if (direct == null || !direct.equals(managerEmpId)) {
-                throw new SecurityException("Not allowed to view this payslip");
+            Integer ownerEmpId = p.getEmployee() != null ? p.getEmployee().getId() : null;
+            Integer direct = p.getEmployee() != null ? p.getEmployee().getDirectManagerId() : null;
+
+            boolean ok = Objects.equals(ownerEmpId, managerEmpId)
+                    || Objects.equals(direct, managerEmpId);
+
+            if (!ok) {
+                throw new AccessDeniedException("Not allowed to view this payslip");
             }
         }
 
@@ -384,7 +393,7 @@ public class PayrollService {
                 .batchId(p.getBatch().getId())
                 .empId(p.getEmployee().getId())
                 .employeeName(empName(p.getEmployee()))
-                .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null)) // ✅ ADD
+                .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null))
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
                 .actualWorkDays(nz(p.getActualWorkDays()))
@@ -470,11 +479,9 @@ public class PayrollService {
 
             // ===== BENEFITS (Phúc lợi) =====
             // bạn đổi số tiền/ngày ở đây
-            BigDecimal mealAllowance = actualDays.multiply(new BigDecimal("30000"))
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            BigDecimal transportAllowance = actualDays.multiply(new BigDecimal("20000"))
-                    .setScale(2, RoundingMode.HALF_UP);
+            // ===== BENEFITS (cố định mỗi tháng) =====
+            BigDecimal mealAllowance = new BigDecimal("50000");       // 50,000 / tháng
+            BigDecimal transportAllowance = new BigDecimal("100000"); // 100,000 / tháng
 
             BigDecimal totalIncome = salaryByDays
                     .add(overtimePay)
@@ -891,13 +898,13 @@ public class PayrollService {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
-        // ✅ check font có tồn tại trong classpath không
+            // ✅ check font có tồn tại trong classpath không
             System.out.println("FONT arial.ttf exists? " +
                     new ClassPathResource("static/fonts/arial.ttf").exists());
             System.out.println("FONT arialbd.ttf exists? " +
                     new ClassPathResource("static/fonts/arialbd.ttf").exists());
 
-        // ✅ load font
+            // ✅ load font
             PDType0Font font = tryLoadTtf(doc, "static/fonts/arial.ttf");
             PDType0Font fontBold = tryLoadTtf(doc, "static/fonts/arialbd.ttf");
             final boolean unicodeOk = (font != null && fontBold != null);

@@ -5,6 +5,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -72,6 +73,37 @@ public class EmailServiceImpl implements EmailService {
                         "Human Resources Department\n" +
                         "Software House\n" +
                         "HRM System"
+        );
+
+        mailSender.send(message);
+    }
+    @Override
+    public void sendOfferMail(String to,
+                              String name,
+                              String jobTitle,
+                              Double salary,
+                              LocalDate startDate,
+                              String probation,
+                              String acceptLink,
+                              String rejectLink) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("lebanhatnam996@gmail.com");
+        message.setTo(to);
+        message.setSubject("Official Job Offer – " + jobTitle);
+
+        message.setText(
+                "Dear " + name + ",\n\n" +
+                        "We are pleased to offer you the position of " + jobTitle + ".\n\n" +
+                        "Salary: " + salary + "\n" +
+                        "Start Date: " + startDate + "\n" +
+                        "Probation Period: " + probation + "\n\n" +
+                        "Please confirm your decision:\n\n" +
+                        "ACCEPT: " + acceptLink + "\n" +
+                        "REJECT: " + rejectLink + "\n\n" +
+                        "Best regards,\n" +
+                        "Human Resources Department\n" +
+                        "Software House"
         );
 
         mailSender.send(message);

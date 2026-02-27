@@ -1,6 +1,7 @@
 package com.example.hrm.repository;
 
 import com.example.hrm.entity.Interview;
+import com.example.hrm.entity.InterviewResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -24,5 +25,6 @@ public interface InterviewRepository extends JpaRepository<Interview, Integer> {
             Integer candidateId,
             Integer roundNumber
     );
+    List<Interview> findByRoundNumberAndResult(Integer roundNumber, InterviewResult result);
 
 }

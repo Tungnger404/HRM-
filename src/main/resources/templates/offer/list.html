@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-hr.html'">
+
+<head>
+    <title>Offer Management</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+
+        <h2 class="mb-4 fw-bold">Offer Pipeline</h2>
+
+        <div class="table-responsive shadow-sm rounded-3"
+             style="background: #1e1e2f; padding: 20px;">
+
+            <table class="table table-hover align-middle table-bordered table-dark">
+
+                <thead class="table-light text-dark">
+                <tr>
+                    <th>Candidate ID</th>
+                    <th>Candidate</th>
+                    <th>Position</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="interview : ${interviews}">
+
+                    <td th:text="${interview.candidate.candidateId}"></td>
+
+                    <td th:text="${interview.candidate.fullName}"></td>
+
+                    <td th:text="${interview.candidate.jobPosting.title}"></td>
+
+                    <td>
+        <span class="badge bg-success">
+            Passed Round 2
+        </span>
+                    </td>
+
+                    <td>
+                        <a class="btn btn-success btn-sm"
+                           th:href="@{/offer/create/{id}(id=${interview.candidate.candidateId})}">
+                            Create Offer
+                        </a>
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(interviews)}">
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        No candidates passed round 2.
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
