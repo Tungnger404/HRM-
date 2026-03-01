@@ -48,31 +48,10 @@
             box-shadow: 4px 0 20px rgba(0,0,0,0.2);
             transition: left 0.3s ease;
             border-right: none !important;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
 
-        /* Custom scrollbar cho sidebar */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-            border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.35);
+            height: 100vh;          /* full màn hình */
+            overflow-y: auto;       /* ✅ cho phép cuộn */
+            overflow-x: hidden;     /* tránh scroll ngang */
         }
 
         /* Sidebar Brand */
