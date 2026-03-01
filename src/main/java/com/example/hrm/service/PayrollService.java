@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.text.Normalizer;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 
 import org.springframework.security.access.AccessDeniedException;
 
@@ -29,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
-import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
@@ -50,11 +50,12 @@ public class PayrollService {
     private final ContractRepository contractRepo;
     private final AttendanceLogRepository attendanceRepo;
     private final RequestRepository requestRepo;
-
     // =========================
     // MANAGER SIDE
     // =========================
     private final BankAccountRepository bankAccountRepo;
+
+    public record SalaryUpdateResult(BigDecimal baseSalary, BigDecimal netSalary, String slipStatus) {}
 
     private static String ascii(String s) {
         if (s == null)
@@ -86,6 +87,142 @@ public class PayrollService {
         return nf.format(val);
     }
 
+    @Transactional
+    public SalaryUpdateResult updatePayslipBaseSalary(Integer managerEmpId,
+                                                      Integer payslipId,
+                                                      BigDecimal newBaseSalary) {
+
+        if (newBaseSalary == null || newBaseSalary.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Base salary invalid");
+        }
+
+        Payslip p = payslipRepo.findById(payslipId)
+                .orElseThrow(() -> new IllegalArgumentException("Payslip not found: " + payslipId));
+
+        // ✅ quyền giống view detail
+        if (managerEmpId != null) {
+            Integer ownerEmpId = p.getEmployee() != null ? p.getEmployee().getId() : null;
+            Integer direct = p.getEmployee() != null ? p.getEmployee().getDirectManagerId() : null;
+
+            boolean ok = Objects.equals(ownerEmpId, managerEmpId) || Objects.equals(direct, managerEmpId);
+            if (!ok)
+                throw new AccessDeniedException("Not allowed to edit this payslip");
+        }
+
+        String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
+                ? "" : p.getBatch().getStatus().trim().toUpperCase();
+
+        // ✅ cho sửa cả Approved/Rejected, chỉ chặn PAID
+        if ("PAID".equals(batchStatus)) {
+            throw new IllegalStateException("Batch PAID không cho sửa.");
+        }
+
+        boolean wasRejected = "REJECTED".equalsIgnoreCase(p.getSlipStatus());
+        if (wasRejected) {
+            p.setSlipStatus("ACTIVE"); // sửa lại => active lại
+            // nếu batch đã approved thì có thể release lại, còn không thì để false
+            p.setSentToEmployee("APPROVED".equals(batchStatus));
+        }
+
+        BigDecimal base = newBaseSalary.setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal standardDays = nz(p.getStandardWorkDays());
+        BigDecimal actualDays = nz(p.getActualWorkDays());
+        BigDecimal otHours = nz(p.getOtHours());
+
+        BigDecimal salaryByDays = BigDecimal.ZERO;
+        if (standardDays.compareTo(BigDecimal.ZERO) > 0) {
+            salaryByDays = base.multiply(actualDays).divide(standardDays, 2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal hourly = BigDecimal.ZERO;
+        if (standardDays.compareTo(BigDecimal.ZERO) > 0) {
+            hourly = base.divide(standardDays, 2, RoundingMode.HALF_UP)
+                    .divide(BigDecimal.valueOf(8), 2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal overtimePay = hourly.multiply(otHours).multiply(BigDecimal.valueOf(1.5))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        // allowance demo (giữ như generator của bạn)
+        BigDecimal mealAllowance = new BigDecimal("50000");
+        BigDecimal transportAllowance = new BigDecimal("100000");
+
+        BigDecimal totalIncome = salaryByDays.add(overtimePay).add(mealAllowance).add(transportAllowance);
+        BigDecimal insuranceDeduction = base.multiply(new BigDecimal("0.03"))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal totalDeduction = insuranceDeduction;
+        BigDecimal net = totalIncome.subtract(totalDeduction);
+
+        p.setBaseSalary(base);
+        p.setTotalIncome(totalIncome);
+        p.setTotalDeduction(totalDeduction);
+        p.setNetSalary(net);
+        payslipRepo.save(p);
+
+        // ✅ update payslip_items cho khớp
+        List<PayslipItem> items = itemRepo.findByPayslip_IdOrderByIdAsc(payslipId);
+        Map<String, PayslipItem> byCode = new HashMap<>();
+        for (PayslipItem it : items) {
+            if (it.getItemCode() != null)
+                byCode.put(it.getItemCode().trim().toUpperCase(), it);
+        }
+
+        upsertSalaryItem(byCode, p, "BASE_BY_DAYS", "Salary by work days", salaryByDays, "INCOME");
+        upsertSalaryItem(byCode, p, "OT_PAY", "Overtime pay", overtimePay, "INCOME");
+        upsertSalaryItem(byCode, p, "MEAL_ALLOW", "Meal allowance", mealAllowance, "INCOME");
+        upsertSalaryItem(byCode, p, "TRANSPORT_ALLOW", "Transport allowance", transportAllowance, "INCOME");
+        upsertSalaryItem(byCode, p, "BHYT", "BHYT (3%)", insuranceDeduction, "DEDUCTION");
+
+        itemRepo.saveAll(byCode.values());
+
+        // ✅ tính lại batch total theo payslip ACTIVE (đúng cả case: REJECTED -> ACTIVE)
+        PayrollBatch b = p.getBatch();
+        if (b != null) {
+            List<Payslip> slips = payslipRepo.findByBatch_IdOrderByIdAsc(b.getId());
+
+            BigDecimal grossSum = slips.stream()
+                    .filter(s -> !"REJECTED".equalsIgnoreCase(s.getSlipStatus()))
+                    .map(s -> s.getTotalIncome() == null ? BigDecimal.ZERO : s.getTotalIncome())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal netSum = slips.stream()
+                    .filter(s -> !"REJECTED".equalsIgnoreCase(s.getSlipStatus()))
+                    .map(s -> s.getNetSalary() == null ? BigDecimal.ZERO : s.getNetSalary())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            b.setTotalGross(grossSum);
+            b.setTotalNet(netSum);
+            batchRepo.save(b);
+        }
+
+        return new SalaryUpdateResult(p.getBaseSalary(), p.getNetSalary(), p.getSlipStatus());
+    }
+
+    // ✅ ĐẶT TÊN KHÁC để tránh trùng helper của bạn
+    private void upsertSalaryItem(Map<String, PayslipItem> byCode, Payslip p,
+                                  String code, String name, BigDecimal amount, String type) {
+        String key = code.trim().toUpperCase();
+        PayslipItem it = byCode.get(key);
+
+        if (it == null) {
+            it = PayslipItem.builder()
+                    .payslip(p)
+                    .itemCode(code)
+                    .itemName(name)
+                    .itemType(type)
+                    .manualAdjustment(true)
+                    .amount(BigDecimal.ZERO)
+                    .build();
+            byCode.put(key, it);
+        }
+
+        it.setAmount(amount == null ? BigDecimal.ZERO : amount);
+        it.setItemName(name);
+        it.setItemType(type);
+    }
+
     @Transactional(readOnly = true)
     public List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds) {
         if (payslipIds == null || payslipIds.isEmpty())
@@ -98,27 +235,24 @@ public class PayrollService {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found: " + payslipId));
 
-        // Chỉ cho reject khi batch DRAFT hoặc PENDING_APPROVAL (đúng flow)
-        String st = (p.getBatch() == null || p.getBatch().getStatus() == null)
+        String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
                 ? ""
                 : p.getBatch().getStatus().trim().toUpperCase();
 
-        if (!"DRAFT".equals(st) && !"PENDING_APPROVAL".equals(st)) {
+        if (!"DRAFT".equals(batchStatus) && !"PENDING_APPROVAL".equals(batchStatus)) {
             throw new IllegalStateException("Chỉ reject được khi batch là DRAFT hoặc PENDING_APPROVAL.");
         }
 
+        // đã reject rồi thì thôi (idempotent)
+        if ("REJECTED".equalsIgnoreCase(p.getSlipStatus()))
+            return;
+
         PayrollBatch b = p.getBatch();
-        Integer batchId = (b != null ? b.getId() : null);
 
-        // xóa con trước
-        inquiryRepo.deleteByPayslipId(payslipId);
-        itemRepo.deleteByPayslipId(payslipId);
-
-        // update total trước khi xóa (tùy bạn có cần chuẩn số không)
+        // ✅ nếu bạn muốn batch total phản ánh đúng các payslip ACTIVE
         if (b != null) {
             BigDecimal gross = b.getTotalGross() == null ? BigDecimal.ZERO : b.getTotalGross();
             BigDecimal net = b.getTotalNet() == null ? BigDecimal.ZERO : b.getTotalNet();
-
             BigDecimal slipIncome = p.getTotalIncome() == null ? BigDecimal.ZERO : p.getTotalIncome();
             BigDecimal slipNet = p.getNetSalary() == null ? BigDecimal.ZERO : p.getNetSalary();
 
@@ -127,12 +261,10 @@ public class PayrollService {
             batchRepo.save(b);
         }
 
-        payslipRepo.deleteById(payslipId);
-
-        // nếu batch rỗng thì xoá batch luôn (để sạch DB)
-        if (batchId != null && payslipRepo.countByBatch_Id(batchId) == 0) {
-            batchRepo.deleteById(batchId);
-        }
+        // ✅ đổi trạng thái payslip, không xóa
+        p.setSlipStatus("REJECTED");
+        p.setSentToEmployee(false); // không release cho employee
+        payslipRepo.save(p);
     }
 
     @Transactional(readOnly = true)
@@ -181,6 +313,7 @@ public class PayrollService {
 
             String jobTitle = (String) r[17];
             Boolean sentToEmployee = (r[18] instanceof Boolean b) ? b : Boolean.FALSE;
+            String slipStatus = (String) r[19];
 
             BigDecimal dailySalary = BigDecimal.ZERO;
             if (standardDays != null && standardDays.compareTo(BigDecimal.ZERO) > 0) {
@@ -218,6 +351,7 @@ public class PayrollService {
                     .statusLabel(label)
 
                     .sentToEmployee(Boolean.TRUE.equals(sentToEmployee))
+                    .slipStatus(slipStatus == null ? "ACTIVE" : slipStatus)
                     .bankMissing(false) // set sau
                     .build();
         }).toList();
@@ -581,10 +715,6 @@ public class PayrollService {
         return batch.getId();
     }
 
-    // =========================
-    // EMPLOYEE SIDE
-    // =========================
-
     @Transactional
     public void submitBatchForApproval(Integer batchId) {
         PayrollBatch batch = batchRepo.findById(batchId)
@@ -600,22 +730,35 @@ public class PayrollService {
     public void approveBatch(Integer batchId, Integer approverEmpId) {
         PayrollBatch batch = batchRepo.findById(batchId)
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found"));
-        if (!"PENDING_APPROVAL".equals(batch.getStatus())) {
+
+        // (khuyên có) chỉ cho approve khi PENDING_APPROVAL
+        String st = (batch.getStatus() == null ? "" : batch.getStatus().trim().toUpperCase());
+        if (!"PENDING_APPROVAL".equals(st)) {
             throw new IllegalStateException("Only PENDING_APPROVAL can be approved.");
         }
+
+        // ✅ release payslip KHÔNG bị REJECTED
+        payslipRepo.findByBatch_IdOrderByIdAsc(batchId).forEach(s -> {
+            if (!"REJECTED".equalsIgnoreCase(s.getSlipStatus())) {
+                s.setSentToEmployee(true);
+            } else {
+                s.setSentToEmployee(false);
+            }
+        });
+
         batch.setStatus("APPROVED");
         batch.setApprovedBy(approverEmpId);
         batchRepo.save(batch);
 
-        // lock period
         PayrollPeriod period = batch.getPeriod();
         period.setLocked(true);
         period.setStatus("CLOSED");
         periodRepo.save(period);
-
-        // mark payslips sent
-        payslipRepo.findByBatch_IdOrderByIdAsc(batchId).forEach(s -> s.setSentToEmployee(true));
     }
+
+    // =========================
+    // EMPLOYEE SIDE
+    // =========================
 
     @Transactional
     public void rejectBatch(Integer batchId) {
@@ -718,9 +861,6 @@ public class PayrollService {
                 .toList();
     }
 
-
-    // PDF download for payslip
-
     @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForEmployee(Integer empId, Integer payslipId) {
         Payslip p = payslipRepo.findById(payslipId)
@@ -785,6 +925,9 @@ public class PayrollService {
                 .toList();
     }
 
+
+    // PDF download for payslip
+
     @Transactional
     public PayrollInquiryDTO submitInquiry(Integer empId, PayrollInquiryCreateDTO req) {
         Payslip p = payslipRepo.findById(req.getPayslipId())
@@ -833,6 +976,7 @@ public class PayrollService {
         // Lấy payslips thuộc các batch
         List<Payslip> slips = batchIds.stream()
                 .flatMap(id -> payslipRepo.findByBatch_IdOrderByIdAsc(id).stream())
+                .filter(s -> !"REJECTED".equalsIgnoreCase(s.getSlipStatus()))
                 .toList();
 
         // group theo emp
@@ -973,7 +1117,6 @@ public class PayrollService {
     private BigDecimal nz(BigDecimal v) {
         return v == null ? BigDecimal.ZERO : v;
     }
-    // === MANAGER - INQUIRIES ===
 
     @Transactional(readOnly = true)
     public List<PayrollInquiryDTO> listInquiriesForManager(Integer managerEmpId, String status) {
@@ -1007,6 +1150,7 @@ public class PayrollService {
                 .createdAt(i.getCreatedAt())
                 .build();
     }
+    // === MANAGER - INQUIRIES ===
 
     @Transactional
     public void resolveInquiry(Integer managerEmpId, Integer inquiryId, String answer) {
@@ -1057,5 +1201,6 @@ public class PayrollService {
         }
         return mmYY;
     }
+
 
 }

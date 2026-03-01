@@ -55,4 +55,8 @@ public class Payslip {
 
     @Column(name = "is_sent_to_employee")
     private Boolean sentToEmployee;
+
+    @Column(name = "slip_status", nullable = false, length = 20)
+    @Builder.Default
+    private String slipStatus = "ACTIVE";
 }
