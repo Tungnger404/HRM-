@@ -25,6 +25,7 @@ public class PayrollRowDTO {
 
     private String jobTitle;
     private String batchName;
+    private String slipStatus; // ACTIVE / REJECTED
 
     // Work metrics
     private BigDecimal baseSalary;        // lương cơ bản/vị trí

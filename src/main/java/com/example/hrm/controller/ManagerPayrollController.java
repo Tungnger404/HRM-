@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.*;
 
@@ -20,11 +21,6 @@ public class ManagerPayrollController {
 
     private final PayrollService payrollService;
     private final CurrentEmployeeService currentEmployeeService;
-
-    // DEMO: bạn thay bằng current manager empId từ Security sau
-    private Integer demoManagerEmpId() {
-        return 2;
-    }
 
     @GetMapping("/periods")
     public String periods(Model model) {
@@ -37,12 +33,6 @@ public class ManagerPayrollController {
         model.addAttribute("periodId", periodId);
         model.addAttribute("batches", payrollService.listBatchesByPeriod(periodId));
         return "manager/payroll-batch-list";
-    }
-
-    @PostMapping("/periods/{periodId}/generate")
-    public String generate(@PathVariable Integer periodId) {
-        Integer batchId = payrollService.generatePayrollDraft(periodId, demoManagerEmpId());
-        return "redirect:/manager/payroll/batches/" + batchId;
     }
 
     @GetMapping("/batches/{batchId}")
@@ -273,25 +263,20 @@ public class ManagerPayrollController {
         }
 
         if ("reject".equalsIgnoreCase(action)) {
-            // reject 1 dòng = xoá đúng payslip
             for (Integer payslipId : ids) {
                 try {
                     payrollService.rejectPayslip(payslipId);
                     ok++;
-                    processed.add(payslipId); // ✅ trả payslipId để UI xoá đúng dòng
+                    processed.add(payslipId); // ✅ trả về để UI đổi trạng thái
                 } catch (Exception e) {
                     fail++;
                 }
             }
-
             res.put("ok", ok);
             res.put("fail", fail);
             res.put("processedIds", processed);
-
-            // reject thì nên màu đỏ/warning
-            String msgType = (fail > 0) ? "warning" : "danger";
-            res.put("msgType", msgType);
-            res.put("msg", "Done");
+            res.put("msgType", (fail > 0) ? "warning" : "success");
+            res.put("msg", "Rejected (status updated)");
             return res;
         }
 
@@ -300,6 +285,31 @@ public class ManagerPayrollController {
         res.put("processedIds", List.of());
         res.put("msgType", "danger");
         res.put("msg", "Action không hợp lệ.");
+        return res;
+    }
+
+    //update nut sua
+    @PostMapping(value = "/payslips/{payslipId}/salary", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> updatePayslipSalary(@PathVariable Integer payslipId,
+                                                   @RequestParam("baseSalary") BigDecimal baseSalary,
+                                                   Principal principal,
+                                                   Authentication authentication) {
+
+        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
+
+        boolean isAdminOrHr = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+        if (isAdminOrHr) managerEmpId = null;
+
+        PayrollService.SalaryUpdateResult r = payrollService.updatePayslipBaseSalary(managerEmpId, payslipId, baseSalary);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("ok", 1);
+        res.put("payslipId", payslipId);
+        res.put("baseSalary", r.baseSalary());
+        res.put("netSalary", r.netSalary());
+        res.put("slipStatus", r.slipStatus());
         return res;
     }
 }
