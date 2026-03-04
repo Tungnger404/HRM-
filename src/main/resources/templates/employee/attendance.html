@@ -23,6 +23,12 @@
                 <span th:text="${error}"></span>
             </div>
 
+            <!-- Real-time Clock -->
+            <div class="mb-3">
+                <h6 class="fw-bold">Current Time</h6>
+                <div id="clock" class="fs-4 text-primary fw-bold"></div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="mb-4 d-flex gap-2">
 
@@ -84,7 +90,32 @@
 
         </div>
     </div>
+    <script>
 
+        function updateClock() {
+
+            const now = new Date();
+
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const timeString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+            document.getElementById("clock").innerText = timeString;
+        }
+
+        // cập nhật mỗi giây
+        setInterval(updateClock, 1000);
+
+        // chạy ngay khi load
+        updateClock();
+
+    </script>
 </div>
 
 </html>
