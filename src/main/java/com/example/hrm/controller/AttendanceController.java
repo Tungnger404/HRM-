@@ -48,7 +48,7 @@ public class AttendanceController {
     public String checkOut(HttpSession session, RedirectAttributes ra) {
 
         Integer empId = (Integer) session.getAttribute("EMP_ID");
-        if (empId == null) return "redirect:/login";
+        //if (empId == null) return "redirect:/login";
 
         try {
             attendanceService.checkOut(empId);
