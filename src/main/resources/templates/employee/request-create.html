@@ -21,7 +21,8 @@
 
             <form th:action="@{/employee/requests/create}"
                   th:object="${request}"
-                  method="post">
+                  method="post"
+                  enctype="multipart/form-data">
 
                 <!-- Request Type -->
                 <div class="mb-3">
@@ -31,6 +32,7 @@
                         <option value="">-- Select Type --</option>
                         <option value="LEAVE">Leave</option>
                         <option value="OVERTIME">Overtime</option>
+                        <option value="OTHER">Other</option>
                     </select>
                 </div>
 
@@ -51,15 +53,57 @@
                            th:field="*{endTime}"
                            required>
                 </div>
+                <!-- LEAVE OPTIONS -->
+                <div id="leaveFields" style="display:none;">
 
-                <!-- Reason -->
+                    <div class="mb-3">
+                        <label class="form-label">Leave Type</label>
+                        <select class="form-select" name="leaveType">
+                            <option value="">-- Select Leave Type --</option>
+                            <option value="SICK">Sick Leave</option>
+                            <option value="ANNUAL">Annual Leave</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Upload Medical / Leave Document</label>
+                        <input type="file"
+                               class="form-control"
+                               name="leaveFile"
+                               accept=".pdf,.jpg,.png,.doc,.docx">
+                    </div>
+
+                </div>
+
+
+                <!-- OVERTIME OPTIONS -->
+                <div id="overtimeFields" style="display:none;">
+
+                    <div class="mb-3">
+                        <label class="form-label">Overtime Hours</label>
+                        <input type="number"
+                               class="form-control"
+                               name="overtimeHours"
+                               min="1"
+                               placeholder="Enter overtime hours">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Project / Task</label>
+                        <input type="text"
+                               class="form-control"
+                               name="projectTask"
+                               placeholder="Enter project or task name">
+                    </div>
+
+                </div>
                 <div class="mb-3">
                     <label class="form-label">Reason</label>
                     <textarea class="form-control"
                               th:field="*{reason}"
-                              rows="3"></textarea>
+                              rows="3"
+                              placeholder="Enter reason"></textarea>
                 </div>
-
                 <button type="submit" class="btn btn-primary">
                     Submit Request
                 </button>
@@ -73,7 +117,37 @@
 
         </div>
     </div>
+    <script>
 
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const requestType = document.getElementById("requestType");
+            const leaveFields = document.getElementById("leaveFields");
+            const overtimeFields = document.getElementById("overtimeFields");
+
+            function updateForm() {
+
+                let type = requestType.value;
+
+                // reset
+                leaveFields.style.display = "none";
+                overtimeFields.style.display = "none";
+
+                if (type === "LEAVE") {
+                    leaveFields.style.display = "block";
+                }
+
+                if (type === "OVERTIME") {
+                    overtimeFields.style.display = "block";
+                }
+            }
+
+            requestType.addEventListener("change", updateForm);
+
+            updateForm();
+        });
+
+    </script>
 </div>
 
 </html>

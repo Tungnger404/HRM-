@@ -76,6 +76,17 @@
 
     <div id="clientAlert" style="display:none"></div>
 
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">Payroll Payslips</h2>
+            <div class="text-body-secondary small">Manage payroll payslips</div>
+        </div>
+
+        <button type="button" class="btn btn-warning text-white" id="btnAddSalary">
+            + Add Salary
+        </button>
+    </div>
+
     <div class="card mb-3">
         <div class="card-body">
             <form method="get" th:action="@{/manager/payroll/payslips}"
