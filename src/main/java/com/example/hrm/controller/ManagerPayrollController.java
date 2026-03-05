@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.example.hrm.service.BenefitService;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -21,6 +22,7 @@ public class ManagerPayrollController {
 
     private final PayrollService payrollService;
     private final CurrentEmployeeService currentEmployeeService;
+    private final BenefitService benefitService;
 
     @GetMapping("/periods")
     public String periods(Model model) {
@@ -71,6 +73,7 @@ public class ManagerPayrollController {
                 .body(xlsx);
     }
 
+
     @GetMapping("/payslips/{payslipId}")
     public String payslipDetail(@PathVariable Integer payslipId,
                                 Model model,
@@ -81,16 +84,38 @@ public class ManagerPayrollController {
 
         boolean isAdminOrHr = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
-        if (isAdminOrHr)
-            managerEmpId = null;
+        if (isAdminOrHr) managerEmpId = null;
 
         try {
             model.addAttribute("p", payrollService.getPayslipDetailForManager(managerEmpId, payslipId));
+            model.addAttribute("activeBenefits", benefitService.listActive()); // ✅ NEW
             return "manager/payslip-detail";
         } catch (org.springframework.security.access.AccessDeniedException ex) {
             model.addAttribute("err", ex.getMessage());
-            return "error/403"; // hoặc trang lỗi bạn đang dùng
+            return "error/403";
         }
+    }
+
+    // ✅ NEW: add benefit vào payslip (chỉ cho ACTIVE)
+    @PostMapping("/payslips/{payslipId}/benefits/add")
+    public String addBenefitToPayslip(@PathVariable Integer payslipId,
+                                      @RequestParam("benefitId") Integer benefitId,
+                                      Principal principal,
+                                      Authentication authentication,
+                                      RedirectAttributes ra) {
+
+        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        boolean isAdminOrHr = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+        if (isAdminOrHr) managerEmpId = null;
+
+        try {
+            payrollService.addActiveBenefitToPayslip(managerEmpId, payslipId, benefitId);
+            ra.addFlashAttribute("msg", "Đã thêm khoản lương vào payslip.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("err", e.getMessage());
+        }
+        return "redirect:/manager/payroll/payslips/" + payslipId;
     }
 
     @GetMapping("/payslips")
@@ -125,6 +150,7 @@ public class ManagerPayrollController {
                        @RequestParam(value = "q", required = false) String q,
                        @RequestParam(value = "status", required = false) String status,
                        Principal principal,
+                       Authentication authentication,
                        RedirectAttributes ra) {
 
         String redirectBack = "redirect:/manager/payroll/payslips"
@@ -139,41 +165,28 @@ public class ManagerPayrollController {
             return redirectBack;
         }
 
-        Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        // managerEmpId: HR/ADMIN => null
+        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        boolean isAdminOrHr = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+        if (isAdminOrHr)
+            managerEmpId = null;
 
         List<Integer> ids = payslipIds.stream().filter(Objects::nonNull).distinct().toList();
-
         int ok = 0, fail = 0;
 
         try {
             if ("approve".equalsIgnoreCase(action)) {
-                // approve theo batch của các payslip đã chọn
-                List<Integer> batchIds = payrollService.findBatchIdsByPayslipIds(ids);
-                batchIds = batchIds.stream().filter(Objects::nonNull).distinct().toList();
-
-                List<Integer> approvedIds = new ArrayList<>();
-
-                for (Integer batchId : batchIds) {
+                // ✅ approve theo TỪNG PAYSLIP
+                for (Integer payslipId : ids) {
                     try {
-                        try {
-                            payrollService.approveBatch(batchId, approverEmpId);
-                        } catch (IllegalStateException ex) {
-                            payrollService.submitBatchForApproval(batchId);
-                            payrollService.approveBatch(batchId, approverEmpId);
-                        }
+                        payrollService.approvePayslip(managerEmpId, payslipId);
                         ok++;
-                        approvedIds.add(batchId);
                     } catch (Exception e) {
                         fail++;
                     }
                 }
-
-                if (!approvedIds.isEmpty()) {
-                    String idsParam = approvedIds.stream().map(String::valueOf).reduce((a, b) -> a + "," + b).orElse("");
-                    return "redirect:/bank/portal?batchIds=" + idsParam + "&auto=1";
-                }
             } else if ("reject".equalsIgnoreCase(action)) {
-                // reject 1 dòng = xoá đúng payslip
                 for (Integer payslipId : ids) {
                     try {
                         payrollService.rejectPayslip(payslipId);
@@ -187,7 +200,6 @@ public class ManagerPayrollController {
                 ra.addFlashAttribute("msg", "Action không hợp lệ.");
                 return redirectBack;
             }
-
         } catch (Exception e) {
             ra.addFlashAttribute("msgType", "danger");
             ra.addFlashAttribute("msg", "Lỗi xử lý bulk.");
@@ -204,7 +216,8 @@ public class ManagerPayrollController {
     @ResponseBody
     public Map<String, Object> bulkJson(@RequestParam("action") String action,
                                         @RequestParam(value = "payslipIds", required = false) List<Integer> payslipIds,
-                                        Principal principal) {
+                                        Principal principal,
+                                        Authentication authentication) {
 
         Map<String, Object> res = new HashMap<>();
 
@@ -217,7 +230,11 @@ public class ManagerPayrollController {
             return res;
         }
 
-        Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
+        boolean isAdminOrHr = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+        if (isAdminOrHr)
+            managerEmpId = null;
 
         List<Integer> ids = payslipIds.stream().filter(Objects::nonNull).distinct().toList();
 
@@ -225,40 +242,20 @@ public class ManagerPayrollController {
         List<Integer> processed = new ArrayList<>();
 
         if ("approve".equalsIgnoreCase(action)) {
-            // approve theo batch của các payslip đã chọn
-            List<Integer> batchIds = payrollService.findBatchIdsByPayslipIds(ids);
-            batchIds = batchIds.stream().filter(Objects::nonNull).distinct().toList();
-
-            List<Integer> approvedBatchIds = new ArrayList<>();
-
-            for (Integer batchId : batchIds) {
+            for (Integer payslipId : ids) {
                 try {
-                    try {
-                        payrollService.approveBatch(batchId, approverEmpId);
-                    } catch (IllegalStateException ex) {
-                        payrollService.submitBatchForApproval(batchId);
-                        payrollService.approveBatch(batchId, approverEmpId);
-                    }
+                    payrollService.approvePayslip(managerEmpId, payslipId);
                     ok++;
-                    approvedBatchIds.add(batchId);
+                    processed.add(payslipId);
                 } catch (Exception e) {
                     fail++;
                 }
             }
-
             res.put("ok", ok);
             res.put("fail", fail);
-            res.put("processedIds", List.of()); // UI không cần xoá vì sẽ redirect
-
-            String msgType = (fail > 0) ? "warning" : "success";
-            res.put("msgType", msgType);
-            res.put("msg", "Done");
-
-            if (!approvedBatchIds.isEmpty()) {
-                String idsParam = approvedBatchIds.stream().map(String::valueOf)
-                        .reduce((a, b) -> a + "," + b).orElse("");
-                res.put("redirectUrl", "/bank/portal?batchIds=" + idsParam + "&auto=1");
-            }
+            res.put("processedIds", processed);
+            res.put("msgType", (fail > 0) ? "warning" : "success");
+            res.put("msg", "Approved (status updated)");
             return res;
         }
 
@@ -267,7 +264,7 @@ public class ManagerPayrollController {
                 try {
                     payrollService.rejectPayslip(payslipId);
                     ok++;
-                    processed.add(payslipId); // ✅ trả về để UI đổi trạng thái
+                    processed.add(payslipId);
                 } catch (Exception e) {
                     fail++;
                 }
@@ -300,7 +297,8 @@ public class ManagerPayrollController {
 
         boolean isAdminOrHr = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
-        if (isAdminOrHr) managerEmpId = null;
+        if (isAdminOrHr)
+            managerEmpId = null;
 
         PayrollService.SalaryUpdateResult r = payrollService.updatePayslipBaseSalary(managerEmpId, payslipId, baseSalary);
 

@@ -50,6 +50,8 @@ public class PayrollService {
     private final ContractRepository contractRepo;
     private final AttendanceLogRepository attendanceRepo;
     private final RequestRepository requestRepo;
+
+    private final BenefitService benefitService;
     // =========================
     // MANAGER SIDE
     // =========================
@@ -88,6 +90,134 @@ public class PayrollService {
     }
 
     @Transactional
+    public void addActiveBenefitToPayslip(Integer managerEmpId, Integer payslipId, Integer benefitId) {
+
+        Payslip p = payslipRepo.findById(payslipId)
+                .orElseThrow(() -> new IllegalArgumentException("Payslip not found: " + payslipId));
+
+        // quyền giống getPayslipDetailForManager/update salary
+        if (managerEmpId != null) {
+            Integer ownerEmpId = (p.getEmployee() != null) ? p.getEmployee().getId() : null;
+            Integer direct = (p.getEmployee() != null) ? p.getEmployee().getDirectManagerId() : null;
+
+            boolean ok = Objects.equals(ownerEmpId, managerEmpId) || Objects.equals(direct, managerEmpId);
+            if (!ok) throw new AccessDeniedException("Not allowed to edit this payslip");
+        }
+
+        String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
+                ? "" : p.getBatch().getStatus().trim().toUpperCase();
+
+        if ("PAID".equals(batchStatus)) throw new IllegalStateException("Batch PAID không cho sửa.");
+        if ("REJECTED".equalsIgnoreCase(p.getSlipStatus())) throw new IllegalStateException("Payslip REJECTED không thêm được.");
+
+        Benefit b = benefitService.requireActive(benefitId); // ✅ chỉ ACTIVE
+
+        BigDecimal base = nz(p.getBaseSalary());
+        BigDecimal amount;
+        if ("PERCENT_BASE".equalsIgnoreCase(b.getCalcMethod())) {
+            amount = base.multiply(nz(b.getValue())).setScale(2, RoundingMode.HALF_UP);
+        } else {
+            amount = nz(b.getValue()).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        // upsert payslip_item theo code benefit
+        String codeKey = (b.getCode() == null ? "" : b.getCode().trim().toUpperCase());
+        if (codeKey.isBlank()) throw new IllegalStateException("Benefit code is empty");
+
+        List<PayslipItem> items = itemRepo.findByPayslip_IdOrderByIdAsc(payslipId);
+
+        PayslipItem it = items.stream()
+                .filter(x -> x.getItemCode() != null && x.getItemCode().trim().equalsIgnoreCase(codeKey))
+                .findFirst()
+                .orElse(null);
+
+        if (it == null) {
+            it = PayslipItem.builder()
+                    .payslip(p)
+                    .itemCode(codeKey)
+                    .itemName(b.getName())
+                    .itemType(b.getType()) // INCOME / DEDUCTION
+                    .amount(amount)
+                    .manualAdjustment(true)
+                    .build();
+        } else {
+            it.setItemName(b.getName());
+            it.setItemType(b.getType());
+            it.setAmount(amount);
+            it.setManualAdjustment(true);
+        }
+        itemRepo.save(it);
+
+        // recalc totals từ items
+        List<PayslipItem> after = itemRepo.findByPayslip_IdOrderByIdAsc(payslipId);
+
+        BigDecimal totalIncome = after.stream()
+                .filter(x -> "INCOME".equalsIgnoreCase(x.getItemType()))
+                .map(x -> x.getAmount() == null ? BigDecimal.ZERO : x.getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalDeduction = after.stream()
+                .filter(x -> "DEDUCTION".equalsIgnoreCase(x.getItemType()))
+                .map(x -> x.getAmount() == null ? BigDecimal.ZERO : x.getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        p.setTotalIncome(totalIncome);
+        p.setTotalDeduction(totalDeduction);
+        p.setNetSalary(totalIncome.subtract(totalDeduction));
+        payslipRepo.save(p);
+
+        // update batch total (an toàn)
+        PayrollBatch batch = p.getBatch();
+        if (batch != null) {
+            List<Payslip> slips = payslipRepo.findByBatch_IdOrderByIdAsc(batch.getId());
+
+            BigDecimal grossSum = slips.stream()
+                    .filter(s -> !"REJECTED".equalsIgnoreCase(s.getSlipStatus()))
+                    .map(s -> s.getTotalIncome() == null ? BigDecimal.ZERO : s.getTotalIncome())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal netSum = slips.stream()
+                    .filter(s -> !"REJECTED".equalsIgnoreCase(s.getSlipStatus()))
+                    .map(s -> s.getNetSalary() == null ? BigDecimal.ZERO : s.getNetSalary())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            batch.setTotalGross(grossSum);
+            batch.setTotalNet(netSum);
+            batchRepo.save(batch);
+        }
+    }
+
+    @Transactional
+    public void approvePayslip(Integer managerEmpId, Integer payslipId) {
+
+        Payslip p = payslipRepo.findById(payslipId)
+                .orElseThrow(() -> new IllegalArgumentException("Payslip not found: " + payslipId));
+
+        // check quyền giống view detail
+        if (managerEmpId != null) {
+            Integer ownerEmpId = p.getEmployee() != null ? p.getEmployee().getId() : null;
+            Integer direct = p.getEmployee() != null ? p.getEmployee().getDirectManagerId() : null;
+
+            boolean ok = Objects.equals(ownerEmpId, managerEmpId) || Objects.equals(direct, managerEmpId);
+            if (!ok) throw new AccessDeniedException("Not allowed to approve this payslip");
+        }
+
+        String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
+                ? "" : p.getBatch().getStatus().trim().toUpperCase();
+
+        if ("PAID".equals(batchStatus)) {
+            throw new IllegalStateException("Batch PAID không cho approve.");
+        }
+
+        if ("REJECTED".equalsIgnoreCase(p.getSlipStatus())) {
+            throw new IllegalStateException("Payslip REJECTED không approve được (hãy sửa lương rồi ACTIVE lại).");
+        }
+
+        p.setSentToEmployee(true);     // ✅ approve/release đúng 1 payslip
+        payslipRepo.save(p);
+    }
+
+    @Transactional
     public SalaryUpdateResult updatePayslipBaseSalary(Integer managerEmpId,
                                                       Integer payslipId,
                                                       BigDecimal newBaseSalary) {
@@ -101,12 +231,11 @@ public class PayrollService {
 
         // ✅ quyền giống view detail
         if (managerEmpId != null) {
-            Integer ownerEmpId = p.getEmployee() != null ? p.getEmployee().getId() : null;
-            Integer direct = p.getEmployee() != null ? p.getEmployee().getDirectManagerId() : null;
+            Integer ownerEmpId = (p.getEmployee() != null) ? p.getEmployee().getId() : null;
+            Integer direct = (p.getEmployee() != null) ? p.getEmployee().getDirectManagerId() : null;
 
             boolean ok = Objects.equals(ownerEmpId, managerEmpId) || Objects.equals(direct, managerEmpId);
-            if (!ok)
-                throw new AccessDeniedException("Not allowed to edit this payslip");
+            if (!ok) throw new AccessDeniedException("Not allowed to edit this payslip");
         }
 
         String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
@@ -120,8 +249,33 @@ public class PayrollService {
         boolean wasRejected = "REJECTED".equalsIgnoreCase(p.getSlipStatus());
         if (wasRejected) {
             p.setSlipStatus("ACTIVE"); // sửa lại => active lại
-            // nếu batch đã approved thì có thể release lại, còn không thì để false
-            p.setSentToEmployee("APPROVED".equals(batchStatus));
+            p.setSentToEmployee("APPROVED".equals(batchStatus)); // nếu batch approved thì vẫn release
+        }
+
+        // ===== Resolve period range để tính benefit theo kỳ lương =====
+        LocalDate startDate;
+        LocalDate endDate;
+
+        PayrollPeriod per = (p.getBatch() != null) ? p.getBatch().getPeriod() : null;
+        if (per != null) {
+            LocalDate s = per.getStartDate();
+            LocalDate e = per.getEndDate();
+
+            if (s == null) {
+                // fallback: month/year
+                int m = (per.getMonth() != null ? per.getMonth() : LocalDate.now().getMonthValue());
+                int y = (per.getYear() != null ? per.getYear() : LocalDate.now().getYear());
+                s = LocalDate.of(y, m, 1);
+            }
+            if (e == null) e = s.withDayOfMonth(s.lengthOfMonth());
+
+            startDate = s;
+            endDate = e;
+        } else {
+            // fallback nếu thiếu period
+            LocalDate now = LocalDate.now();
+            startDate = now.withDayOfMonth(1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         }
 
         BigDecimal base = newBaseSalary.setScale(2, RoundingMode.HALF_UP);
@@ -130,11 +284,13 @@ public class PayrollService {
         BigDecimal actualDays = nz(p.getActualWorkDays());
         BigDecimal otHours = nz(p.getOtHours());
 
+        // salary by days
         BigDecimal salaryByDays = BigDecimal.ZERO;
         if (standardDays.compareTo(BigDecimal.ZERO) > 0) {
             salaryByDays = base.multiply(actualDays).divide(standardDays, 2, RoundingMode.HALF_UP);
         }
 
+        // hourly
         BigDecimal hourly = BigDecimal.ZERO;
         if (standardDays.compareTo(BigDecimal.ZERO) > 0) {
             hourly = base.divide(standardDays, 2, RoundingMode.HALF_UP)
@@ -144,40 +300,73 @@ public class PayrollService {
         BigDecimal overtimePay = hourly.multiply(otHours).multiply(BigDecimal.valueOf(1.5))
                 .setScale(2, RoundingMode.HALF_UP);
 
-        // allowance demo (giữ như generator của bạn)
-        BigDecimal mealAllowance = new BigDecimal("50000");
-        BigDecimal transportAllowance = new BigDecimal("100000");
+        // ===== BENEFITS (Phúc lợi) từ config =====
+        Integer empId = (p.getEmployee() != null) ? p.getEmployee().getId() : null;
+        List<BenefitService.BenefitApplied> ben = (empId == null)
+                ? List.of()
+                : benefitService.calculateForEmployee(empId, startDate, endDate, base);
 
-        BigDecimal totalIncome = salaryByDays.add(overtimePay).add(mealAllowance).add(transportAllowance);
-        BigDecimal insuranceDeduction = base.multiply(new BigDecimal("0.03"))
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal benefitIncome = ben.stream()
+                .filter(x -> "INCOME".equalsIgnoreCase(x.type()))
+                .map(BenefitService.BenefitApplied::amount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalDeduction = insuranceDeduction;
+        BigDecimal benefitDeduction = ben.stream()
+                .filter(x -> "DEDUCTION".equalsIgnoreCase(x.type()))
+                .map(BenefitService.BenefitApplied::amount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalIncome = salaryByDays.add(overtimePay).add(benefitIncome);
+        BigDecimal totalDeduction = benefitDeduction;
         BigDecimal net = totalIncome.subtract(totalDeduction);
 
+        // update payslip totals
         p.setBaseSalary(base);
         p.setTotalIncome(totalIncome);
         p.setTotalDeduction(totalDeduction);
         p.setNetSalary(net);
         payslipRepo.save(p);
 
-        // ✅ update payslip_items cho khớp
+        // ===== update payslip_items =====
         List<PayslipItem> items = itemRepo.findByPayslip_IdOrderByIdAsc(payslipId);
         Map<String, PayslipItem> byCode = new HashMap<>();
         for (PayslipItem it : items) {
-            if (it.getItemCode() != null)
+            if (it.getItemCode() != null) {
                 byCode.put(it.getItemCode().trim().toUpperCase(), it);
+            }
         }
 
+        // base + OT
         upsertSalaryItem(byCode, p, "BASE_BY_DAYS", "Salary by work days", salaryByDays, "INCOME");
         upsertSalaryItem(byCode, p, "OT_PAY", "Overtime pay", overtimePay, "INCOME");
-        upsertSalaryItem(byCode, p, "MEAL_ALLOW", "Meal allowance", mealAllowance, "INCOME");
-        upsertSalaryItem(byCode, p, "TRANSPORT_ALLOW", "Transport allowance", transportAllowance, "INCOME");
-        upsertSalaryItem(byCode, p, "BHYT", "BHYT (3%)", insuranceDeduction, "DEDUCTION");
+
+        // benefits list
+        for (var x : ben) {
+            BigDecimal amt = (x.amount() == null) ? BigDecimal.ZERO : x.amount();
+            upsertSalaryItem(byCode, p, x.code(), x.name(), amt, x.type());
+        }
+
+        // ✅ OPTIONAL: dọn item không còn nằm trong benefit config hiện tại
+        Set<String> keep = new HashSet<>();
+        keep.add("BASE_BY_DAYS");
+        keep.add("OT_PAY");
+        for (var x : ben) keep.add(x.code().trim().toUpperCase());
+
+        List<PayslipItem> toDelete = new ArrayList<>();
+        for (PayslipItem it : items) {
+            String code = (it.getItemCode() == null) ? "" : it.getItemCode().trim().toUpperCase();
+            if (!keep.contains(code)) {
+                toDelete.add(it);
+                byCode.remove(code);
+            }
+        }
+        if (!toDelete.isEmpty()) itemRepo.deleteAll(toDelete);
 
         itemRepo.saveAll(byCode.values());
 
-        // ✅ tính lại batch total theo payslip ACTIVE (đúng cả case: REJECTED -> ACTIVE)
+        // ✅ tính lại batch total theo payslip ACTIVE
         PayrollBatch b = p.getBatch();
         if (b != null) {
             List<Payslip> slips = payslipRepo.findByBatch_IdOrderByIdAsc(b.getId());
@@ -595,7 +784,8 @@ public class PayrollService {
                     emp.getId(),
                     start.atStartOfDay(),
                     end.atTime(LocalTime.MAX));
-            BigDecimal otHours = BigDecimal.valueOf(otMinutes).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+            BigDecimal otHours = BigDecimal.valueOf(otMinutes)
+                    .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
 
             // salary = base * actual/standard
             BigDecimal salaryByDays = (standardDays.compareTo(BigDecimal.ZERO) == 0)
@@ -611,23 +801,24 @@ public class PayrollService {
             BigDecimal overtimePay = hourly.multiply(otHours).multiply(BigDecimal.valueOf(1.5))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            // ===== BENEFITS (Phúc lợi) =====
-            // bạn đổi số tiền/ngày ở đây
-            // ===== BENEFITS (cố định mỗi tháng) =====
-            BigDecimal mealAllowance = new BigDecimal("50000");       // 50,000 / tháng
-            BigDecimal transportAllowance = new BigDecimal("100000"); // 100,000 / tháng
+            // ✅ BENEFITS (Phúc lợi) từ config + optional override theo employee
+            List<BenefitService.BenefitApplied> ben =
+                    benefitService.calculateForEmployee(emp.getId(), start, end, baseSalary);
 
-            BigDecimal totalIncome = salaryByDays
-                    .add(overtimePay)
-                    .add(mealAllowance)
-                    .add(transportAllowance);
+            BigDecimal benefitIncome = ben.stream()
+                    .filter(x -> "INCOME".equalsIgnoreCase(x.type()))
+                    .map(BenefitService.BenefitApplied::amount)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // ===== DEDUCTION: BHYT/BHXH 3% (demo) =====
-            BigDecimal insuranceRate = new BigDecimal("0.03"); // 3%
-            BigDecimal insuranceDeduction = baseSalary.multiply(insuranceRate)
-                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal benefitDeduction = ben.stream()
+                    .filter(x -> "DEDUCTION".equalsIgnoreCase(x.type()))
+                    .map(BenefitService.BenefitApplied::amount)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            BigDecimal totalDeduction = insuranceDeduction;
+            BigDecimal totalIncome = salaryByDays.add(overtimePay).add(benefitIncome);
+            BigDecimal totalDeduction = benefitDeduction;
             BigDecimal net = totalIncome.subtract(totalDeduction);
 
             Payslip slip = Payslip.builder()
@@ -646,6 +837,7 @@ public class PayrollService {
 
             // items
             List<PayslipItem> items = new ArrayList<>();
+
             items.add(PayslipItem.builder()
                     .payslip(slip)
                     .itemCode("BASE_BY_DAYS")
@@ -666,35 +858,17 @@ public class PayrollService {
                         .build());
             }
 
-            if (mealAllowance.compareTo(BigDecimal.ZERO) > 0) {
-                items.add(PayslipItem.builder()
-                        .payslip(slip)
-                        .itemCode("MEAL_ALLOW")
-                        .itemName("Meal allowance")
-                        .amount(mealAllowance)
-                        .itemType("INCOME")
-                        .manualAdjustment(false)
-                        .build());
-            }
+            // ✅ add benefit items (INCOME/DEDUCTION)
+            for (var x : ben) {
+                BigDecimal amt = (x.amount() == null) ? BigDecimal.ZERO : x.amount();
+                if (amt.compareTo(BigDecimal.ZERO) == 0) continue;
 
-            if (transportAllowance.compareTo(BigDecimal.ZERO) > 0) {
                 items.add(PayslipItem.builder()
                         .payslip(slip)
-                        .itemCode("TRANSPORT_ALLOW")
-                        .itemName("Transport allowance")
-                        .amount(transportAllowance)
-                        .itemType("INCOME")
-                        .manualAdjustment(false)
-                        .build());
-            }
-
-            if (insuranceDeduction.compareTo(BigDecimal.ZERO) > 0) {
-                items.add(PayslipItem.builder()
-                        .payslip(slip)
-                        .itemCode("BHYT")          // bạn đổi thành "BHXH" nếu muốn
-                        .itemName("BHYT (3%)")     // hiển thị
-                        .amount(insuranceDeduction)
-                        .itemType("DEDUCTION")
+                        .itemCode(x.code())
+                        .itemName(x.name())
+                        .amount(amt)
+                        .itemType(x.type()) // INCOME / DEDUCTION
                         .manualAdjustment(false)
                         .build());
             }
