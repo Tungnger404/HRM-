@@ -2,7 +2,9 @@ package com.example.hrm.controller;
 
 import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.KpiEvidence;
+import com.example.hrm.entity.Employee;
 import com.example.hrm.repository.KpiAssignmentRepository;
+import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.service.KpiEvidenceService;
 import com.example.hrm.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/manager/evaluation")
@@ -27,6 +32,9 @@ public class ManagerEvaluationViewController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
     @GetMapping("/pending")
     public String showPendingEvaluations(Model model,
                                         @ModelAttribute("msg") String msg,
@@ -38,18 +46,49 @@ public class ManagerEvaluationViewController {
         return "manager/evaluation_pending";
     }
 
+    @GetMapping("/ranking/{cycleId}")
+    public String showPerformanceRanking(@PathVariable Integer cycleId, Model model) {
+        List<KpiAssignment> cycleAssignments = kpiAssignmentRepository.findByCycleId(cycleId);
+
+        // Show records already reviewed or ready for manager review
+        List<KpiAssignment> rankingAssignments = cycleAssignments.stream()
+                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.HR_VERIFIED
+                        || a.getStatus() == KpiAssignment.AssignmentStatus.COMPLETED)
+                .sorted(Comparator.comparing(
+                        KpiAssignment::getManagerScore,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .toList();
+
+        Map<Integer, String> empNames = employeeRepository.findAllById(
+                        rankingAssignments.stream().map(KpiAssignment::getEmpId).collect(Collectors.toSet())
+                ).stream()
+                .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
+
+        model.addAttribute("assignments", rankingAssignments);
+        model.addAttribute("empNames", empNames);
+        model.addAttribute("cycleId", cycleId);
+        model.addAttribute("pageTitle", "Performance Ranking");
+        return "evaluation/ranking";
+    }
+
     @GetMapping("/review/{assignmentId}")
     public String showReviewPage(@PathVariable Integer assignmentId, Model model,
                                  @ModelAttribute("msg") String msg,
-                                 @ModelAttribute("err") String err) {
-        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("Assignment not found"));
-        
+                                 @ModelAttribute("err") String err,
+                                 RedirectAttributes ra) {
+        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId).orElse(null);
+        if (assignment == null) {
+            ra.addFlashAttribute("err", "Evaluation assignment not found.");
+            return "redirect:/manager/evaluation/pending";
+        }
+
         List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignmentId);
-        
+
         model.addAttribute("assignment", assignment);
         model.addAttribute("evidences", evidences);
-        return "manager/evaluation_review";
+        model.addAttribute("evaluationId", assignmentId);
+        return "evaluation/manager-review";
     }
 
     @PostMapping("/review/{assignmentId}/approve")

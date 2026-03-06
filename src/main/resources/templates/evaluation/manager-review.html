@@ -11,7 +11,6 @@
         <div class="row mb-4">
             <div class="col-12">
                 <h2>Manager Review</h2>
-                <p class="text-muted">Review employee's self-evaluation and provide feedback</p>
             </div>
         </div>
 
@@ -76,25 +75,34 @@
                         <!-- KPI 1 -->
                         <div class="card mb-3 border">
                             <div class="card-body">
-                                <h6 class="card-title">
-                                    Code Quality
-                                    <span class="badge bg-secondary float-end">Weight: 30%</span>
-                                </h6>
-                                <p class="text-muted small">Code review score >= 8/10</p>
-                                
-                                <div class="row mb-2">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h6 class="card-title mb-1">Code Quality</h6>
+                                        <p class="text-muted small mb-0">Code review score >= 8/10</p>
+                                    </div>
+                                    <div class="text-end" style="min-width: 150px;">
+                                        <label class="form-label mb-1"><strong>Weight: <span class="text-danger">*</span></strong></label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control kpi-weight" data-kpi="1" 
+                                                   name="weight_1" min="0" max="100" step="1" required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label text-info">Employee Self Score:</label>
-                                        <p><span class="badge bg-info">9.0 / 10</span></p>
+                                        <label class="form-label text-info"><strong>Employee Self Score:</strong></label>
+                                        <p><span class="badge bg-info">90 / 100</span></p>
                                         <p class="small">"Maintained high code standards, all PRs approved first try."</p>
                                     </div>
                                     <div class="col-md-6 border-start">
-                                        <label class="form-label text-success">Manager Score:</label>
-                                        <input type="number" class="form-control" name="managerScore_1" 
-                                               min="0" max="10" step="0.5" placeholder="0-10">
+                                        <label class="form-label text-success"><strong>Manager Score (0-100):</strong> <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control kpi-score" data-kpi="1" 
+                                               name="managerScore_1" min="0" max="100" step="0.5" required>
                                         <label class="form-label mt-2">Manager Comment:</label>
                                         <textarea class="form-control" name="managerComment_1" 
-                                                  rows="2" placeholder="Provide feedback..."></textarea>
+                                                  rows="2"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -103,25 +111,34 @@
                         <!-- KPI 2 -->
                         <div class="card mb-3 border">
                             <div class="card-body">
-                                <h6 class="card-title">
-                                    Task Completion
-                                    <span class="badge bg-secondary float-end">Weight: 40%</span>
-                                </h6>
-                                <p class="text-muted small">Task completion rate >= 90%</p>
-                                
-                                <div class="row mb-2">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h6 class="card-title mb-1">Task Completion</h6>
+                                        <p class="text-muted small mb-0">Task completion rate >= 90%</p>
+                                    </div>
+                                    <div class="text-end" style="min-width: 150px;">
+                                        <label class="form-label mb-1"><strong>Weight: <span class="text-danger">*</span></strong></label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control kpi-weight" data-kpi="2" 
+                                                   name="weight_2" min="0" max="100" step="1" required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label text-info">Employee Self Score:</label>
-                                        <p><span class="badge bg-info">9.5 / 10</span></p>
+                                        <label class="form-label text-info"><strong>Employee Self Score:</strong></label>
+                                        <p><span class="badge bg-info">95 / 100</span></p>
                                         <p class="small">"Completed 100% of sprint tasks on time."</p>
                                     </div>
                                     <div class="col-md-6 border-start">
-                                        <label class="form-label text-success">Manager Score:</label>
-                                        <input type="number" class="form-control" name="managerScore_2" 
-                                               min="0" max="10" step="0.5" placeholder="0-10">
+                                        <label class="form-label text-success"><strong>Manager Score (0-100):</strong> <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control kpi-score" data-kpi="2" 
+                                               name="managerScore_2" min="0" max="100" step="0.5" required>
                                         <label class="form-label mt-2">Manager Comment:</label>
                                         <textarea class="form-control" name="managerComment_2" 
-                                                  rows="2" placeholder="Provide feedback..."></textarea>
+                                                  rows="2"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -130,25 +147,57 @@
                         <!-- KPI 3 -->
                         <div class="card mb-3 border">
                             <div class="card-body">
-                                <h6 class="card-title">
-                                    Team Collaboration
-                                    <span class="badge bg-secondary float-end">Weight: 30%</span>
-                                </h6>
-                                <p class="text-muted small">Peer review score >= 8/10</p>
-                                
-                                <div class="row mb-2">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h6 class="card-title mb-1">Team Collaboration</h6>
+                                        <p class="text-muted small mb-0">Peer review score >= 8/10</p>
+                                    </div>
+                                    <div class="text-end" style="min-width: 150px;">
+                                        <label class="form-label mb-1"><strong>Weight: <span class="text-danger">*</span></strong></label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control kpi-weight" data-kpi="3" 
+                                                   name="weight_3" min="0" max="100" step="1" required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label text-info">Employee Self Score:</label>
-                                        <p><span class="badge bg-info">8.5 / 10</span></p>
+                                        <label class="form-label text-info"><strong>Employee Self Score:</strong></label>
+                                        <p><span class="badge bg-info">85 / 100</span></p>
                                         <p class="small">"Active in code reviews and team discussions."</p>
                                     </div>
                                     <div class="col-md-6 border-start">
-                                        <label class="form-label text-success">Manager Score:</label>
-                                        <input type="number" class="form-control" name="managerScore_3" 
-                                               min="0" max="10" step="0.5" placeholder="0-10">
+                                        <label class="form-label text-success"><strong>Manager Score (0-100):</strong> <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control kpi-score" data-kpi="3" 
+                                               name="managerScore_3" min="0" max="100" step="0.5" required>
                                         <label class="form-label mt-2">Manager Comment:</label>
                                         <textarea class="form-control" name="managerComment_3" 
-                                                  rows="2" placeholder="Provide feedback..."></textarea>
+                                                  rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calculated Score Section -->
+                        <div class="card border-primary bg-light">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <button type="button" class="btn btn-primary" id="calculateScoreBtn" onclick="calculateScore()">
+                                            <i class="fa fa-calculator"></i> Calculate Manager Score
+                                        </button>
+                                        <small class="d-block mt-2 text-muted">
+                                            <i class="fa fa-info-circle"></i> Total weight must equal 100%
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div id="calculatedScoreDisplay" class="text-end">
+                                            <h5 class="mb-0">Calculated Score:</h5>
+                                            <h2 class="text-primary mb-0" id="calculatedScoreValue">-- / 100</h2>
+                                            <small id="weightValidation" class="text-muted"></small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -174,7 +223,6 @@
                             <div class="mb-3">
                                 <label for="managerReview" class="form-label">Manager Review Summary <span class="text-danger">*</span></label>
                                 <textarea class="form-control" id="managerReview" name="managerReview" rows="5" 
-                                          placeholder="Provide comprehensive feedback on employee's performance..."
                                           required></textarea>
                             </div>
 
@@ -227,6 +275,153 @@
             </div>
         </div>
     </div>
+</div>
+
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+    // Global function for button onclick
+    function calculateScore() {
+        console.log('=== CALCULATE BUTTON CLICKED ===');
+        
+        const weightInputs = document.querySelectorAll('.kpi-weight');
+        const scoreInputs = document.querySelectorAll('.kpi-score');
+        const scoreDisplay = document.getElementById('calculatedScoreValue');
+        const weightValidation = document.getElementById('weightValidation');
+        
+        console.log('Weight inputs found:', weightInputs.length);
+        console.log('Score inputs found:', scoreInputs.length);
+        
+        if (weightInputs.length === 0 || scoreInputs.length === 0) {
+            alert('ERROR: Cannot find input fields! Please refresh the page.');
+            return;
+        }
+        
+        let totalWeight = 0;
+        let weightedSum = 0;
+        let missingWeights = [];
+        let missingScores = [];
+        
+        // Check each KPI
+        weightInputs.forEach((weightInput, index) => {
+            const kpiNumber = index + 1;
+            const weight = parseFloat(weightInput.value);
+            const score = parseFloat(scoreInputs[index].value);
+            
+            console.log(`KPI ${kpiNumber}: weight="${weightInput.value}" (${weight}), score="${scoreInputs[index].value}" (${score})`);
+            
+            // Check if weight is missing or invalid
+            if (!weightInput.value || isNaN(weight) || weight <= 0) {
+                missingWeights.push(kpiNumber);
+            } else {
+                totalWeight += weight;
+            }
+            
+            // Check if score is missing or invalid
+            if (!scoreInputs[index].value && scoreInputs[index].value !== '0' || isNaN(score)) {
+                missingScores.push(kpiNumber);
+            }
+            
+            if (!isNaN(weight) && !isNaN(score) && weight > 0) {
+                weightedSum += (weight / 100) * score;
+            }
+        });
+        
+        console.log('Total weight:', totalWeight);
+        console.log('Missing weights:', missingWeights);
+        console.log('Missing scores:', missingScores);
+        
+        // Validate missing weights
+        if (missingWeights.length > 0) {
+            const kpiNames = [];
+            missingWeights.forEach(num => {
+                if (num === 1) kpiNames.push('Code Quality');
+                if (num === 2) kpiNames.push('Task Completion');
+                if (num === 3) kpiNames.push('Team Collaboration');
+            });
+            const message = `⚠️ Please fill in Weight for: ${kpiNames.join(', ')}`;
+            alert(message);
+            weightValidation.textContent = message;
+            weightValidation.className = 'text-danger';
+            scoreDisplay.textContent = '-- / 100';
+            return;
+        }
+        
+        // Validate missing scores
+        if (missingScores.length > 0) {
+            const kpiNames = [];
+            missingScores.forEach(num => {
+                if (num === 1) kpiNames.push('Code Quality');
+                if (num === 2) kpiNames.push('Task Completion');
+                if (num === 3) kpiNames.push('Team Collaboration');
+            });
+            const message = `⚠️ Please fill in Manager Score for: ${kpiNames.join(', ')}`;
+            alert(message);
+            weightValidation.textContent = message;
+            weightValidation.className = 'text-warning';
+            scoreDisplay.textContent = '-- / 100';
+            return;
+        }
+        
+        // Validate total weight must equal 100%
+        if (Math.abs(totalWeight - 100) > 0.01) {
+            const message = `⚠️ Total weight is ${totalWeight.toFixed(1)}% but must be exactly 100%`;
+            alert(message);
+            weightValidation.textContent = message;
+            weightValidation.className = 'text-danger';
+            scoreDisplay.textContent = '-- / 100';
+            return;
+        }
+        
+        // All validations passed - calculate final score
+        const finalScore = weightedSum.toFixed(1);
+        scoreDisplay.textContent = finalScore + ' / 100';
+        weightValidation.textContent = '✓ Total weight: 100%';
+        weightValidation.className = 'text-success';
+        
+        // Update the overall manager score field
+        const managerScoreField = document.getElementById('managerScore');
+        if (managerScoreField) {
+            managerScoreField.value = finalScore;
+            alert(`✓ Calculated Score: ${finalScore} / 100\n\nThe score has been filled in the "Manager Overall Score" field below.`);
+        }
+        
+        console.log('=== CALCULATION COMPLETE ===');
+        console.log('Final score:', finalScore);
+    }
+    
+    // Also set up event listeners on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== PAGE LOADED ===');
+        
+        const calculateBtn = document.getElementById('calculateScoreBtn');
+        const weightInputs = document.querySelectorAll('.kpi-weight');
+        const scoreInputs = document.querySelectorAll('.kpi-score');
+        const weightValidation = document.getElementById('weightValidation');
+        
+        console.log('Calculate button found:', calculateBtn !== null);
+        console.log('Weight inputs:', weightInputs.length);
+        console.log('Score inputs:', scoreInputs.length);
+        
+        // Backup event listener (in case onclick doesn't work)
+        if (calculateBtn) {
+            calculateBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                calculateScore();
+            });
+        }
+        
+        // Live update on input change
+        [...weightInputs, ...scoreInputs].forEach(input => {
+            input.addEventListener('input', function() {
+                // Auto-calculate if validation message exists (button was clicked at least once)
+                if (weightValidation && weightValidation.textContent !== '') {
+                    calculateScore();
+                }
+            });
+        });
+    });
+</script>
 </div>
 </body>
 </html>

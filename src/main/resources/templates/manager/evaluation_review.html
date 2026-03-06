@@ -11,7 +11,6 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <h3 class="mb-1">Review Employee Evaluation</h3>
-      <div class="text-body-secondary">Employee ID: <span th:text="${assignment.empId}"></span></div>
     </div>
     <a class="btn btn-outline-secondary" th:href="@{/manager/evaluation/pending}">
       <i class="cil-arrow-left"></i> Back
@@ -129,7 +128,7 @@
                 Manager Score <span class="text-danger">*</span>
               </label>
               <input type="number" name="managerScore" class="form-control" 
-                     min="0" max="100" placeholder="0-100" required>
+                     min="0" max="100" required>
             </div>
 
             <div class="mb-3">
@@ -148,8 +147,7 @@
 
             <div class="mb-3">
               <label class="form-label">Manager Comment:</label>
-              <textarea name="managerComment" class="form-control" rows="4"
-                        placeholder="Comments on employee performance..."></textarea>
+              <textarea name="managerComment" class="form-control" rows="4"></textarea>
             </div>
 
             <div class="mb-3">
@@ -170,8 +168,7 @@
 
             <div class="mb-3" id="trainingField" style="display: none;">
               <label class="form-label">Training Program/Course:</label>
-              <textarea name="trainingRecommendation" class="form-control" rows="2"
-                        placeholder="e.g., Leadership Development, Technical Skills Training..."></textarea>
+              <textarea name="trainingRecommendation" class="form-control" rows="2"></textarea>
             </div>
 
             <button type="submit" class="btn btn-success w-100 mb-2">
@@ -182,8 +179,7 @@
           <form method="post" th:action="@{/manager/evaluation/review/{id}/reject(id=${assignment.assignmentId})}">
             <div class="mb-3">
               <label class="form-label">Rejection Reason:</label>
-              <textarea name="rejectReason" class="form-control" rows="3" 
-                        placeholder="Evidence not convincing enough..." required></textarea>
+              <textarea name="rejectReason" class="form-control" rows="3" required></textarea>
             </div>
             <button type="submit" class="btn btn-danger w-100">
               <i class="cil-x"></i> Return to Employee

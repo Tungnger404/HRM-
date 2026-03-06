@@ -13,7 +13,7 @@
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
         <li class="breadcrumb-item"><a th:href="@{/evaluation/history}">Evaluation</a></li>
-        <li class="breadcrumb-item active">Tự đánh giá</li>
+        <li class="breadcrumb-item active">Self Evaluation</li>
       </ol>
     </nav>
   </div>
@@ -21,7 +21,6 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <h3 class="mb-1">STEP 2/2: OVERALL SELF ASSESSMENT</h3>
-      <div class="text-body-secondary">Overall assessment of achievements and development</div>
     </div>
   </div>
 
@@ -72,36 +71,28 @@
               <label class="form-label fw-bold">
                 Overall Self Assessment <span class="text-danger">*</span>
               </label>
-              <textarea name="selfAssessment" class="form-control" rows="8" required
-                        placeholder="Main achievements this cycle:&#10;1. Completed 7/5 projects, exceeded target by 40%&#10;2. Achieved 120M/100M revenue, exceeded by 20%&#10;3. Customer satisfaction 4.8/4.5, top 3 in team&#10;4. Supported onboarding of 3 new members&#10;5. Led 2 process improvement initiatives&#10;&#10;Team contributions:&#10;- Mentored junior developers&#10;- Weekly knowledge sharing sessions"></textarea>
-              <small class="text-muted">Describe your achievements and contributions in detail</small>
+              <textarea name="selfAssessment" class="form-control" rows="8" required></textarea>
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold">
                 Overall Self Score <span class="text-danger">*</span>
               </label>
-              <input type="number" name="selfScore" class="form-control" min="0" max="100" 
-                     placeholder="Example: 90" required>
-              <small class="text-muted">Overall self-assessment score (0-100)</small>
+              <input type="number" name="selfScore" class="form-control" min="0" max="100" required>
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold">
                 Challenges Faced
               </label>
-              <textarea name="challenges" class="form-control" rows="4"
-                        placeholder="- Tight deadlines in January and February&#10;- Lack of resources when scaling projects&#10;- Some stakeholders were not responsive&#10;- Need to improve time management when handling multiple projects"></textarea>
-              <small class="text-muted">Challenges and difficulties you encountered</small>
+              <textarea name="challenges" class="form-control" rows="4"></textarea>
             </div>
 
             <div class="mb-4">
               <label class="form-label fw-bold">
                 Development Goals
               </label>
-              <textarea name="developmentGoals" class="form-control" rows="4"
-                        placeholder="Plans for next cycle:&#10;1. Learn more about Advanced Project Management&#10;2. Improve presentation skills&#10;3. Explore process automation&#10;4. Mentor 2 more junior members"></textarea>
-              <small class="text-muted">Learning and development goals for next cycle</small>
+              <textarea name="developmentGoals" class="form-control" rows="4"></textarea>
             </div>
 
             <hr>
