@@ -24,7 +24,7 @@ public class KpiEvidenceServiceImpl implements KpiEvidenceService {
     @Override
     public KpiEvidence saveEvidence(Integer assignmentId, MultipartFile file) {
         String storedPath = documentStorageService.store(file);
-        
+
         KpiEvidence evidence = new KpiEvidence();
         evidence.setAssignmentId(assignmentId);
         evidence.setFileName(file.getOriginalFilename());
@@ -32,7 +32,7 @@ public class KpiEvidenceServiceImpl implements KpiEvidenceService {
         evidence.setContentType(file.getContentType());
         evidence.setFileSize(file.getSize());
         evidence.setUploadedAt(LocalDateTime.now());
-        
+
         return evidenceRepository.save(evidence);
     }
 
