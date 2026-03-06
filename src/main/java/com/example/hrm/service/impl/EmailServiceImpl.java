@@ -1,6 +1,7 @@
 package com.example.hrm.service.impl;
 
 import com.example.hrm.service.EmailService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,9 @@ import java.time.LocalDateTime;
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
+
+    @Value("${app.mail.from:${spring.mail.username}}")
+    private String fromMail;
 
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -25,7 +29,7 @@ public class EmailServiceImpl implements EmailService {
                                   String location) {
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("lebanhatnam996@gmail.com");
+        message.setFrom(fromMail);
         message.setTo(to);
         message.setSubject("Invitation to Interview – " + jobTitle);
 
@@ -56,7 +60,7 @@ public class EmailServiceImpl implements EmailService {
                                String jobTitle) {
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("lebanhatnam996@gmail.com");
+        message.setFrom(fromMail);
         message.setTo(to);
         message.setSubject("Recruitment Update – " + jobTitle);
 
@@ -77,6 +81,7 @@ public class EmailServiceImpl implements EmailService {
 
         mailSender.send(message);
     }
+
     @Override
     public void sendOfferMail(String to,
                               String name,
@@ -88,7 +93,7 @@ public class EmailServiceImpl implements EmailService {
                               String rejectLink) {
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("lebanhatnam996@gmail.com");
+        message.setFrom(fromMail);
         message.setTo(to);
         message.setSubject("Official Job Offer – " + jobTitle);
 
@@ -106,6 +111,20 @@ public class EmailServiceImpl implements EmailService {
                         "Software House"
         );
 
+        mailSender.send(message);
+    }
+
+    @Override
+    public void sendOtpEmail(String to, String otpCode) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromMail);
+        message.setTo(to);
+        message.setSubject("HRM - Password Reset OTP");
+        message.setText(
+                "Your OTP code to reset password is: " + otpCode + "\n\n" +
+                        "This code will expire in 5 minutes.\n" +
+                        "If you did not request this, please ignore this email."
+        );
         mailSender.send(message);
     }
 }

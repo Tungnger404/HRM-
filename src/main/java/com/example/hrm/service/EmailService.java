@@ -10,9 +10,11 @@ public interface EmailService {
                            String jobTitle,
                            LocalDateTime date,
                            String location);
+
     void sendRejectMail(String to,
                         String name,
                         String jobTitle);
+
     void sendOfferMail(String to,
                        String name,
                        String jobTitle,
@@ -21,4 +23,6 @@ public interface EmailService {
                        String probation,
                        String acceptLink,
                        String rejectLink);
+
+    void sendOtpEmail(String to, String otpCode);
 }

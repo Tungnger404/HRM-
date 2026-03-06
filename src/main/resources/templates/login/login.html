@@ -1,8 +1,4 @@
 <!DOCTYPE html>
-<!--
-* CoreUI - Free Bootstrap Admin Template
-* @version v5.3.0
--->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <base href="./">
@@ -11,26 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>Login</title>
 
-    <!-- favicon -->
-    <link rel="apple-touch-icon" sizes="57x57" href="assets/favicon/apple-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="assets/favicon/apple-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="assets/favicon/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="assets/favicon/apple-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="assets/favicon/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="assets/favicon/apple-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="assets/favicon/apple-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="assets/favicon/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="assets/favicon/favicon-96x96.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
-    <link rel="manifest" href="assets/favicon/manifest.json">
-
-    <!-- Vendors styles-->
     <link rel="stylesheet" href="vendors/simplebar/css/simplebar.css">
     <link rel="stylesheet" href="css/vendors/simplebar.css">
-    <!-- Main styles for this application-->
     <link href="css/style.css" rel="stylesheet">
     <link href="css/examples.css" rel="stylesheet">
     <script src="js/config.js"></script>
@@ -44,35 +22,30 @@
             <div class="col-lg-8">
                 <div class="card-group d-block d-md-flex row">
 
-                    <!-- LEFT: LOGIN -->
                     <div class="card col-md-7 p-4 mb-0">
                         <div class="card-body">
                             <h1>Login</h1>
-                            <p class="text-body-secondary">Sign In to your account</p>
+                            <p class="text-body-secondary">Sign in to your account</p>
 
-                            <!-- Alerts -->
                             <div class="alert alert-success" th:if="${param.registered}">
                                 Đăng ký thành công. Vui lòng đăng nhập.
                             </div>
+
+                            <div class="alert alert-success" th:if="${param.resetSuccess}">
+                                Đổi mật khẩu thành công. Vui lòng đăng nhập lại.
+                            </div>
+
                             <div class="alert alert-info" th:if="${param.logout}">
                                 Bạn đã đăng xuất.
                             </div>
 
-                            <!-- ✅ Spring Security error -->
                             <div class="alert alert-danger" th:if="${param.error}">
-                                Sai tài khoản hoặc mật khẩu.
+                                Sai tài khoản, mật khẩu hoặc tài khoản chỉ hỗ trợ Google login.
                             </div>
 
-                            <!-- ✅ FORM: POST /login (Spring Security) -->
                             <form th:action="@{/login}" method="post">
-
-                                <!-- Username / Email (Spring Security needs name="username") -->
                                 <div class="input-group mb-3">
-                  <span class="input-group-text">
-                    <svg class="icon">
-                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                    </svg>
-                  </span>
+                                    <span class="input-group-text">👤</span>
                                     <input class="form-control"
                                            type="text"
                                            name="username"
@@ -80,13 +53,8 @@
                                            required>
                                 </div>
 
-                                <!-- Password (Spring Security needs name="password") -->
                                 <div class="input-group mb-4">
-                  <span class="input-group-text">
-                    <svg class="icon">
-                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
-                    </svg>
-                  </span>
+                                    <span class="input-group-text">🔒</span>
                                     <input class="form-control"
                                            type="password"
                                            name="password"
@@ -94,23 +62,29 @@
                                            required>
                                 </div>
 
-                                <div class="row">
+                                <div class="row mb-3">
                                     <div class="col-6">
                                         <button class="btn btn-primary px-4" type="submit">Login</button>
                                     </div>
                                     <div class="col-6 text-end">
-                                        <a class="btn btn-link px-0" href="#"
-                                           onclick="alert('Chức năng Forgot Password chưa triển khai'); return false;">
+                                        <a class="btn btn-link px-0" th:href="@{/forgot-password}">
                                             Forgot password?
                                         </a>
                                     </div>
                                 </div>
                             </form>
 
+                            <hr>
+
+                            <div class="d-grid">
+                                <a class="btn btn-outline-danger"
+                                   th:href="@{/oauth2/authorization/google}">
+                                    Login with Google
+                                </a>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- RIGHT: REGISTER -->
                     <div class="card col-md-5 text-white bg-primary py-5">
                         <div class="card-body text-center">
                             <div>
@@ -129,14 +103,7 @@
     </div>
 </div>
 
-<!-- CoreUI and necessary plugins-->
 <script src="vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
 <script src="vendors/simplebar/js/simplebar.min.js"></script>
-<script>
-    const header = document.querySelector('header.header');
-    document.addEventListener('scroll', () => {
-        if (header) header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
-    });
-</script>
 </body>
 </html>
