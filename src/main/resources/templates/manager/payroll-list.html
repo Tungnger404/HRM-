@@ -6,17 +6,9 @@
     <title>Payroll List</title>
 
     <style>
-        .wrapper, .content, main, .container-fluid {
-            min-width: 0;
-        }
-
-        #payrollTable th, #payrollTable td {
-            white-space: nowrap;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
+        .wrapper, .content, main, .container-fluid { min-width: 0; }
+        #payrollTable th, #payrollTable td { white-space: nowrap; }
+        .table-responsive { overflow-x: auto; }
 
         .btn-edit-salary {
             width: 34px;
@@ -27,7 +19,9 @@
             justify-content: center;
         }
 
-        dialog#salaryDialog {
+        /* ✅ áp dụng cho cả 2 dialog */
+        dialog#salaryDialog,
+        dialog#addSalaryDialog {
             border: 0;
             border-radius: 12px;
             padding: 0;
@@ -35,9 +29,7 @@
             box-shadow: 0 10px 35px rgba(0, 0, 0, .25);
         }
 
-        dialog::backdrop {
-            background: rgba(0, 0, 0, .25);
-        }
+        dialog::backdrop { background: rgba(0, 0, 0, .25); }
 
         .dialog-head {
             padding: 14px 16px;
@@ -47,9 +39,7 @@
             align-items: center;
         }
 
-        .dialog-body {
-            padding: 16px;
-        }
+        .dialog-body { padding: 16px; }
 
         .dialog-foot {
             padding: 14px 16px;
@@ -57,6 +47,32 @@
             display: flex;
             gap: 8px;
             justify-content: flex-end;
+        }
+
+        #employeeSearchResult {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+
+        #employeeSearchResult:empty {
+            display: none;
+        }
+
+        .employee-result-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            background: #fff;
+        }
+
+        .employee-result-item:last-child {
+            border-bottom: 0;
+        }
+
+        .employee-result-item:hover {
+            background: #f8f9fa;
         }
     </style>
 </head>
@@ -76,6 +92,7 @@
 
     <div id="clientAlert" style="display:none"></div>
 
+    <!-- ✅ HEADER + ADD SALARY BUTTON -->
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h2 class="mb-1">Payroll Payslips</h2>
@@ -83,7 +100,7 @@
         </div>
 
         <button type="button" class="btn btn-warning text-white" id="btnAddSalary">
-            + Add Salary
+            + Add Employee
         </button>
     </div>
 
@@ -144,7 +161,9 @@
                         th:attr="data-clickable='1',
                                  data-payslip-id=${r.payslipId},
                                  data-batch-status=${r.batchStatus},
-                                 data-slip-status=${r.slipStatus}"
+                                 data-slip-status=${r.slipStatus},
+                                 data-full-name=${r.fullName},
+                                 data-base-salary=${r.baseSalary}"
                         th:classappend="${(r.sentToEmployee or r.batchStatus == 'PAID') ? 'text-muted' : ''}">
 
                         <td class="text-center">
@@ -212,6 +231,7 @@
         </div>
     </form>
 
+    <!-- ================= EDIT SALARY DIALOG ================= -->
     <dialog id="salaryDialog">
         <form method="dialog" style="margin:0;">
             <div class="dialog-head">
@@ -238,6 +258,56 @@
             <div class="dialog-foot">
                 <button value="cancel" class="btn btn-outline-secondary" type="submit">Hủy</button>
                 <button id="btnSaveSalary" class="btn btn-primary" type="button">Lưu</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- ================= ADD SALARY DIALOG ================= -->
+    <!-- ================= ADD EMPLOYEE TO PAYROLL DIALOG ================= -->
+    <dialog id="addSalaryDialog">
+        <form method="dialog" style="margin:0;">
+            <div class="dialog-head">
+                <div style="font-weight:600;">Add Employee To Payroll</div>
+                <button value="cancel" class="btn btn-sm btn-outline-secondary" type="submit">Đóng</button>
+            </div>
+
+            <div class="dialog-body">
+                <div class="text-muted small mb-2" id="addSalaryInfo"></div>
+
+                <label class="form-label">Batch DRAFT</label>
+                <select id="addSalaryBatchSelect" class="form-select mb-3"></select>
+
+                <label class="form-label">Tìm nhân viên</label>
+                <input id="employeeKeyword"
+                       class="form-control"
+                       type="text"
+                       placeholder="Nhập tên hoặc mã NV..."
+                       autocomplete="off"/>
+
+                <input type="hidden" id="selectedEmpId"/>
+
+                <div id="employeeSearchResult" class="mt-2"></div>
+
+                <div class="small text-muted mt-2 mb-3" id="selectedEmployeeText">
+                    Chưa chọn nhân viên
+                </div>
+
+                <label class="form-label">Lương cơ bản</label>
+                <input id="addSalaryInput"
+                       class="form-control"
+                       type="text"
+                       inputmode="numeric"
+                       placeholder="VD: 12,000,000"
+                       autocomplete="off"/>
+
+                <div class="small text-muted mt-2">
+                    Nhập số, không cần dấu phẩy. Ví dụ: <b>12000000</b> → tự thành <b>12,000,000</b>
+                </div>
+            </div>
+
+            <div class="dialog-foot">
+                <button value="cancel" class="btn btn-outline-secondary" type="submit">Hủy</button>
+                <button id="btnSaveAddSalary" class="btn btn-warning text-white" type="button">Lưu</button>
             </div>
         </form>
     </dialog>
@@ -397,7 +467,6 @@
                         return;
                     }
 
-                    // ✅ FIX: approve cũng update UI
                     if (actionName === "approve") {
                         const processedIds = data.processedIds || [];
                         if (processedIds.length > 0) markApprovedByPayslipIds(processedIds);
@@ -422,14 +491,7 @@
             btnApprove?.addEventListener("click", () => submitAjax("approve"));
             btnReject?.addEventListener("click", () => submitAjax("reject"));
 
-            // ======= EDIT SALARY (bút chì) - format 12,000,000 =======
-            const salaryDialog = document.getElementById("salaryDialog");
-            const salaryInput = document.getElementById("salaryInput");
-            const salaryDialogInfo = document.getElementById("salaryDialogInfo");
-            const btnSaveSalary = document.getElementById("btnSaveSalary");
-
-            let editingPayslipId = null;
-
+            // ======= MONEY HELPERS =======
             function rawDigits(v) {
                 let s = (v ?? "").toString().trim();
                 if (!s) return "";
@@ -444,6 +506,14 @@
                 if (!raw) return "";
                 return raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
             }
+
+            // ======= EDIT SALARY (bút chì) =======
+            const salaryDialog = document.getElementById("salaryDialog");
+            const salaryInput = document.getElementById("salaryInput");
+            const salaryDialogInfo = document.getElementById("salaryDialogInfo");
+            const btnSaveSalary = document.getElementById("btnSaveSalary");
+
+            let editingPayslipId = null;
 
             function setSalaryInputValue(raw) {
                 salaryInput.dataset.raw = raw || "";
@@ -525,8 +595,10 @@
                         if (baseSpan) baseSpan.textContent = withCommas(baseRaw);
                         if (netSpan) netSpan.textContent = withCommas(netRaw);
 
-                        const btn = tr.querySelector(".btn-edit-salary");
-                        if (btn) btn.setAttribute("data-salary", baseRaw);
+                        tr.dataset.baseSalary = baseRaw;
+
+                        const penBtn = tr.querySelector(".btn-edit-salary");
+                        if (penBtn) penBtn.setAttribute("data-salary", baseRaw);
                     }
 
                     showAlert("success", "Đã cập nhật lương.");
@@ -535,6 +607,209 @@
                 } catch (err) {
                     console.error(err);
                     showAlert("danger", "Lỗi khi cập nhật lương. Xem Console.");
+                }
+            });
+
+            // ======= ADD SALARY (button) =======
+// ======= ADD EMPLOYEE TO PAYROLL =======
+            const btnAddSalary = document.getElementById("btnAddSalary");
+            const addSalaryDialog = document.getElementById("addSalaryDialog");
+            const addSalaryBatchSelect = document.getElementById("addSalaryBatchSelect");
+            const employeeKeyword = document.getElementById("employeeKeyword");
+            const selectedEmpId = document.getElementById("selectedEmpId");
+            const employeeSearchResult = document.getElementById("employeeSearchResult");
+            const selectedEmployeeText = document.getElementById("selectedEmployeeText");
+            const addSalaryInput = document.getElementById("addSalaryInput");
+            const addSalaryInfo = document.getElementById("addSalaryInfo");
+            const btnSaveAddSalary = document.getElementById("btnSaveAddSalary");
+
+            const draftBatchesUrl = /*[[@{/manager/payroll/draft-batches}]]*/ "/manager/payroll/draft-batches";
+
+            let employeeSearchTimer = null;
+
+            function clearSelect(selectEl) {
+                if (selectEl) selectEl.innerHTML = "";
+            }
+
+            function appendOption(selectEl, value, text) {
+                const opt = document.createElement("option");
+                opt.value = value;
+                opt.textContent = text;
+                selectEl.appendChild(opt);
+            }
+
+            function renderEmployeeResults(items) {
+                employeeSearchResult.innerHTML = "";
+
+                if (!items || items.length === 0) {
+                    employeeSearchResult.innerHTML = `<div class="employee-result-item text-muted">Không tìm thấy nhân viên phù hợp</div>`;
+                    return;
+                }
+
+                items.forEach(it => {
+                    const div = document.createElement("div");
+                    div.className = "employee-result-item";
+                    div.textContent = it.displayText || (`NV${it.empId} - ${it.fullName}`);
+
+                    div.addEventListener("click", () => {
+                        selectedEmpId.value = it.empId;
+                        employeeKeyword.value = it.displayText || (`NV${it.empId} - ${it.fullName}`);
+                        selectedEmployeeText.textContent = "Đã chọn: " + (it.displayText || (`NV${it.empId} - ${it.fullName}`));
+                        employeeSearchResult.innerHTML = "";
+                    });
+
+                    employeeSearchResult.appendChild(div);
+                });
+            }
+
+            async function loadDraftBatches() {
+                clearSelect(addSalaryBatchSelect);
+
+                const resp = await fetch(draftBatchesUrl, {
+                    headers: {"X-Requested-With": "XMLHttpRequest"}
+                });
+
+                const list = await resp.json();
+
+                if (!Array.isArray(list) || list.length === 0) {
+                    appendOption(addSalaryBatchSelect, "", "Không có batch DRAFT");
+                    addSalaryBatchSelect.disabled = true;
+                    addSalaryInfo.textContent = "Hiện chưa có batch DRAFT để thêm nhân viên.";
+                    return;
+                }
+
+                addSalaryBatchSelect.disabled = false;
+                list.forEach(b => {
+                    appendOption(addSalaryBatchSelect, b.id, `${b.name || ('Batch #' + b.id)}`);
+                });
+
+                const selectedBatchText = addSalaryBatchSelect.options[addSalaryBatchSelect.selectedIndex]?.text || "";
+                addSalaryInfo.textContent = `Batch: ${selectedBatchText}`;
+            }
+
+            async function searchEmployees() {
+                const batchId = addSalaryBatchSelect?.value;
+                const q = employeeKeyword?.value?.trim() || "";
+
+                if (!batchId) return;
+
+                const url = `/manager/payroll/batches/${batchId}/employee-search?q=${encodeURIComponent(q)}`;
+                const resp = await fetch(url, {
+                    headers: {"X-Requested-With": "XMLHttpRequest"}
+                });
+
+                const data = await resp.json();
+                renderEmployeeResults(data);
+            }
+
+            addSalaryBatchSelect?.addEventListener("change", function () {
+                const selectedBatchText = addSalaryBatchSelect.options[addSalaryBatchSelect.selectedIndex]?.text || "";
+                addSalaryInfo.textContent = `Batch: ${selectedBatchText}`;
+
+                selectedEmpId.value = "";
+                employeeKeyword.value = "";
+                selectedEmployeeText.textContent = "Chưa chọn nhân viên";
+                employeeSearchResult.innerHTML = "";
+            });
+
+            employeeKeyword?.addEventListener("input", function () {
+                selectedEmpId.value = "";
+                selectedEmployeeText.textContent = "Chưa chọn nhân viên";
+
+                clearTimeout(employeeSearchTimer);
+                employeeSearchTimer = setTimeout(searchEmployees, 300);
+            });
+
+            addSalaryInput?.addEventListener("input", function () {
+                const raw = rawDigits(this.value);
+                addSalaryInput.dataset.raw = raw;
+                addSalaryInput.value = withCommas(raw);
+            });
+
+            addSalaryInput?.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    btnSaveAddSalary?.click();
+                }
+            });
+
+            employeeKeyword?.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                }
+            });
+
+            btnAddSalary?.addEventListener("click", async function () {
+                addSalaryInfo.textContent = "";
+                selectedEmpId.value = "";
+                employeeKeyword.value = "";
+                selectedEmployeeText.textContent = "Chưa chọn nhân viên";
+                employeeSearchResult.innerHTML = "";
+                addSalaryInput.dataset.raw = "";
+                addSalaryInput.value = "";
+
+                try {
+                    await loadDraftBatches();
+
+                    if (addSalaryDialog && typeof addSalaryDialog.showModal === "function") {
+                        addSalaryDialog.showModal();
+                        setTimeout(() => employeeKeyword?.focus(), 0);
+                    } else {
+                        alert("Trình duyệt không hỗ trợ dialog. Dùng Chrome mới là OK.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showAlert("danger", "Không load được batch DRAFT.");
+                }
+            });
+
+            btnSaveAddSalary?.addEventListener("click", async function () {
+                const batchId = addSalaryBatchSelect?.value;
+                const empId = selectedEmpId?.value;
+                const raw = addSalaryInput.dataset.raw || rawDigits(addSalaryInput.value);
+
+                if (!batchId) {
+                    showAlert("warning", "Bạn chưa chọn batch DRAFT.");
+                    return;
+                }
+
+                if (!empId) {
+                    showAlert("warning", "Bạn chưa chọn nhân viên từ danh sách gợi ý.");
+                    return;
+                }
+
+                if (!raw || isNaN(Number(raw)) || Number(raw) < 0) {
+                    showAlert("warning", "Lương không hợp lệ. Nhập số >= 0.");
+                    return;
+                }
+
+                const url = `/manager/payroll/batches/${batchId}/payslips/add`;
+                const fd = new FormData();
+                fd.set("empId", empId);
+                fd.set("baseSalary", raw);
+
+                try {
+                    const headers = {"X-Requested-With": "XMLHttpRequest"};
+                    if (csrfToken && csrfToken.value) headers["X-CSRF-TOKEN"] = csrfToken.value;
+
+                    const resp = await fetch(url, {method: "POST", body: fd, headers});
+
+                    const ct = (resp.headers.get("content-type") || "").toLowerCase();
+                    if (!ct.includes("application/json")) {
+                        showAlert("danger", "Server không trả JSON. Mở Console để xem lỗi.");
+                        return;
+                    }
+
+                    const data = await resp.json();
+
+                    showAlert("success", data.msg || "Đã thêm nhân viên vào payroll.");
+                    addSalaryDialog?.close();
+
+                    window.location.reload();
+
+                } catch (err) {
+                    console.error(err);
+                    showAlert("danger", "Lỗi khi thêm nhân viên vào payroll. Xem Console.");
                 }
             });
 

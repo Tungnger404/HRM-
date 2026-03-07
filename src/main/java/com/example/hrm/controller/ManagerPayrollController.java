@@ -1,7 +1,10 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.dto.EmployeeSearchResultDTO;
+import com.example.hrm.service.BenefitService;
 import com.example.hrm.service.CurrentEmployeeService;
-import com.example.hrm.service.PayrollService;
+import com.example.hrm.service.PayrollExportService;
+import com.example.hrm.service.PayrollManagerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -9,7 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.example.hrm.service.BenefitService;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -20,51 +22,52 @@ import java.util.*;
 @RequestMapping("/manager/payroll")
 public class ManagerPayrollController {
 
-    private final PayrollService payrollService;
+    private final PayrollManagerService payrollManagerService;
+    private final PayrollExportService payrollExportService;
     private final CurrentEmployeeService currentEmployeeService;
     private final BenefitService benefitService;
 
     @GetMapping("/periods")
     public String periods(Model model) {
-        model.addAttribute("periods", payrollService.listPayrollPeriods());
+        model.addAttribute("periods", payrollManagerService.listPayrollPeriods());
         return "manager/payroll-period-list";
     }
 
     @GetMapping("/periods/{periodId}/batches")
     public String batches(@PathVariable Integer periodId, Model model) {
         model.addAttribute("periodId", periodId);
-        model.addAttribute("batches", payrollService.listBatchesByPeriod(periodId));
+        model.addAttribute("batches", payrollManagerService.listBatchesByPeriod(periodId));
         return "manager/payroll-batch-list";
     }
 
     @GetMapping("/batches/{batchId}")
     public String batchDetail(@PathVariable Integer batchId, Model model) {
-        model.addAttribute("b", payrollService.viewBatchDetail(batchId));
+        model.addAttribute("b", payrollManagerService.viewBatchDetail(batchId));
         return "manager/payroll-detail";
     }
 
     @PostMapping("/batches/{batchId}/submit")
     public String submitForApproval(@PathVariable Integer batchId) {
-        payrollService.submitBatchForApproval(batchId);
+        payrollManagerService.submitBatchForApproval(batchId);
         return "redirect:/manager/payroll/batches/" + batchId;
     }
 
     @PostMapping("/batches/{batchId}/approve")
     public String approve(@PathVariable Integer batchId, Principal principal) {
         Integer approverEmpId = currentEmployeeService.requireEmployee(principal).getId();
-        payrollService.approveBatch(batchId, approverEmpId);
+        payrollManagerService.approveBatch(batchId, approverEmpId);
         return "redirect:/manager/payroll/batches/" + batchId;
     }
 
     @PostMapping("/batches/{batchId}/reject")
     public String reject(@PathVariable Integer batchId) {
-        payrollService.rejectBatch(batchId);
+        payrollManagerService.rejectBatch(batchId);
         return "redirect:/manager/payroll/batches/" + batchId;
     }
 
     @GetMapping("/batches/{batchId}/export")
     public ResponseEntity<byte[]> exportExcel(@PathVariable Integer batchId) {
-        byte[] xlsx = payrollService.exportBatchExcel(batchId);
+        byte[] xlsx = payrollExportService.exportBatchExcel(batchId);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(
@@ -72,7 +75,6 @@ public class ManagerPayrollController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payroll-batch-" + batchId + ".xlsx")
                 .body(xlsx);
     }
-
 
     @GetMapping("/payslips/{payslipId}")
     public String payslipDetail(@PathVariable Integer payslipId,
@@ -87,8 +89,8 @@ public class ManagerPayrollController {
         if (isAdminOrHr) managerEmpId = null;
 
         try {
-            model.addAttribute("p", payrollService.getPayslipDetailForManager(managerEmpId, payslipId));
-            model.addAttribute("activeBenefits", benefitService.listActive()); // ✅ NEW
+            model.addAttribute("p", payrollManagerService.getPayslipDetailForManager(managerEmpId, payslipId));
+            model.addAttribute("activeBenefits", benefitService.listActive());
             return "manager/payslip-detail";
         } catch (org.springframework.security.access.AccessDeniedException ex) {
             model.addAttribute("err", ex.getMessage());
@@ -96,7 +98,6 @@ public class ManagerPayrollController {
         }
     }
 
-    // ✅ NEW: add benefit vào payslip (chỉ cho ACTIVE)
     @PostMapping("/payslips/{payslipId}/benefits/add")
     public String addBenefitToPayslip(@PathVariable Integer payslipId,
                                       @RequestParam("benefitId") Integer benefitId,
@@ -106,11 +107,12 @@ public class ManagerPayrollController {
 
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
         boolean isAdminOrHr = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                        || a.getAuthority().equals("ROLE_HR"));
         if (isAdminOrHr) managerEmpId = null;
 
         try {
-            payrollService.addActiveBenefitToPayslip(managerEmpId, payslipId, benefitId);
+            payrollManagerService.addActiveBenefitToPayslip(managerEmpId, payslipId, benefitId);
             ra.addFlashAttribute("msg", "Đã thêm khoản lương vào payslip.");
         } catch (Exception e) {
             ra.addFlashAttribute("err", e.getMessage());
@@ -128,7 +130,8 @@ public class ManagerPayrollController {
         Integer managerEmpId;
 
         boolean isAdminOrHr = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                        || a.getAuthority().equals("ROLE_HR"));
 
         if (isAdminOrHr) {
             managerEmpId = null;
@@ -136,10 +139,10 @@ public class ManagerPayrollController {
             managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
         }
 
-        model.addAttribute("rows", payrollService.listPayrollRowsForManager(managerEmpId, q, status));
+        model.addAttribute("rows", payrollManagerService.listPayrollRowsForManager(managerEmpId, q, status));
         model.addAttribute("q", q);
         model.addAttribute("status", status);
-        model.addAttribute("statusOptions", List.of("", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PAID"));
+        model.addAttribute("statusOptions", List.of("", "DRAFT", "APPROVED"));
 
         return "manager/payroll-list";
     }
@@ -165,22 +168,19 @@ public class ManagerPayrollController {
             return redirectBack;
         }
 
-        // managerEmpId: HR/ADMIN => null
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
         boolean isAdminOrHr = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
-        if (isAdminOrHr)
-            managerEmpId = null;
+        if (isAdminOrHr) managerEmpId = null;
 
         List<Integer> ids = payslipIds.stream().filter(Objects::nonNull).distinct().toList();
         int ok = 0, fail = 0;
 
         try {
             if ("approve".equalsIgnoreCase(action)) {
-                // ✅ approve theo TỪNG PAYSLIP
                 for (Integer payslipId : ids) {
                     try {
-                        payrollService.approvePayslip(managerEmpId, payslipId);
+                        payrollManagerService.approvePayslip(managerEmpId, payslipId);
                         ok++;
                     } catch (Exception e) {
                         fail++;
@@ -189,7 +189,7 @@ public class ManagerPayrollController {
             } else if ("reject".equalsIgnoreCase(action)) {
                 for (Integer payslipId : ids) {
                     try {
-                        payrollService.rejectPayslip(payslipId);
+                        payrollManagerService.rejectPayslip(payslipId);
                         ok++;
                     } catch (Exception e) {
                         fail++;
@@ -233,8 +233,7 @@ public class ManagerPayrollController {
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
         boolean isAdminOrHr = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
-        if (isAdminOrHr)
-            managerEmpId = null;
+        if (isAdminOrHr) managerEmpId = null;
 
         List<Integer> ids = payslipIds.stream().filter(Objects::nonNull).distinct().toList();
 
@@ -244,7 +243,7 @@ public class ManagerPayrollController {
         if ("approve".equalsIgnoreCase(action)) {
             for (Integer payslipId : ids) {
                 try {
-                    payrollService.approvePayslip(managerEmpId, payslipId);
+                    payrollManagerService.approvePayslip(managerEmpId, payslipId);
                     ok++;
                     processed.add(payslipId);
                 } catch (Exception e) {
@@ -262,7 +261,7 @@ public class ManagerPayrollController {
         if ("reject".equalsIgnoreCase(action)) {
             for (Integer payslipId : ids) {
                 try {
-                    payrollService.rejectPayslip(payslipId);
+                    payrollManagerService.rejectPayslip(payslipId);
                     ok++;
                     processed.add(payslipId);
                 } catch (Exception e) {
@@ -285,7 +284,6 @@ public class ManagerPayrollController {
         return res;
     }
 
-    //update nut sua
     @PostMapping(value = "/payslips/{payslipId}/salary", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Map<String, Object> updatePayslipSalary(@PathVariable Integer payslipId,
@@ -296,11 +294,12 @@ public class ManagerPayrollController {
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
 
         boolean isAdminOrHr = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR"));
-        if (isAdminOrHr)
-            managerEmpId = null;
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                        || a.getAuthority().equals("ROLE_HR"));
+        if (isAdminOrHr) managerEmpId = null;
 
-        PayrollService.SalaryUpdateResult r = payrollService.updatePayslipBaseSalary(managerEmpId, payslipId, baseSalary);
+        PayrollManagerService.SalaryUpdateResult r =
+                payrollManagerService.updatePayslipBaseSalary(managerEmpId, payslipId, baseSalary);
 
         Map<String, Object> res = new HashMap<>();
         res.put("ok", 1);
@@ -309,5 +308,12 @@ public class ManagerPayrollController {
         res.put("netSalary", r.netSalary());
         res.put("slipStatus", r.slipStatus());
         return res;
+    }
+
+    @GetMapping(value = "/batches/{batchId}/employee-search", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<EmployeeSearchResultDTO> searchEmployeesForBatch(@PathVariable Integer batchId,
+                                                                 @RequestParam(value = "q", required = false) String q) {
+        return payrollManagerService.searchEmployeesForBatch(batchId, q);
     }
 }
