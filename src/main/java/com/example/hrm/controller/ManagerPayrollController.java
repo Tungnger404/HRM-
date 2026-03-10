@@ -1,6 +1,8 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.dto.EmployeeSearchResultDTO;
+import com.example.hrm.dto.PayrollBatchSummaryDTO;
+import com.example.hrm.dto.PayrollPeriodSummaryDTO;
 import com.example.hrm.service.BenefitService;
 import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.PayrollExportService;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -123,6 +126,7 @@ public class ManagerPayrollController {
     @GetMapping("/payslips")
     public String payrollList(@RequestParam(value = "q", required = false) String q,
                               @RequestParam(value = "status", required = false) String status,
+                              @RequestParam(value = "periodId", required = false) Integer periodId,
                               Model model,
                               Principal principal,
                               Authentication authentication) {
@@ -139,10 +143,23 @@ public class ManagerPayrollController {
             managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
         }
 
-        model.addAttribute("rows", payrollManagerService.listPayrollRowsForManager(managerEmpId, q, status));
+        List<PayrollPeriodSummaryDTO> periods = payrollManagerService.listPayrollPeriods();
+
+        model.addAttribute("rows",
+                payrollManagerService.listPayrollRowsForManager(managerEmpId, q, status, periodId));
         model.addAttribute("q", q);
         model.addAttribute("status", status);
+        model.addAttribute("periodId", periodId);
+        model.addAttribute("periods", periods);
         model.addAttribute("statusOptions", List.of("", "DRAFT", "APPROVED"));
+
+        String selectedPeriodLabel = periods.stream()
+                .filter(p -> Objects.equals(p.getId(), periodId))
+                .findFirst()
+                .map(p -> String.format("%02d/%d", p.getMonth(), p.getYear()))
+                .orElse("Tất cả kỳ lương");
+
+        model.addAttribute("selectedPeriodLabel", selectedPeriodLabel);
 
         return "manager/payroll-list";
     }
@@ -152,15 +169,21 @@ public class ManagerPayrollController {
                        @RequestParam(value = "payslipIds", required = false) List<Integer> payslipIds,
                        @RequestParam(value = "q", required = false) String q,
                        @RequestParam(value = "status", required = false) String status,
+                       @RequestParam(value = "periodId", required = false) Integer periodId,
                        Principal principal,
                        Authentication authentication,
                        RedirectAttributes ra) {
 
-        String redirectBack = "redirect:/manager/payroll/payslips"
-                + ((q != null && !q.isBlank()) ? "?q=" + q : "")
-                + ((status != null && !status.isBlank())
-                ? ((q != null && !q.isBlank()) ? "&" : "?") + "status=" + status
-                : "");
+        String redirectBack = "redirect:/manager/payroll/payslips";
+        List<String> params = new ArrayList<>();
+
+        if (q != null && !q.isBlank()) params.add("q=" + q);
+        if (status != null && !status.isBlank()) params.add("status=" + status);
+        if (periodId != null) params.add("periodId=" + periodId);
+
+        if (!params.isEmpty()) {
+            redirectBack += "?" + String.join("&", params);
+        }
 
         if (payslipIds == null || payslipIds.isEmpty()) {
             ra.addFlashAttribute("msgType", "warning");
@@ -315,5 +338,28 @@ public class ManagerPayrollController {
     public List<EmployeeSearchResultDTO> searchEmployeesForBatch(@PathVariable Integer batchId,
                                                                  @RequestParam(value = "q", required = false) String q) {
         return payrollManagerService.searchEmployeesForBatch(batchId, q);
+    }
+
+    @GetMapping(value = "/draft-batches", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<PayrollBatchSummaryDTO> listDraftBatches() {
+        return payrollManagerService.listDraftBatches();
+    }
+
+    @PostMapping(value = "/batches/{batchId}/payslips/add", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> addEmployeeToPayroll(@PathVariable Integer batchId,
+                                                    @RequestParam("empId") Integer empId,
+                                                    @RequestParam("baseSalary") BigDecimal baseSalary) {
+
+        Integer payslipId = payrollManagerService.addEmployeeToPayroll(batchId, empId, baseSalary);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("ok", 1);
+        res.put("batchId", batchId);
+        res.put("empId", empId);
+        res.put("payslipId", payslipId);
+        res.put("msg", "Đã thêm nhân viên vào payroll.");
+        return res;
     }
 }

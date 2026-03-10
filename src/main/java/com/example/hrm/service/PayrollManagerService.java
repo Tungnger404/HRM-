@@ -21,7 +21,7 @@ public interface PayrollManagerService {
 
     void rejectPayslip(Integer payslipId);
 
-    List<PayrollRowDTO> listPayrollRowsForManager(Integer managerEmpId, String q, String status);
+    List<PayrollRowDTO> listPayrollRowsForManager(Integer managerEmpId, String q, String status, Integer periodId);
 
     List<PayrollPeriodSummaryDTO> listPayrollPeriods();
 
@@ -40,4 +40,7 @@ public interface PayrollManagerService {
     void approveBatch(Integer batchId, Integer approverEmpId);
 
     void rejectBatch(Integer batchId);
+
+    List<PayrollBatchSummaryDTO> listDraftBatches();
+    Integer addEmployeeToPayroll(Integer batchId, Integer empId, BigDecimal baseSalary);
 }

@@ -12,7 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 
 @Controller
-@RequiredArgsConstructor
+@RequiredArgsConstructor    
 @RequestMapping("/manager/payroll/benefits")
 public class ManagerBenefitController {
 

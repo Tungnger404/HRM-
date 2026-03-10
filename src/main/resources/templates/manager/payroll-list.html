@@ -19,7 +19,6 @@
             justify-content: center;
         }
 
-        /* ✅ áp dụng cho cả 2 dialog */
         dialog#salaryDialog,
         dialog#addSalaryDialog {
             border: 0;
@@ -74,6 +73,115 @@
         .employee-result-item:hover {
             background: #f8f9fa;
         }
+
+        .payroll-filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .payroll-filter-left,
+        .payroll-filter-right {
+            display: flex;
+            align-items: end;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .payroll-filter-right {
+            margin-left: auto;
+        }
+
+        .filter-inline-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .filter-select-sm {
+            width: 170px;
+        }
+
+        .filter-search-wrap,
+        .filter-status-wrap {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-search-input {
+            width: 260px;
+        }
+
+        .filter-status-select {
+            width: 160px;
+        }
+
+        .filter-btn-wrap {
+            display: flex;
+            align-items: end;
+        }
+
+        .filter-btn-wrap .btn {
+            height: 38px;
+            min-width: 86px;
+        }
+
+        @media (max-width: 992px) {
+            .payroll-filter-left,
+            .payroll-filter-right {
+                width: 100%;
+            }
+
+            .filter-search-input,
+            .filter-status-select,
+            .filter-select-sm {
+                width: 100%;
+            }
+
+            .filter-btn-wrap {
+                width: 100%;
+            }
+
+            .filter-btn-wrap .btn {
+                width: 100%;
+            }
+        }
+
+        /* --- CSS CHO TOAST NOTIFICATION --- */
+        .toast-notification {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 280px;
+            max-width: 400px;
+            padding: 14px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            font-size: 15px;
+            font-weight: 500;
+            color: #fff;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .toast-notification.show {
+            transform: translateX(0);
+        }
+
+        .toast-success { background-color: #28a745; }
+        .toast-danger { background-color: #dc3545; }
+        .toast-warning { background-color: #ffc107; color: #212529; }
+
+        .toast-note {
+            font-size: 12px;
+            font-weight: normal;
+            margin-top: 6px;
+            opacity: 0.9;
+        }
     </style>
 </head>
 
@@ -81,18 +189,22 @@
 <div layout:fragment="content">
 
     <div th:if="${msg != null}"
-         id="serverAlert"
-         th:class="'alert alert-' + (${msgType} != null ? ${msgType} : 'success')">
+         id="serverToastMsg"
+         class="toast-notification"
+         th:classappend="'toast-' + (${msgType} != null ? ${msgType} : 'success')">
         <span th:text="${msg}"></span>
-        <div class="small mt-1 text-muted">
-            Lưu ý: Dòng trong bảng là <b>payslip</b>. Approve sẽ theo <b>từng payslip</b>, Reject sẽ <b>chuyển trạng
-            thái payslip</b> (không xoá).
+        <div class="toast-note">
+            Lưu ý: Approve sẽ theo <b>từng payslip</b>, Reject sẽ <b>chuyển trạng thái payslip</b> (không xoá).
         </div>
     </div>
 
-    <div id="clientAlert" style="display:none"></div>
+    <div th:if="${error != null}" class="toast-notification toast-danger" id="serverToastError">
+        <span th:text="${error}"></span>
+    </div>
 
-    <!-- ✅ HEADER + ADD SALARY BUTTON -->
+    <div id="clientAlert" class="toast-notification" style="display:none"></div>
+
+
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h2 class="mb-1">Payroll Payslips</h2>
@@ -106,21 +218,54 @@
 
     <div class="card mb-3">
         <div class="card-body">
-            <form method="get" th:action="@{/manager/payroll/payslips}"
-                  class="d-flex gap-2 align-items-center flex-wrap">
-                <input class="form-control" style="max-width:320px"
-                       name="q" th:value="${q}" placeholder="Search"/>
+            <form method="get"
+                  th:action="@{/manager/payroll/payslips}"
+                  id="filterForm"
+                  class="payroll-filter-bar">
 
-                <select class="form-select" style="max-width:220px" name="status" id="statusSelect">
-                    <option th:each="op : ${statusOptions}"
-                            th:value="${op}"
-                            th:selected="${op == status}"
-                            th:text="${op == '' ? 'All Status' : op}">
-                    </option>
-                </select>
+                <input type="hidden" name="periodId" id="periodIdInput" th:value="${periodId}">
 
-                <button class="btn btn-primary" type="submit">Search</button>
+                <div class="payroll-filter-left">
+                    <div class="filter-inline-label">Kỳ lương:</div>
+
+                    <select class="form-select form-select-sm filter-select-sm" id="filterMonth">
+                    </select>
+
+                    <select class="form-select form-select-sm filter-select-sm" id="filterYear">
+                    </select>
+                </div>
+
+                <div class="payroll-filter-right">
+                    <div class="filter-search-wrap">
+                        <label class="form-label mb-1">Tìm kiếm:</label>
+                        <input class="form-control form-control-sm filter-search-input"
+                               name="q"
+                               th:value="${q}"
+                               placeholder="Tên nhân viên..."/>
+                    </div>
+
+                    <div class="filter-status-wrap">
+                        <label class="form-label mb-1">Trạng thái:</label>
+                        <select class="form-select form-select-sm filter-status-select"
+                                name="status"
+                                id="statusSelect">
+                            <option th:each="op : ${statusOptions}"
+                                    th:value="${op}"
+                                    th:selected="${op == status}"
+                                    th:text="${op == '' ? 'Tất cả' : op}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="filter-btn-wrap">
+                        <button class="btn btn-primary" type="submit">Search</button>
+                    </div>
+                </div>
             </form>
+
+            <div class="small text-muted mt-3">
+                Đang hiển thị: <b th:text="${selectedPeriodLabel}">Tất cả kỳ lương</b>
+            </div>
         </div>
     </div>
 
@@ -131,6 +276,7 @@
 
         <input type="hidden" name="q" th:value="${q}">
         <input type="hidden" name="status" th:value="${status}">
+        <input type="hidden" name="periodId" th:value="${periodId}">
         <input type="hidden" name="action" id="bulkAction"/>
 
         <div class="d-flex gap-2 mb-2">
@@ -148,6 +294,7 @@
                             <label for="checkAll" class="ms-1">All</label>
                         </th>
                         <th>Name</th>
+                        <th class="text-end">Công thực tế</th>
                         <th>Vị trí</th>
                         <th class="text-end">Lương cơ bản</th>
                         <th class="text-end">Thực nhận (Net)</th>
@@ -177,6 +324,11 @@
                         </td>
 
                         <td th:text="${r.fullName}"></td>
+
+                        <td class="text-end"
+                            th:text="${r.actualWorkDays == null ? '0' : #numbers.formatDecimal(r.actualWorkDays, 1, 'COMMA', 0, 'POINT')}">
+                        </td>
+
                         <td th:text="${r.jobTitle}"></td>
 
                         <td class="text-end">
@@ -223,7 +375,7 @@
                     </tr>
 
                     <tr th:if="${#lists.isEmpty(rows)}" id="emptyRow">
-                        <td colspan="7" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
+                        <td colspan="8" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
                     </tr>
                     </tbody>
                 </table>
@@ -231,7 +383,6 @@
         </div>
     </form>
 
-    <!-- ================= EDIT SALARY DIALOG ================= -->
     <dialog id="salaryDialog">
         <form method="dialog" style="margin:0;">
             <div class="dialog-head">
@@ -262,8 +413,6 @@
         </form>
     </dialog>
 
-    <!-- ================= ADD SALARY DIALOG ================= -->
-    <!-- ================= ADD EMPLOYEE TO PAYROLL DIALOG ================= -->
     <dialog id="addSalaryDialog">
         <form method="dialog" style="margin:0;">
             <div class="dialog-head">
@@ -322,19 +471,52 @@
             const bulkAction = document.getElementById("bulkAction");
             const clientAlert = document.getElementById("clientAlert");
             const csrfToken = document.getElementById("csrfToken");
-            const serverAlert = document.getElementById("serverAlert");
 
             const bulkJsonUrl = /*[[@{/manager/payroll/payslips/bulk-json}]]*/ "/manager/payroll/payslips/bulk-json";
 
+            let toastTimer = null;
+
+            // XỬ LÝ TOAST TỪ SERVER (LOAD TRANG)
+            function initServerToasts() {
+                const sToast = document.getElementById("serverToastMsg");
+                const eToast = document.getElementById("serverToastError");
+
+                if (sToast) {
+                    setTimeout(() => sToast.classList.add("show"), 50);
+                    setTimeout(() => sToast.classList.remove("show"), 5000); // Tắt sau 5 giây
+                }
+                if (eToast) {
+                    setTimeout(() => eToast.classList.add("show"), 50);
+                    setTimeout(() => eToast.classList.remove("show"), 4000);
+                }
+            }
+            initServerToasts();
+
+            // HÀM SHOW TOAST CHO AJAX (BẤM NÚT)
+            function showAlert(type, text) {
+                // Ẩn các toast server đi nếu đang hiện
+                document.getElementById("serverToastMsg")?.classList.remove("show");
+                document.getElementById("serverToastError")?.classList.remove("show");
+
+                clientAlert.className = "toast-notification toast-" + (type || "success");
+                clientAlert.innerHTML = `<span>${text || ""}</span>`;
+                clientAlert.style.display = "block";
+
+                // Timeout nhỏ để kịp render css
+                setTimeout(() => {
+                    clientAlert.classList.add("show");
+                }, 10);
+
+                if (toastTimer) clearTimeout(toastTimer);
+
+                toastTimer = setTimeout(() => {
+                    clientAlert.classList.remove("show");
+                    setTimeout(() => { clientAlert.style.display = "none"; }, 400);
+                }, 3000);
+            }
+
             const allChecks = () => Array.from(document.querySelectorAll(".row-check"));
             const enabledChecks = () => allChecks().filter(cb => !cb.disabled);
-
-            function showAlert(type, text) {
-                if (serverAlert) serverAlert.style.display = "none";
-                clientAlert.className = "alert alert-" + (type || "success");
-                clientAlert.innerText = text || "";
-                clientAlert.style.display = "block";
-            }
 
             function setCheckAllState() {
                 const list = enabledChecks();
@@ -349,7 +531,7 @@
                     if (!empty) {
                         const tr = document.createElement("tr");
                         tr.id = "emptyRow";
-                        tr.innerHTML = `<td colspan="7" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>`;
+                        tr.innerHTML = `<td colspan="8" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>`;
                         tbody.appendChild(tr);
                     }
                 } else {
@@ -491,7 +673,6 @@
             btnApprove?.addEventListener("click", () => submitAjax("approve"));
             btnReject?.addEventListener("click", () => submitAjax("reject"));
 
-            // ======= MONEY HELPERS =======
             function rawDigits(v) {
                 let s = (v ?? "").toString().trim();
                 if (!s) return "";
@@ -507,7 +688,6 @@
                 return raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
             }
 
-            // ======= EDIT SALARY (bút chì) =======
             const salaryDialog = document.getElementById("salaryDialog");
             const salaryInput = document.getElementById("salaryInput");
             const salaryDialogInfo = document.getElementById("salaryDialogInfo");
@@ -601,7 +781,7 @@
                         if (penBtn) penBtn.setAttribute("data-salary", baseRaw);
                     }
 
-                    showAlert("success", "Đã cập nhật lương.");
+                    showAlert("success", "Đã cập nhật lương thành công.");
                     salaryDialog?.close();
 
                 } catch (err) {
@@ -610,8 +790,6 @@
                 }
             });
 
-            // ======= ADD SALARY (button) =======
-// ======= ADD EMPLOYEE TO PAYROLL =======
             const btnAddSalary = document.getElementById("btnAddSalary");
             const addSalaryDialog = document.getElementById("addSalaryDialog");
             const addSalaryBatchSelect = document.getElementById("addSalaryBatchSelect");
@@ -812,6 +990,131 @@
                     showAlert("danger", "Lỗi khi thêm nhân viên vào payroll. Xem Console.");
                 }
             });
+
+            const filterForm = document.getElementById("filterForm");
+            const filterMonth = document.getElementById("filterMonth");
+            const filterYear = document.getElementById("filterYear");
+            const periodIdInput = document.getElementById("periodIdInput");
+
+            const periodsData = /*[[${periods}]]*/ [];
+            const selectedPeriodId = /*[[${periodId}]]*/ null;
+
+            const normalizedPeriods = (Array.isArray(periodsData) ? periodsData : [])
+                .map(p => ({
+                    id: Number(p.id),
+                    month: Number(p.month),
+                    year: Number(p.year)
+                }))
+                .filter(p => p.id && p.month && p.year);
+
+            function buildYearOptions(selectedYear) {
+                const years = [...new Set(normalizedPeriods.map(p => p.year))].sort((a, b) => b - a);
+
+                filterYear.innerHTML = `<option value="">Năm</option>`;
+                years.forEach(y => {
+                    const opt = document.createElement("option");
+                    opt.value = String(y);
+                    opt.textContent = `Năm ${y}`;
+                    if (String(y) === String(selectedYear)) opt.selected = true;
+                    filterYear.appendChild(opt);
+                });
+            }
+
+            function buildMonthOptions(selectedMonth) {
+                const months = [...new Set(normalizedPeriods.map(p => p.month))].sort((a, b) => a - b);
+
+                filterMonth.innerHTML = `<option value="">Tháng</option>`;
+                months.forEach(m => {
+                    const opt = document.createElement("option");
+                    opt.value = String(m);
+                    opt.textContent = `Tháng ${m}`;
+                    if (String(m) === String(selectedMonth)) opt.selected = true;
+                    filterMonth.appendChild(opt);
+                });
+            }
+
+            function findPeriodIdByMonthYear(month, year) {
+                if (!month || !year) return "";
+                const found = normalizedPeriods.find(p =>
+                    String(p.month) === String(month) && String(p.year) === String(year)
+                );
+                return found ? String(found.id) : "";
+            }
+
+            function syncPeriodIdOnly() {
+                const m = filterMonth?.value || "";
+                const y = filterYear?.value || "";
+                periodIdInput.value = findPeriodIdByMonthYear(m, y);
+            }
+
+            function trySubmitWhenEnough() {
+                const m = filterMonth?.value || "";
+                const y = filterYear?.value || "";
+
+                // chưa đủ tháng + năm thì KHÔNG submit
+                if (!m || !y) {
+                    periodIdInput.value = "";
+                    return;
+                }
+
+                const foundId = findPeriodIdByMonthYear(m, y);
+
+                if (!foundId) {
+                    periodIdInput.value = "";
+                    showAlert("warning", `Không có kỳ lương cho Tháng ${m}/${y}.`);
+                    return;
+                }
+
+                periodIdInput.value = foundId;
+                filterForm?.submit();
+            }
+
+            function initPeriodSelectors() {
+                const selected = normalizedPeriods.find(p => String(p.id) === String(selectedPeriodId));
+
+                buildMonthOptions(selected ? selected.month : "");
+                buildYearOptions(selected ? selected.year : "");
+
+                if (selected) {
+                    filterMonth.value = String(selected.month);
+                    filterYear.value = String(selected.year);
+                    periodIdInput.value = String(selected.id);
+                } else {
+                    filterMonth.value = "";
+                    filterYear.value = "";
+                    periodIdInput.value = "";
+                }
+            }
+
+            filterMonth?.addEventListener("change", function () {
+                trySubmitWhenEnough();
+            });
+
+            filterYear?.addEventListener("change", function () {
+                trySubmitWhenEnough();
+            });
+
+            filterForm?.addEventListener("submit", function (e) {
+                const m = filterMonth?.value || "";
+                const y = filterYear?.value || "";
+
+                // nếu user bấm Search mà chỉ chọn 1 trong 2 thì không ép reload theo period
+                if (!m || !y) {
+                    periodIdInput.value = "";
+                    return;
+                }
+
+                const foundId = findPeriodIdByMonthYear(m, y);
+                if (!foundId) {
+                    e.preventDefault();
+                    showAlert("warning", `Không có kỳ lương cho Tháng ${m}/${y}.`);
+                    return;
+                }
+
+                periodIdInput.value = foundId;
+            });
+
+            initPeriodSelectors();
 
             ensureEmptyRow();
             setCheckAllState();

@@ -37,6 +37,8 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     private final BenefitService benefitService;
     private final BankAccountRepository bankAccountRepo;
     private final PayrollCalculationService payrollCalculationService;
+    private final UserRepository userRepo;
+    private final JobPositionRepository jobRepo;
 
     @Override
     public void addActiveBenefitToPayslip(Integer managerEmpId, Integer payslipId, Integer benefitId) {
@@ -210,7 +212,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PayrollRowDTO> listPayrollRowsForManager(Integer managerEmpId, String q, String status) {
+    public List<PayrollRowDTO> listPayrollRowsForManager(Integer managerEmpId, String q, String status, Integer periodId) {
         Integer empId = null;
         if (q != null) {
             String t = q.trim().toUpperCase();
@@ -224,7 +226,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
             }
         }
 
-        List<Object[]> rows = payslipRepo.findPayrollRowsRaw(managerEmpId, status, q, empId);
+        List<Object[]> rows = payslipRepo.findPayrollRowsRaw(managerEmpId, status, q, empId, periodId);
 
         List<PayrollRowDTO> result = rows.stream().map(r -> {
             int payslipId = toInt(r[0]);
@@ -384,11 +386,33 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                         .build())
                 .toList();
 
+        Employee emp = p.getEmployee();
+
+        String jobTitle = "";
+        String email = "";
+        String phone = "";
+
+        if (emp != null) {
+            phone = emp.getPhone() == null ? "" : emp.getPhone();
+
+            if (emp.getJobId() != null) {
+                jobTitle = jobRepo.findById(emp.getJobId())
+                        .map(JobPosition::getTitle)
+                        .orElse("");
+            }
+
+            if (emp.getUserId() != null) {
+                email = userRepo.findById(emp.getUserId())
+                        .map(User::getEmail)
+                        .orElse("");
+            }
+        }
+
         return PayslipDetailDTO.builder()
                 .payslipId(p.getId())
                 .batchId(p.getBatch().getId())
-                .empId(p.getEmployee().getId())
-                .employeeName(empName(p.getEmployee()))
+                .empId(emp != null ? emp.getId() : null)
+                .employeeName(empName(emp))
                 .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null))
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
@@ -398,6 +422,9 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                 .totalDeduction(nz(p.getTotalDeduction()))
                 .netSalary(nz(p.getNetSalary()))
                 .items(items)
+                .jobTitle(jobTitle)
+                .email(email)
+                .phone(phone)
                 .build();
     }
 
@@ -680,5 +707,98 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                         .displayText("NV" + e.getId() + " - " + empName(e))
                         .build())
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PayrollBatchSummaryDTO> listDraftBatches() {
+        return batchRepo.findByStatusOrderByIdDesc("DRAFT")
+                .stream()
+                .map(b -> PayrollBatchSummaryDTO.builder()
+                        .id(b.getId())
+                        .periodId(b.getPeriod() != null ? b.getPeriod().getId() : null)
+                        .name(b.getName())
+                        .status(b.getStatus())
+                        .totalGross(nz(b.getTotalGross()))
+                        .totalNet(nz(b.getTotalNet()))
+                        .build())
+                .toList();
+    }
+
+    @Override
+    public Integer addEmployeeToPayroll(Integer batchId, Integer empId, BigDecimal baseSalary) {
+        if (baseSalary == null || baseSalary.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Base salary invalid");
+        }
+
+        PayrollBatch batch = batchRepo.findById(batchId)
+                .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
+
+        if (!"DRAFT".equalsIgnoreCase(batch.getStatus())) {
+            throw new IllegalStateException("Chỉ thêm nhân viên vào batch DRAFT.");
+        }
+
+        Employee emp = employeeRepo.findById(empId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + empId));
+
+        if (payslipRepo.existsByBatch_IdAndEmployee_Id(batchId, empId)) {
+            throw new IllegalStateException("Employee này đã có payslip trong batch.");
+        }
+
+        PayrollPeriod period = batch.getPeriod();
+        if (period == null) {
+            throw new IllegalStateException("Batch chưa có payroll period.");
+        }
+
+        LocalDate start = Optional.ofNullable(period.getStartDate())
+                .orElse(LocalDate.of(period.getYear(), period.getMonth(), 1));
+
+        LocalDate end = Optional.ofNullable(period.getEndDate())
+                .orElse(start.withDayOfMonth(start.lengthOfMonth()));
+
+        BigDecimal standardDays = BigDecimal.valueOf(22);
+
+        long actualDaysLong = attendanceRepo.countActualWorkDays(emp.getId(), start, end);
+        BigDecimal actualDays = BigDecimal.valueOf(actualDaysLong);
+
+        long otMinutes = requestRepo.sumApprovedOvertimeMinutes(
+                emp.getId(),
+                start.atStartOfDay(),
+                end.atTime(LocalTime.MAX)
+        );
+
+        BigDecimal otHours = BigDecimal.valueOf(otMinutes)
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+
+        PayrollCalculationService.PayslipComputation c = payrollCalculationService.compute(
+                emp.getId(),
+                start,
+                end,
+                baseSalary,
+                standardDays,
+                actualDays,
+                otHours
+        );
+
+        Payslip slip = Payslip.builder()
+                .batch(batch)
+                .employee(emp)
+                .baseSalary(baseSalary.setScale(2, RoundingMode.HALF_UP))
+                .standardWorkDays(standardDays)
+                .actualWorkDays(actualDays)
+                .otHours(otHours)
+                .totalIncome(c.totalIncome())
+                .totalDeduction(c.totalDeduction())
+                .netSalary(c.netSalary())
+                .sentToEmployee(false)
+                .slipStatus("ACTIVE")
+                .build();
+
+        slip = payslipRepo.save(slip);
+
+        payrollCalculationService.upsertComputedItems(slip, c, false);
+        payrollCalculationService.recalcBatchTotals(batch);
+
+        return slip.getId();
     }
 }
