@@ -14,7 +14,20 @@
         <h2 class="mb-0">Payslip Detail</h2>
         <a class="btn btn-secondary btn-sm" th:href="@{/manager/payroll/payslips}">Back</a>
     </div>
+    <form method="post" th:action="@{/manager/payroll/payslips/{id}/benefits/add(id=${p.payslipId})}"
+          class="d-flex gap-2 align-items-center flex-wrap mt-3">
+        <input type="hidden" th:if="${_csrf!=null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
+        <select class="form-select" name="benefitId" style="max-width:320px" required>
+            <option value="" selected disabled>Chọn khoản lương (chỉ ACTIVE)</option>
+            <option th:each="b : ${activeBenefits}"
+                    th:value="${b.id}"
+                    th:text="${b.name + ' - ' + (b.type=='INCOME'?'Thu nhập':'Khấu trừ')}">
+            </option>
+        </select>
+
+        <button class="btn btn-primary" type="submit">+ Thêm</button>
+    </form>
     <!-- Summary -->
     <div class="card mb-3">
         <div class="card-body">

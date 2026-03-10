@@ -1,7 +1,7 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.repository.BankAccountRepository;
-import com.example.hrm.service.PayrollService;
+import com.example.hrm.service.PayrollExportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
@@ -15,7 +15,7 @@ import java.util.*;
 @RequestMapping("/bank/portal")
 public class BankPortalController {
 
-    private final PayrollService payrollService;
+    private final PayrollExportService payrollExportService;
     private final BankAccountRepository bankAccountRepo;
 
     @GetMapping
@@ -30,10 +30,12 @@ public class BankPortalController {
     @GetMapping("/download")
     public ResponseEntity<byte[]> download(@RequestParam("batchIds") String batchIds) {
         List<Integer> ids = Arrays.stream(batchIds.split(","))
-                .map(String::trim).filter(s -> !s.isEmpty())
-                .map(Integer::parseInt).toList();
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .toList();
 
-        byte[] xlsx = payrollService.exportBankTransferExcel(ids);
+        byte[] xlsx = payrollExportService.exportBankTransferExcel(ids);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(
