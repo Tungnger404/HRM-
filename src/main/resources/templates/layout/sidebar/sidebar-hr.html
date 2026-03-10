@@ -42,6 +42,17 @@
       </a>
     </li>
 
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/view-request}">
+      <!--   th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">-->
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-briefcase"></use>
+        </svg>
+        View request
+      </a>
+    </li>
+
     <li class="nav-title">Evaluation & KPI</li>
 
     <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/hr/kpi')} ? 'show' : ''">
