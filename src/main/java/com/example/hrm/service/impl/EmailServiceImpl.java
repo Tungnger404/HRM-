@@ -6,33 +6,20 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
-    private String senderEmail;
-
-    private final DateTimeFormatter dateTimeFormatter =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-    private final DateTimeFormatter dateFormatter =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    @Value("${app.mail.from:${spring.mail.username}}")
+    private String fromMail;
 
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
-
-    // =====================================================
-    // ================= INTERVIEW MAIL ====================
-    // =====================================================
 
     @Override
     public void sendInterviewMail(String to,
@@ -42,32 +29,30 @@ public class EmailServiceImpl implements EmailService {
                                   String location) {
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(senderEmail);
+        message.setFrom(fromMail);
         message.setTo(to);
-        message.setSubject("Interview Invitation – " + jobTitle);
-
-        String formattedDate = date != null
-                ? date.format(dateTimeFormatter)
-                : "To be announced";
+        message.setSubject("Invitation to Interview – " + jobTitle);
 
         message.setText(
                 "Dear " + name + ",\n\n" +
-                        "Thank you for applying for the position of " + jobTitle + ".\n\n" +
-                        "We are pleased to invite you to attend an interview with the details below:\n\n" +
+                        "Thank you for your interest in joining Software House.\n\n" +
+                        "We are pleased to inform you that your application for the position of "
+                        + jobTitle + " has been shortlisted by our recruitment team.\n\n" +
+                        "You are invited to attend an interview with us. Please find the details below:\n\n" +
                         "Position: " + jobTitle + "\n" +
-                        "Date & Time: " + formattedDate + "\n" +
+                        "Date & Time: " + date + "\n" +
                         "Location: " + location + "\n\n" +
-                        "Please confirm your availability by replying to this email.\n\n" +
+                        "Kindly confirm your availability by replying to this email.\n\n" +
+                        "If you have any questions, please feel free to contact the HR Department via the HRM System.\n\n" +
+                        "We look forward to meeting you and discussing your potential contribution to Software House.\n\n" +
                         "Best regards,\n" +
-                        "Human Resources Department"
+                        "Human Resources Department\n" +
+                        "Software House\n" +
+                        "HRM System"
         );
 
         mailSender.send(message);
     }
-
-    // =====================================================
-    // ================= REJECT MAIL =======================
-    // =====================================================
 
     @Override
     public void sendRejectMail(String to,
@@ -75,26 +60,27 @@ public class EmailServiceImpl implements EmailService {
                                String jobTitle) {
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(senderEmail);
+        message.setFrom(fromMail);
         message.setTo(to);
         message.setSubject("Recruitment Update – " + jobTitle);
 
         message.setText(
                 "Dear " + name + ",\n\n" +
-                        "Thank you for your interest in the position of " + jobTitle + ".\n\n" +
+                        "Thank you for your interest in the position of " + jobTitle +
+                        " at Software House and for participating in our recruitment process.\n\n" +
                         "After careful consideration, we regret to inform you that " +
-                        "we will not be proceeding with your application at this time.\n\n" +
-                        "We sincerely appreciate your effort and wish you success in your career journey.\n\n" +
+                        "we will not be moving forward with your application at this time.\n\n" +
+                        "We sincerely appreciate the effort you have put into your application. " +
+                        "We encourage you to follow future opportunities at Software House through our HRM System.\n\n" +
+                        "We wish you continued success in your career journey.\n\n" +
                         "Best regards,\n" +
-                        "Human Resources Department"
+                        "Human Resources Department\n" +
+                        "Software House\n" +
+                        "HRM System"
         );
 
         mailSender.send(message);
     }
-
-    // =====================================================
-    // ================= OFFER MAIL ========================
-    // =====================================================
 
     @Override
     public void sendOfferMail(String to,
@@ -107,33 +93,38 @@ public class EmailServiceImpl implements EmailService {
                               String rejectLink) {
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(senderEmail);
+        message.setFrom(fromMail);
         message.setTo(to);
         message.setSubject("Official Job Offer – " + jobTitle);
 
-        String formattedSalary = salary != null
-                ? NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(salary)
-                : "Negotiable";
-
-        String formattedStartDate = startDate != null
-                ? startDate.format(dateFormatter)
-                : "To be confirmed";
-
         message.setText(
                 "Dear " + name + ",\n\n" +
-                        "We are delighted to offer you the position of " + jobTitle + ".\n\n" +
-                        "Offer Details:\n" +
-                        "Salary: " + formattedSalary + "\n" +
-                        "Start Date: " + formattedStartDate + "\n" +
+                        "We are pleased to offer you the position of " + jobTitle + ".\n\n" +
+                        "Salary: " + salary + "\n" +
+                        "Start Date: " + startDate + "\n" +
                         "Probation Period: " + probation + "\n\n" +
-                        "Please confirm your decision by clicking one of the links below:\n\n" +
-                        "Accept Offer:\n" + acceptLink + "\n\n" +
-                        "Reject Offer:\n" + rejectLink + "\n\n" +
-                        "We look forward to welcoming you to our team.\n\n" +
+                        "Please confirm your decision:\n\n" +
+                        "ACCEPT: " + acceptLink + "\n" +
+                        "REJECT: " + rejectLink + "\n\n" +
                         "Best regards,\n" +
-                        "Human Resources Department"
+                        "Human Resources Department\n" +
+                        "Software House"
         );
 
+        mailSender.send(message);
+    }
+
+    @Override
+    public void sendOtpEmail(String to, String otpCode) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromMail);
+        message.setTo(to);
+        message.setSubject("HRM - Password Reset OTP");
+        message.setText(
+                "Your OTP code to reset password is: " + otpCode + "\n\n" +
+                        "This code will expire in 5 minutes.\n" +
+                        "If you did not request this, please ignore this email."
+        );
         mailSender.send(message);
     }
 }

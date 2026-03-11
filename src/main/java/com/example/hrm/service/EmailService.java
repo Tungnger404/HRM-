@@ -23,4 +23,6 @@ public interface EmailService {
                        String probation,
                        String acceptLink,
                        String rejectLink);
+
+    void sendOtpEmail(String to, String otpCode);
 }
