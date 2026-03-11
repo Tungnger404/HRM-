@@ -21,7 +21,8 @@ public class UserAccount {
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    // Cho phép null để hỗ trợ account đăng nhập bằng Google
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Column(name = "email", nullable = false, unique = true, length = 100)
@@ -36,4 +37,11 @@ public class UserAccount {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    // ===== Thêm mới để hỗ trợ Google Login =====
+    @Column(name = "google_id", unique = true, length = 100)
+    private String googleId;
+
+    @Column(name = "auth_provider", length = 20)
+    private String authProvider; // LOCAL / GOOGLE
 }

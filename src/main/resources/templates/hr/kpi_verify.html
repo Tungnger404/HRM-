@@ -11,7 +11,6 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <h3 class="mb-1">Verify KPI Submission</h3>
-      <div class="text-body-secondary">Employee ID: <span th:text="${assignment.empId}"></span></div>
     </div>
     <a class="btn btn-outline-secondary" th:href="@{/hr/kpi/pending-verification}">
       <i class="cil-arrow-left"></i> Back
@@ -114,7 +113,7 @@
           <form method="post" th:action="@{/hr/kpi/verify/{id}/approve(id=${assignment.assignmentId})}">
             <div class="mb-3">
               <label class="form-label">HR Note (optional):</label>
-              <textarea name="hrNote" class="form-control" rows="3" placeholder="Files verified, forwarding to Manager..."></textarea>
+              <textarea name="hrNote" class="form-control" rows="3"></textarea>
             </div>
             <button type="submit" class="btn btn-success w-100 mb-2">
               <i class="cil-check"></i> Forward to Manager
@@ -124,7 +123,7 @@
           <form method="post" th:action="@{/hr/kpi/verify/{id}/reject(id=${assignment.assignmentId})}">
             <div class="mb-3">
               <label class="form-label">Rejection Reason:</label>
-              <textarea name="rejectReason" class="form-control" rows="3" placeholder="Example: Excel file format is incorrect..." required></textarea>
+              <textarea name="rejectReason" class="form-control" rows="3" required></textarea>
             </div>
             <button type="submit" class="btn btn-danger w-100">
               <i class="cil-x"></i> Return to Employee

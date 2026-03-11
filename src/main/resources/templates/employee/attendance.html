@@ -23,6 +23,12 @@
                 <span th:text="${error}"></span>
             </div>
 
+            <!-- Real-time Clock -->
+            <div class="mb-3">
+                <h6 class="fw-bold">Current Time</h6>
+                <div id="clock" class="fs-4 text-primary fw-bold"></div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="mb-4 d-flex gap-2">
 
@@ -52,23 +58,31 @@
                         <th>Date</th>
                         <th>Check In</th>
                         <th>Check Out</th>
-                        <th>Status</th>
+                        <th>Attendance Status</th>
+                        <th>Work Type</th>
                     </tr>
                     </thead>
 
                     <tbody>
                     <tr th:each="log : ${logs}">
-                        <td th:text="${log.workDate}"></td>
-                        <td th:text="${log.checkIn} ?: '-'"></td>
-                        <td th:text="${log.checkOut} ?: '-'"></td>
+                        <td th:text="${#temporals.format(log.workDate, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${log.checkIn != null ? #temporals.format(log.checkIn, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
+                        <td th:text="${log.checkOut != null ? #temporals.format(log.checkOut, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
                         <td>
-                            <span class="badge"
-                                  th:classappend="
-                                        ${log.status} == 'LATE' ? ' bg-warning' :
-                                        (${log.status} == 'ON_TIME' ? ' bg-success' :
-                                        ' bg-secondary')"
-                                  th:text="${log.status}">
-                            </span>
+                <span class="badge"
+                      th:classappend="${log.status == 'LATE' ? ' bg-warning' :
+                      (log.status == 'ON_TIME' ? ' bg-success' :
+                      (log.status == 'ABSENT' ? ' bg-danger' : ' bg-secondary'))}"
+                      th:text="${log.status}">
+</span>
+                        </td>
+                        <td>
+                <span class="badge"
+                      th:classappend="
+                            ${log.workType} == 'OT' ? ' bg-primary' :
+                            ' bg-secondary'"
+                      th:text="${log.workType}">
+                </span>
                         </td>
                     </tr>
 
@@ -84,7 +98,32 @@
 
         </div>
     </div>
+    <script>
 
+        function updateClock() {
+
+            const now = new Date();
+
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const timeString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+            document.getElementById("clock").innerText = timeString;
+        }
+
+        // cập nhật mỗi giây
+        setInterval(updateClock, 1000);
+
+        // chạy ngay khi load
+        updateClock();
+
+    </script>
 </div>
 
 </html>

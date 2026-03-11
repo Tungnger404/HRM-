@@ -37,4 +37,7 @@ public class AttendanceLog {
 
     @Column(name = "status", length = 20)
     private String status; // ON_TIME/LATE/ABSENT/EARLY_LEAVE
+
+    @Column(name="work_type")
+    private String workType;
 }

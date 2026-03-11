@@ -67,4 +67,11 @@ public class Employee {
     public void setId(Integer id) {
         this.empId = id;
     }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dept_id", insertable = false, updatable = false)
+    private Department department;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_id", insertable = false, updatable = false)
+    private JobPosition jobPosition;
 }

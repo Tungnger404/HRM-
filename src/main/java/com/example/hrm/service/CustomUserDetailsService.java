@@ -17,13 +17,22 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserAccountRepository userRepo;
 
     @Override
-    @Transactional(readOnly = true) // ✅ giữ session để đọc role
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserAccount u = userRepo.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+
+        UserAccount u = userRepo.findByEmailIgnoreCase(usernameOrEmail).orElse(null);
+
+        if (u == null) {
+            u = userRepo.findByUsernameIgnoreCase(usernameOrEmail)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
+        }
 
         if (u.getActive() == null || !u.getActive()) {
-            throw new UsernameNotFoundException("User is disabled: " + username);
+            throw new UsernameNotFoundException("User is disabled: " + usernameOrEmail);
+        }
+
+        if (u.getPasswordHash() == null || u.getPasswordHash().isBlank()) {
+            throw new UsernameNotFoundException("This account uses Google login only.");
         }
 
         String roleName = (u.getRole() == null || u.getRole().getRoleName() == null)

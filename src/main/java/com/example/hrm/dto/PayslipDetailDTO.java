@@ -5,17 +5,16 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class PayslipDetailDTO {
     private Integer payslipId;
     private Integer batchId;
-
     private Integer empId;
     private String employeeName;
-
     private String period;
 
     private BigDecimal baseSalary;
@@ -28,4 +27,9 @@ public class PayslipDetailDTO {
     private BigDecimal netSalary;
 
     private List<PayslipItemDTO> items;
+
+    // thêm 3 field này
+    private String jobTitle;
+    private String email;
+    private String phone;
 }
