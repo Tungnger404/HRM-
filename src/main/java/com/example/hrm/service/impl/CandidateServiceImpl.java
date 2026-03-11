@@ -10,7 +10,9 @@ import com.example.hrm.repository.InterviewRepository;
 import com.example.hrm.repository.JobPostingRepository;
 import com.example.hrm.service.CandidateService;
 import com.example.hrm.service.EmailService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,26 +23,42 @@ public class CandidateServiceImpl implements CandidateService {
 
     private final CandidateRepository repository;
     private final JobPostingRepository jobPostingRepository;
+    private final EmailService emailService;
+    private final InterviewRepository interviewRepository;
 
     public CandidateServiceImpl(CandidateRepository repository,
-                                JobPostingRepository jobPostingRepository) {
+                                JobPostingRepository jobPostingRepository,
+                                EmailService emailService,
+                                InterviewRepository interviewRepository) {
         this.repository = repository;
         this.jobPostingRepository = jobPostingRepository;
+        this.emailService = emailService;
+        this.interviewRepository = interviewRepository;
     }
 
+    // =====================================================
+    // ================= GET CANDIDATES (FIXED) ============
+    // =====================================================
 
     @Override
     public List<CandidateListDTO> getCandidates(Integer postingId,
                                                 CandidateStatus status,
                                                 String keyword) {
 
-        List<Candidate> entities =
-                repository.searchCandidates(postingId, status, keyword);
+        Pageable pageable = PageRequest.of(0, 100); // default lấy 100 record
 
-        return entities.stream()
+        Page<Candidate> pageResult =
+                repository.searchCandidates(postingId, status, keyword, pageable);
+
+        return pageResult.getContent()
+                .stream()
                 .map(this::mapToListDTO)
                 .toList();
     }
+
+    // =====================================================
+    // ================= EVALUATE ==========================
+    // =====================================================
 
     @Override
     public CandidateEvaluateDTO getEvaluateDTO(Integer id) {
@@ -52,9 +70,7 @@ public class CandidateServiceImpl implements CandidateService {
 
         CandidateEvaluateDTO dto = new CandidateEvaluateDTO();
         dto.setId(candidate.getCandidateId());
-        dto.setPostingId(
-                candidate.getJobPosting().getPostingId()
-        );
+        dto.setPostingId(candidate.getJobPosting().getPostingId());
         dto.setScore(candidate.getScreeningScore());
 
         return dto;
@@ -76,7 +92,6 @@ public class CandidateServiceImpl implements CandidateService {
 
             candidate.setStatus(CandidateStatus.REJECTED);
 
-
             emailService.sendRejectMail(
                     candidate.getEmail(),
                     candidate.getFullName(),
@@ -87,17 +102,20 @@ public class CandidateServiceImpl implements CandidateService {
         repository.save(candidate);
     }
 
+    // =====================================================
+    // ================= APPLY =============================
+    // =====================================================
+
     @Override
     public void apply(String slug, ApplyFormDTO form) {
-
 
         JobPosting job = jobPostingRepository
                 .findBySlugAndIsPublicTrue(slug)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
+
         if (!"OPEN".equalsIgnoreCase(job.getStatus())) {
             throw new RuntimeException("Job is not open");
         }
-
 
         boolean existed = repository
                 .existsByEmailAndJobPosting_PostingId(
@@ -109,14 +127,13 @@ public class CandidateServiceImpl implements CandidateService {
             throw new RuntimeException("You already applied this job");
         }
 
-
         Candidate candidate = Candidate.builder()
                 .jobPosting(job)
                 .fullName(form.getFullName())
                 .email(form.getEmail())
                 .phone(form.getPhone())
                 .cvUrl(form.getCvUrl())
-                .status(CandidateStatus.APPLIED)   // ✅ enum
+                .status(CandidateStatus.APPLIED)
                 .appliedAt(LocalDateTime.now())
                 .source("WEBSITE")
                 .build();
@@ -124,27 +141,19 @@ public class CandidateServiceImpl implements CandidateService {
         repository.save(candidate);
     }
 
+    // =====================================================
+    // ================= FIND BY ID ========================
+    // =====================================================
 
     @Override
     public Candidate findById(Integer id) {
         return repository.findById(id).orElse(null);
     }
 
+    // =====================================================
+    // ================= BATCH INTERVIEW ===================
+    // =====================================================
 
-    private CandidateListDTO mapToListDTO(Candidate c) {
-
-        return new CandidateListDTO(
-                c.getCandidateId(),
-                c.getFullName(),
-                c.getEmail(),
-                c.getStatus(),
-                c.getScreeningScore()
-        );
-    }
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private InterviewRepository interviewRepository;
     @Override
     public void scheduleBatchInterview(BatchInterviewDTO dto) {
 
@@ -152,7 +161,6 @@ public class CandidateServiceImpl implements CandidateService {
 
             Candidate candidate = repository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Candidate not found"));
-
 
             if (!interviewRepository
                     .existsByCandidateCandidateIdAndRoundNumber(id, 1)) {
@@ -166,14 +174,12 @@ public class CandidateServiceImpl implements CandidateService {
                 interviewRepository.save(interview);
             }
 
-
             candidate.setStatus(CandidateStatus.INTERVIEW_SCHEDULED);
             candidate.setInterviewDate(dto.getInterviewDate());
             candidate.setInterviewLocation(dto.getLocation());
 
             repository.save(candidate);
 
-            // Gửi mail
             emailService.sendInterviewMail(
                     candidate.getEmail().trim(),
                     candidate.getFullName(),
@@ -184,4 +190,18 @@ public class CandidateServiceImpl implements CandidateService {
         }
     }
 
+    // =====================================================
+    // ================= MAPPER ============================
+    // =====================================================
+
+    private CandidateListDTO mapToListDTO(Candidate c) {
+
+        return new CandidateListDTO(
+                c.getCandidateId(),
+                c.getFullName(),
+                c.getEmail(),
+                c.getStatus(),
+                c.getScreeningScore()
+        );
+    }
 }

@@ -2,81 +2,191 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/layout}"
-      th:with="sidebar='sidebar-hr.html'">
+      layout:decorate="~{layout/layout}">
 
 <head>
-    <title>Recruitment Requests (HR)</title>
+    <title>Recruitment Requests Management</title>
+    <style>
+        .stat-card { border: none; border-radius: 12px; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .req-table thead th {
+            background-color: #f8fafc;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #64748b;
+            border-top: none;
+        }
+        .job-title-link { color: #1e293b; text-decoration: none; transition: 0.2s; }
+        .job-title-link:hover { color: #4361ee; }
+        .table-row-hover:hover { background-color: #f1f5f9 !important; cursor: pointer; }
+        .quantity-badge { background: #f1f5f9; color: #475569; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 700; }
+        .pagination .page-link { border: none; margin: 0 3px; border-radius: 8px; color: #64748b; font-weight: 600; }
+        .pagination .page-item.active .page-link { background-color: #4361ee; color: white; }
+    </style>
 </head>
 
 <body>
 
 <div layout:fragment="content">
-    <div class="container-fluid px-4">
+    <div class="container-fluid py-4">
 
-    <h2 class="mb-4 fw-bold">Recruitment Requests (HR)</h2>
+        <div class="row align-items-end mb-4">
+            <div class="col-lg-4">
+                <h2 class="fw-bold text-dark mb-1">Recruitment Requests</h2>
+                <p class="text-muted small mb-0">Review and manage headcount requests from department managers.</p>
+            </div>
+            <div class="col-lg-8 mt-3 mt-lg-0">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card stat-card bg-warning bg-opacity-10 border-warning border-opacity-25 p-3">
+                            <div class="d-flex justify-content-between">
+                                <div><small class="text-warning fw-bold text-uppercase">Pending</small><h4 class="fw-bold mb-0">12</h4></div>
+                                <i class="bi bi-hourglass-split text-warning fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card stat-card bg-success bg-opacity-10 border-success border-opacity-25 p-3">
+                            <div class="d-flex justify-content-between">
+                                <div><small class="text-success fw-bold text-uppercase">Approved</small><h4 class="fw-bold mb-0">45</h4></div>
+                                <i class="bi bi-check-circle text-success fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card stat-card bg-primary bg-opacity-10 border-primary border-opacity-25 p-3">
+                            <div class="d-flex justify-content-between">
+                                <div><small class="text-primary fw-bold text-uppercase">Total YTD</small><h4 class="fw-bold mb-0">128</h4></div>
+                                <i class="bi bi-bar-chart text-primary fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <!-- TABLE WRAPPER -->
-    <div class="table-responsive shadow-sm rounded-3" style="background: #1e1e2f; padding: 20px;">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
 
-        <table class="table table-hover align-middle table-bordered table-dark" style="border-color: #2c2c3c;">
-            <thead class="table-light text-dark">
-            <tr>
-                <th style="width: 60px;">ID</th>
-                <th style="width: 150px;">Department</th>
-                <th style="width: 180px;">Job Position</th>
-                <th style="width: 100px;">Quantity</th>
-                <th style="width: 150px;">Deadline</th>
-                <th style="width: 120px;">Status</th>
-                <th style="width: 100px;">Action</th>
-            </tr>
-            </thead>
+            <div class="card-body bg-white border-bottom p-4">
+                <form method="get" th:action="@{/hr/recruitment-request/list}" class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" name="keyword" th:value="${keyword}"
+                                   class="form-control bg-light border-0 ps-0 fs-6"
+                                   placeholder="Search by job title, department...">
+                        </div>
+                    </div>
 
-            <tbody>
+                    <div class="col-lg-3">
+                        <select name="status" class="form-select form-select-lg border-0 bg-light fs-6">
+                            <option value="">All Statuses</option>
+                            <option value="SUBMITTED" th:selected="${status=='SUBMITTED'}">⏳ Submitted</option>
+                            <option value="APPROVED" th:selected="${status=='APPROVED'}">✅ Approved</option>
+                            <option value="REJECTED" th:selected="${status=='REJECTED'}">❌ Rejected</option>
+                        </select>
+                    </div>
 
-            <!-- LOOP REQUEST -->
-            <tr th:each="req : ${requests}">
-                <td th:text="${req.reqId}"></td>
+                    <div class="col-lg-3">
+                        <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" type="submit">
+                            Apply Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
 
-                <td th:text="${req.department.deptName}"></td>
+            <div class="table-responsive">
+                <table class="table req-table align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th class="ps-4">Req ID</th>
+                        <th>Job Information</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-center">Status</th>
+                        <th>Date Created</th>
+                        <th class="text-end pe-4">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                    <tr th:each="req : ${requests}" class="table-row-hover"
+                        th:onclick="|window.location.href='@{/hr/recruitment-request/{id}(id=${req.reqId})}'|">
 
-                <td th:text="${req.jobPosition.title}"></td>
+                        <td class="ps-4">
+                            <span class="badge bg-light text-muted border" th:text="${'#' + req.reqId}"></span>
+                        </td>
 
-                <td th:text="${req.quantity}"></td>
+                        <td>
+                            <div class="job-title-link fw-bold" th:text="${req.jobPosition.title}">Job Title</div>
+                            <div class="text-muted small mt-1">
+                                <i class="bi bi-building me-1"></i>
+                                <span th:text="${req.department != null ? req.department.deptName : 'N/A'}"></span>
+                            </div>
+                        </td>
 
-                <td th:text="${#temporals.format(req.deadline, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td class="text-center">
+                            <span class="quantity-badge shadow-sm border" th:text="${req.quantity}"></span>
+                        </td>
 
-                <td>
-                    <span class="badge rounded-pill px-3 py-2"
-                          th:classappend="${req.status.name() == 'APPROVED' ? 'bg-success' :
-                       req.status.name() == 'REJECTED' ? 'bg-danger' :
-                       req.status.name() == 'SUBMITTED' ? 'bg-warning text-dark' :
-                       'bg-secondary'}"
-                          th:text="${req.status}">
-                    </span>
-                </td>
+                        <td class="text-center" th:switch="${req.status != null ? req.status.name() : ''}">
+                                <span th:case="'APPROVED'" class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Approved
+                                </span>
+                            <span th:case="'REJECTED'" class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-x-circle-fill me-1"></i> Rejected
+                                </span>
+                            <span th:case="'SUBMITTED'" class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-clock-fill me-1"></i> Submitted
+                                </span>
+                            <span th:case="*" class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill" th:text="${req.status}"></span>
+                        </td>
 
-                <td>
-                    <a class="btn btn-primary btn-sm"
-                       th:href="@{/hr/recruitment-request/{id}(id=${req.reqId})}">
-                        View
-                    </a>
-                </td>
-            </tr>
+                        <td>
+                            <div class="text-dark small fw-medium" th:text="${req.createdAt != null ? #temporals.format(req.createdAt,'dd MMM, yyyy') : ''}"></div>
+                            <div class="text-muted x-small" style="font-size: 0.7rem;" th:text="${#temporals.format(req.createdAt,'HH:mm')}"></div>
+                        </td>
 
-            <!-- EMPTY -->
-            <tr th:if="${#lists.isEmpty(requests)}">
-                <td colspan="7" class="text-center py-4 text-muted">
-                    No recruitment requests found.
-                </td>
-            </tr>
+                        <td class="text-end pe-4">
+                            <a class="btn btn-sm btn-light border rounded-circle"
+                               th:href="@{/hr/recruitment-request/{id}(id=${req.reqId})}"
+                               onclick="event.stopPropagation();">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </td>
+                    </tr>
 
-            </tbody>
-        </table>
+                    <tr th:if="${#lists.isEmpty(requests)}">
+                        <td colspan="6" class="py-5 text-center">
+                            <div class="opacity-50 mb-3">
+                                <i class="bi bi-clipboard-x" style="font-size: 4rem;"></i>
+                            </div>
+                            <h5 class="fw-bold text-muted">No requests found</h5>
+                            <p class="text-muted small">Try refining your search keyword or changing the status filter.</p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
+            <div class="card-footer bg-light bg-opacity-50 border-top py-4" th:if="${totalPages > 1}">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0 shadow-sm d-inline-flex">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/hr/recruitment-request/list(page=${currentPage-1},keyword=${keyword},status=${status})}">Prev</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0,totalPages-1)}" th:classappend="${i==currentPage}? 'active'">
+                            <a class="page-link" th:text="${i+1}" th:href="@{/hr/recruitment-request/list(page=${i},keyword=${keyword},status=${status})}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage==totalPages-1}? 'disabled'">
+                            <a class="page-link" th:href="@{/hr/recruitment-request/list(page=${currentPage+1},keyword=${keyword},status=${status})}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
     </div>
+</div>
 
-</div>
-</div>
 </body>
 </html>

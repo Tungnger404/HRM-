@@ -34,6 +34,7 @@ public class SecurityConfig {
 
                         // ===== PUBLIC =====
                         .requestMatchers(
+                                "/",
                                 "/login", "/logout",
                                 "/register", "/register/**",
                                 "/css/**", "/js/**", "/images/**",
@@ -44,7 +45,7 @@ public class SecurityConfig {
                                 "/evaluation/**", "/training/**", // For testing without login
                                 "/hr/kpi/**", "/manager/evaluation/**", "/api/notifications/**",
                                 "/offer/accept/**",
-                                "/offer/reject/**"// For testing KPI workflow
+                                "/offer/reject/**"
                         ).permitAll()
 
                         // ===== DASHBOARD (DEMO: mở hết) =====
@@ -97,7 +98,7 @@ public class SecurityConfig {
                 // ===== LOGOUT =====
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout=true")
+                        .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .permitAll()
