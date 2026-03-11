@@ -8,195 +8,178 @@
 
 <head>
     <title>Candidate Evaluation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .eval-card { border: none; border-radius: 15px; transition: transform 0.2s; }
+        .section-label { font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .candidate-header { background: #fff; border-bottom: 2px solid #f1f5f9; padding: 20px; border-radius: 15px 15px 0 0; }
+        .table thead th { background-color: #f8fafc; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+        .score-badge { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: 800; background: #f1f5f9; }
+        .hr-border { border-left: 5px solid #f59e0b !important; } /* Orange for HR */
+        .mgr-border { border-left: 5px solid #3b82f6 !important; } /* Blue for Manager */
+    </style>
 </head>
 
 <body>
-
 <div layout:fragment="content">
+    <div class="container-fluid py-4">
 
-    <h2 class="mb-4">Candidate Evaluation</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="#">Recruitment</a></li>
+                        <li class="breadcrumb-item active">Evaluation</li>
+                    </ol>
+                </nav>
+                <h3 class="fw-bold text-dark mb-0">Candidate Evaluation Process</h3>
+            </div>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
 
-    <!-- ================= Candidate Info ================= -->
-
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-
-            <div class="row">
-                <div class="col-md-4">
-                    <strong>Name:</strong>
-                    <span th:text="${candidate.fullName}"></span>
-                </div>
-
-                <div class="col-md-4">
-                    <strong>Email:</strong>
-                    <span th:text="${candidate.email}"></span>
-                </div>
-
-                <div class="col-md-4">
-                    <strong>Status:</strong>
-                    <span class="badge"
-                          th:classappend="
+        <div class="card eval-card shadow-sm mb-4">
+            <div class="candidate-header">
+                <div class="row align-items-center">
+                    <div class="col-md-auto">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <span class="fs-3 fw-bold" th:text="${#strings.substring(candidate.fullName,0,1)}">C</span>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h4 class="fw-bold mb-1" th:text="${candidate.fullName}">Full Name</h4>
+                        <p class="text-muted mb-0"><i class="bi bi-envelope me-1"></i> <span th:text="${candidate.email}">email@example.com</span></p>
+                    </div>
+                    <div class="col-md-auto text-end">
+                        <span class="section-label d-block mb-1">Current Status</span>
+                        <span class="badge rounded-pill px-3 py-2"
+                              th:classappend="
                                 ${candidate.status.name() == 'REJECTED'} ? 'bg-danger' :
-                                (${candidate.status.name() == 'EVALUATED'} ? 'bg-success' :
-                                'bg-secondary')"
-                          th:text="${candidate.status}">
-                    </span>
+                                (${candidate.status.name() == 'EVALUATED'} ? 'bg-success' : 'bg-info')"
+                              th:text="${candidate.status}">
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card eval-card shadow-sm mb-4 overflow-hidden">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Interview History</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr class="text-center">
+                            <th class="ps-4 text-start">Round</th>
+                            <th>Schedule</th>
+                            <th>Location</th>
+                            <th>Score</th>
+                            <th>Result</th>
+                            <th class="pe-4">Interviewer's Feedback</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="i : ${interviews}" class="text-center">
+                            <td class="ps-4 text-start fw-bold">Round <span th:text="${i.roundNumber}"></span></td>
+                            <td th:text="${i.scheduledTime}"></td>
+                            <td><i class="bi bi-geo-alt me-1"></i> <span th:text="${i.location}"></span></td>
+                            <td>
+                                <div class="d-flex justify-content-center">
+                                    <div class="score-badge shadow-sm border"
+                                         th:classappend="${i.score >= 7} ? 'text-success' : (${i.score >= 5} ? 'text-warning' : 'text-danger')"
+                                         th:text="${i.score}">0</div>
+                                </div>
+                            </td>
+                            <td>
+                                    <span class="badge rounded-pill px-3 py-2"
+                                          th:classappend="${i.result == 'PASS'} ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'"
+                                          th:text="${i.result}">
+                                    </span>
+                            </td>
+                            <td class="pe-4 text-muted small" style="max-width: 300px;" th:text="${i.feedback}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6" sec:authorize="hasRole('HR')"
+                 th:if="${candidate.status != T(com.example.hrm.entity.CandidateStatus).REJECTED}">
+                <div class="card eval-card shadow-sm hr-border h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold text-warning"><i class="bi bi-person-check me-2"></i>HR Evaluation</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/interview/submit-hr}" method="post">
+                            <input type="hidden" name="candidateId" th:value="${candidate.candidateId}"/>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Assessment Score (0-10)</label>
+                                    <input type="number" name="score" min="0" max="10" class="form-control form-control-lg bg-light" placeholder="0" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Final Decision</label>
+                                    <select name="result" class="form-select form-select-lg bg-light">
+                                        <option value="PASS" class="text-success fw-bold">PASS</option>
+                                        <option value="FAIL" class="text-danger fw-bold">FAIL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small">Detailed Feedback</label>
+                                <textarea name="feedback" class="form-control bg-light" rows="4" placeholder="Mention strengths, weaknesses..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow-sm text-white">
+                                <i class="bi bi-send-fill me-2"></i> SUBMIT HR REVIEW
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
+            <div class="col-lg-6" sec:authorize="hasRole('MANAGER')"
+                 th:if="${candidate.status == T(com.example.hrm.entity.CandidateStatus).INTERVIEWED}">
+                <div class="card eval-card shadow-sm mgr-border h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-shield-check me-2"></i>Manager Evaluation</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/interview/submit-manager}" method="post">
+                            <input type="hidden" name="candidateId" th:value="${candidate.candidateId}"/>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Technical Score (0-10)</label>
+                                    <input type="number" name="score" min="0" max="10" class="form-control form-control-lg bg-light" placeholder="0" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Hiring Decision</label>
+                                    <select name="result" class="form-select form-select-lg bg-light">
+                                        <option value="PASS" class="text-success fw-bold">HIRE (PASS)</option>
+                                        <option value="FAIL" class="text-danger fw-bold">REJECT (FAIL)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small">Manager's Notes</label>
+                                <textarea name="feedback" class="form-control bg-light" rows="4" placeholder="Technical competency, cultural fit..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">
+                                <i class="bi bi-check-circle-fill me-2"></i> CONFIRM FINAL DECISION
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
+
     </div>
-
-
-    <!-- ================= Interview History ================= -->
-
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header">
-            <strong>Interview History</strong>
-        </div>
-
-        <div class="card-body p-0">
-            <table class="table table-bordered align-middle text-center mb-0">
-                <thead class="table-light">
-                <tr>
-                    <th>Round</th>
-                    <th>Scheduled Time</th>
-                    <th>Location</th>
-                    <th>Score</th>
-                    <th>Result</th>
-                    <th>Feedback</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                <tr th:each="i : ${interviews}">
-                    <td th:text="${i.roundNumber}"></td>
-                    <td th:text="${i.scheduledTime}"></td>
-                    <td th:text="${i.location}"></td>
-                    <td th:text="${i.score}"></td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="
-                                    ${i.result == 'PASS'} ? 'bg-success' : 'bg-danger'"
-                              th:text="${i.result}">
-                        </span>
-                    </td>
-                    <td th:text="${i.feedback}"></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-
-    <!-- ================= HR Evaluation ================= -->
-
-    <div class="card mb-4 shadow-sm"
-         sec:authorize="hasRole('HR')"
-         th:if="${candidate.status != T(com.example.hrm.entity.CandidateStatus).REJECTED}">
-
-        <div class="card-header bg-warning">
-            <strong>HR Evaluation (Round 1)</strong>
-        </div>
-
-        <div class="card-body">
-
-            <form th:action="@{/interview/submit-hr}" method="post">
-
-                <input type="hidden"
-                       name="candidateId"
-                       th:value="${candidate.candidateId}"/>
-
-                <div class="mb-3">
-                    <label class="form-label">Score</label>
-                    <input type="number"
-                           name="score"
-                           min="0"
-                           max="10"
-                           class="form-control"
-                           required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Feedback</label>
-                    <textarea name="feedback"
-                              class="form-control"
-                              rows="3"
-                              required></textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Result</label>
-                    <select name="result" class="form-select">
-                        <option value="PASS">PASS</option>
-                        <option value="FAIL">FAIL</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                    Submit HR Evaluation
-                </button>
-
-            </form>
-
-        </div>
-    </div>
-
-
-    <!-- ================= Manager Evaluation ================= -->
-
-    <div class="card mb-4 shadow-sm"
-         sec:authorize="hasRole('MANAGER')"
-         th:if="${candidate.status == T(com.example.hrm.entity.CandidateStatus).INTERVIEWED}">
-
-        <div class="card-header bg-info text-white">
-            <strong>Manager Evaluation (Round 2)</strong>
-        </div>
-
-        <div class="card-body">
-
-            <form th:action="@{/interview/submit-manager}" method="post">
-
-                <input type="hidden"
-                       name="candidateId"
-                       th:value="${candidate.candidateId}"/>
-
-                <div class="mb-3">
-                    <label class="form-label">Score</label>
-                    <input type="number"
-                           name="score"
-                           min="0"
-                           max="10"
-                           class="form-control"
-                           required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Feedback</label>
-                    <textarea name="feedback"
-                              class="form-control"
-                              rows="3"
-                              required></textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Result</label>
-                    <select name="result" class="form-select">
-                        <option value="PASS">PASS</option>
-                        <option value="FAIL">FAIL</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-success">
-                    Submit Manager Evaluation
-                </button>
-
-            </form>
-
-        </div>
-    </div>
-
 </div>
-
 </body>
 </html>

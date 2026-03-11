@@ -41,28 +41,51 @@ public class JobPosting {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String benefits;
 
+    // ================= NEW FILTER FIELDS =================
+
+    @Column(length = 150)
+    private String location; // dùng cho dropdown filter
+
+    @Column(name = "employment_type", length = 100)
+    private String employmentType; // Full-time / Intern / Remote
+
+    @Column(
+            name = "is_hot",
+            nullable = false,
+            columnDefinition = "bit default 0"
+    )
+    @Builder.Default
+    private Boolean isHot = false;
+
+    // ================= DATE =================
+
     @Column(name = "publish_date")
     private LocalDate publishDate;
 
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
+    // ================= STATUS =================
+
     @Column(nullable = false)
-    private String status; // OPEN / CLOSED / EXPIRED
-    @Transient
-    private Long candidateCount;
+    @Builder.Default
+    private String status = "OPEN"; // OPEN / CLOSED / EXPIRED
 
-
-    // ================= NEW FIELDS =================
+    // ================= PUBLIC PORTAL =================
 
     @Column(unique = true, length = 200)
-    private String slug;
+    private String slug; // dùng cho SEO URL: /careers/java-developer
 
     @Column(name = "is_public", nullable = false)
     @Builder.Default
-    private Boolean isPublic = true;
+    private Boolean isPublic = true; // chỉ hiển thị job public
 
     @Column(name = "view_count", nullable = false)
     @Builder.Default
     private Integer viewCount = 0;
+
+    // ================= STATISTIC =================
+
+    @Transient
+    private Long candidateCount; // dùng hiển thị count ngoài UI
 }
