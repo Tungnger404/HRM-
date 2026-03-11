@@ -2,139 +2,181 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/layout}"
-      th:with="sidebar='sidebar-hr.html'">
+      layout:decorate="~{layout/layout}">
 
 <head>
-    <title>Recruitment Request Detail</title>
+    <title>Review Recruitment Request</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        .detail-card { border: none; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
+        .info-label { color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { color: #1e293b; font-weight: 700; font-size: 1.1rem; }
+        .deadline-box {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-left: 5px solid #f56565;
+        }
+        .reason-quote {
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: #475569;
+        }
+        .btn-approve {
+            background: #10b981;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-approve:hover {
+            background: #059669;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        .reject-area { border: 2px dashed #fecaca; border-radius: 15px; }
+    </style>
 </head>
 
 <body>
 
 <div layout:fragment="content">
-    <div class="container mt-4">
+    <div class="container py-4">
 
-    <div class="card shadow-sm">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/hr/recruitment-request/list}" class="text-decoration-none">Requests</a></li>
+                <li class="breadcrumb-item active">Detail</li>
+            </ol>
+        </nav>
 
-        <!-- HEADER -->
-        <div class="card-header bg-dark text-white">
-            <h4 class="mb-0">Recruitment Request Detail</h4>
-        </div>
+        <div class="card detail-card overflow-hidden">
+            <div class="card-header bg-white py-4 px-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-bold" th:text="'REQUEST ID: #' + ${request.reqId}"></span>
+                    <h3 class="fw-bold text-dark mt-1 mb-0" th:text="${request.jobPosition.title}">Position</h3>
+                </div>
+                <div th:with="status=${request.status.name()}">
+                    <span class="badge rounded-pill px-4 py-2 fs-6 shadow-sm"
+                          th:classappend="${status == 'SUBMITTED' ? 'bg-warning text-dark' :
+                                            status == 'APPROVED' ? 'bg-success' :
+                                            status == 'REJECTED' ? 'bg-danger' : 'bg-secondary'}"
+                          th:text="${request.status}">
+                    </span>
+                </div>
+            </div>
 
-        <!-- BODY -->
-        <div class="card-body bg-dark text-white"
-             th:with="
-                isSubmitted=${request.status == T(com.example.hrm.entity.RecruitmentRequestStatus).SUBMITTED},
-                isApproved=${request.status == T(com.example.hrm.entity.RecruitmentRequestStatus).APPROVED},
-                isRejected=${request.status == T(com.example.hrm.entity.RecruitmentRequestStatus).REJECTED}
-             ">
+            <div class="card-body p-4 p-md-5 pt-0" th:with="isSubmitted=${request.status.name() == 'SUBMITTED'}">
+                <div class="row g-5">
 
-            <!-- INFORMATION -->
-            <table class="table table-borderless text-white mb-4">
-                <tbody>
-                <tr>
-                    <th style="width:25%">Request ID</th>
-                    <td th:text="${request.reqId}"></td>
-                </tr>
-                <tr>
-                    <th>Department</th>
-                    <td th:text="${request.department.deptName}"></td>
-                </tr>
-                <tr>
-                    <th>Job Position</th>
-                    <td th:text="${request.jobPosition.title}"></td>
-                </tr>
-                <tr>
-                    <th>Quantity</th>
-                    <td th:text="${request.quantity}"></td>
-                </tr>
-                <tr>
-                    <th>Deadline</th>
-                    <td th:text="${#temporals.format(request.deadline, 'dd/MM/yyyy HH:mm')}"></td>
-                </tr>
-                <tr>
-                    <th>Reason</th>
-                    <td th:text="${request.reason}"></td>
-                </tr>
-                <tr>
-                    <th>Status</th>
-                    <td>
-                        <span class="badge rounded-pill px-3 py-2"
-                              th:classappend="${isSubmitted ? 'bg-warning text-dark' :
-                                                isApproved ? 'bg-success' :
-                                                isRejected ? 'bg-danger' :
-                                                'bg-secondary'}"
-                              th:text="${request.status}">
-                        </span>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                    <div class="col-lg-7">
+                        <h6 class="info-label mb-4"><i class="bi bi-info-circle me-2"></i>Core Requirements</h6>
 
-            <!-- ACTION BUTTONS -->
-            <div class="mt-4" th:if="${isSubmitted}">
-
-                <!-- APPROVE -->
-                <form th:action="@{'/hr/recruitment-request/' + ${request.reqId} + '/approve'}"
-                      method="post"
-                      class="d-inline-block">
-                    <button type="submit"
-                            class="btn btn-success fw-bold px-4">
-                        Approve
-                    </button>
-                </form>
-
-                <!-- REJECT BUTTON -->
-                <button type="button"
-                        class="btn btn-danger fw-bold px-4 ms-3"
-                        onclick="document.getElementById('rejectForm').style.display='block'">
-                    Reject
-                </button>
-
-                <!-- REJECT FORM -->
-                <div id="rejectForm"
-                     style="display:none; max-width:500px;"
-                     class="mt-3">
-
-                    <form th:action="@{'/hr/recruitment-request/' + ${request.reqId} + '/reject'}"
-                          method="post">
-
-                        <div class="mb-2">
-                            <textarea name="reason"
-                                      class="form-control"
-                                      rows="3"
-                                      placeholder="Enter reject reason..."
-                                      required></textarea>
+                        <div class="row mb-4">
+                            <div class="col-sm-6">
+                                <label class="info-label d-block mb-1">Target Department</label>
+                                <div class="info-value"><i class="bi bi-building me-2 text-primary"></i><span th:text="${request.department.deptName}"></span></div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="info-label d-block mb-1">Headcount Needed</label>
+                                <div class="info-value"><i class="bi bi-people me-2 text-primary"></i><span th:text="${request.quantity + ' Positions'}"></span></div>
+                            </div>
                         </div>
 
-                        <button type="submit"
-                                class="btn btn-danger fw-bold px-4">
-                            Confirm Reject
-                        </button>
+                        <div class="mt-4">
+                            <label class="info-label d-block mb-2">Justification / Reason</label>
+                            <div class="reason-quote shadow-sm" th:text="${request.reason}">
+                                Detailed reason goes here...
+                            </div>
+                        </div>
+                    </div>
 
-                        <button type="button"
-                                class="btn btn-secondary ms-2"
-                                onclick="document.getElementById('rejectForm').style.display='none'">
-                            Cancel
-                        </button>
+                    <div class="col-lg-5">
+                        <div class="p-4 rounded-4 deadline-box mb-4 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white rounded-circle p-3 text-danger shadow-sm me-3">
+                                    <i class="bi bi-calendar-check fs-3"></i>
+                                </div>
+                                <div>
+                                    <label class="info-label text-danger opacity-75 mb-0">Hiring Deadline</label>
+                                    <div class="fs-4 fw-bold text-dark" th:text="${#temporals.format(request.deadline, 'dd MMM, yyyy')}"></div>
+                                </div>
+                            </div>
+                        </div>
 
-                    </form>
+                        <div class="card bg-light border-0 rounded-4 p-4">
+                            <h6 class="info-label mb-3">Request Metadata</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-sm bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-3">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Submitted By</small>
+                                    <span class="fw-bold" th:text="${request.createdBy != null ? request.createdBy.fullName : 'System'}"></span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-3">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Submission Date</small>
+                                    <span class="fw-bold" th:text="${#temporals.format(request.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-            </div>
+                <div class="mt-5 pt-4 border-top" th:if="${isSubmitted}">
+                    <div class="d-flex align-items-center justify-content-between bg-light p-4 rounded-4 shadow-sm">
+                        <div class="d-none d-md-block">
+                            <h6 class="fw-bold mb-1 text-dark">Take Action on this Request</h6>
+                            <p class="text-muted small mb-0">Please review the details above before making a decision.</p>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <form th:action="@{'/hr/recruitment-request/' + ${request.reqId} + '/approve'}" method="post">
+                                <button type="submit" class="btn btn-success btn-approve px-5 py-3 fw-bold rounded-pill">
+                                    <i class="bi bi-check2-all me-2"></i> APPROVE REQUEST
+                                </button>
+                            </form>
 
-            <!-- BACK -->
-            <div class="mt-4">
-                <a th:href="@{/hr/recruitment-request/list}"
-                   class="btn btn-info text-dark fw-bold px-4">
-                    Back to List
-                </a>
-            </div>
+                            <button type="button" class="btn btn-white border-danger text-danger px-5 py-3 fw-bold rounded-pill hover-danger"
+                                    onclick="toggleRejectForm()">
+                                <i class="bi bi-x-circle me-2"></i> REJECT
+                            </button>
+                        </div>
+                    </div>
 
+                    <div id="rejectForm" style="display:none;" class="mt-4 p-5 reject-area bg-white animate__animated animate__fadeInUp">
+                        <form th:action="@{'/hr/recruitment-request/' + ${request.reqId} + '/reject'}" method="post">
+                            <h5 class="fw-bold text-danger mb-3">Decline Recruitment Request</h5>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-muted">Feedback to Manager</label>
+                                <textarea name="reason" class="form-control form-control-lg border-danger-subtle bg-danger bg-opacity-10"
+                                          rows="4" placeholder="Explain why this request cannot be fulfilled at this time..." required></textarea>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-light px-4 rounded-pill" onclick="toggleRejectForm()">Cancel</button>
+                                <button type="submit" class="btn btn-danger px-5 rounded-pill fw-bold">Confirm & Send Notification</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-</div>
-</div>
+<script layout:fragment="script">
+    function toggleRejectForm() {
+        const form = document.getElementById('rejectForm');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        if(form.style.display === 'block') {
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+</script>
+
 </body>
 </html>

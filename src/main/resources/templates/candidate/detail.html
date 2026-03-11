@@ -6,70 +6,138 @@
       th:with="sidebar='sidebar-hr'">
 
 <head>
-    <title>Candidate Detail</title>
+    <title>Candidate Profile - HRM</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 30px;
+        }
+        .profile-card { border: none; border-radius: 15px; overflow: hidden; }
+        .info-label { color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
+        .info-value { color: #1e293b; font-weight: 600; font-size: 1rem; }
+        .cv-preview-box {
+            background: #f1f5f9;
+            border-radius: 12px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e1;
+        }
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        .score-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            border: 4px solid #e2e8f0;
+        }
+    </style>
 </head>
 
 <body>
 
 <div layout:fragment="content">
+    <div class="container-fluid py-4">
 
-    <h2>Candidate Detail</h2>
-
-    <div class="card mt-3">
-        <div class="card-body">
-
-            <p><b>Name:</b>
-                <span th:text="${candidate.fullName}"></span>
-            </p>
-
-            <p><b>Email:</b>
-                <span th:text="${candidate.email}"></span>
-            </p>
-
-            <p><b>Phone:</b>
-                <span th:text="${candidate.phone}"></span>
-            </p>
-
-            <p><b>Status:</b>
-                <span th:text="${candidate.status}"></span>
-            </p>
-
-            <p><b>Score:</b>
-                <span th:if="${candidate.screeningScore != null}"
-                      th:text="${candidate.screeningScore}"></span>
-
-                <span th:if="${candidate.screeningScore == null}">
-                    Not evaluated
-                </span>
-            </p>
-
-            <p><b>CV:</b>
-                <a th:href="${candidate.cvUrl}"
-                   target="_blank"
-                   class="btn btn-sm btn-outline-primary">
-                    View CV
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/hr/job-posting}">Job Postings</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/hr/candidates(postingId=${postingId})}">Candidates</a></li>
+                    <li class="breadcrumb-item active">Detail</li>
+                </ol>
+            </nav>
+            <div class="d-flex gap-2">
+                <a th:href="@{/hr/candidates(postingId=${postingId})}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
-            </p>
-
+                <a th:href="@{/hr/candidates/evaluate/{id}(id=${candidate.candidateId})}"
+                   class="btn btn-primary rounded-pill px-4 shadow-sm"
+                   th:if="${candidate.status.name() == 'APPLIED'}">
+                    <i class="bi bi-check2-circle me-1"></i> Start Screening
+                </a>
+            </div>
         </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card profile-card shadow-sm">
+                    <div class="profile-header text-center">
+                        <div class="avatar-placeholder bg-white text-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-person-fill fs-1"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" th:text="${candidate.fullName}">Full Name</h4>
+                        <span class="badge bg-info status-badge" th:text="${candidate.status}">Applied</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <label class="info-label d-block mb-1">Email Address</label>
+                            <div class="info-value"><i class="bi bi-envelope me-2 text-primary"></i> <span th:text="${candidate.email}"></span></div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="info-label d-block mb-1">Phone Number</label>
+                            <div class="info-value"><i class="bi bi-telephone me-2 text-primary"></i> <span th:text="${candidate.phone}"></span></div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="info-label d-block mb-1">Screening Score</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="score-circle"
+                                     th:classappend="${candidate.screeningScore != null ? (candidate.screeningScore >= 7 ? 'text-success border-success' : 'text-warning border-warning') : 'text-muted'}"
+                                     th:text="${candidate.screeningScore != null ? candidate.screeningScore : 'N/A'}">
+                                </div>
+                                <small class="text-muted" th:if="${candidate.screeningScore == null}">Pending evaluation</small>
+                                <small class="text-muted" th:if="${candidate.screeningScore != null}">Overall potential</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-light border shadow-sm mt-4 rounded-4">
+                    <h6><i class="bi bi-lightbulb text-warning me-2"></i>Review Tip</h6>
+                    <p class="small text-muted mb-0">Check if the candidate's skills match the Job Description requirements before scheduling an interview.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card profile-card shadow-sm h-100">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i>Curriculum Vitae</h5>
+                        <a th:href="${candidate.cvUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="cv-preview-box">
+                            <div class="text-center" th:if="${candidate.cvUrl == null}">
+                                <i class="bi bi-file-earmark-x fs-1 text-muted"></i>
+                                <p class="text-muted mt-2">No CV file uploaded.</p>
+                            </div>
+
+                            <iframe th:if="${candidate.cvUrl != null}"
+                                    th:src="${candidate.cvUrl}"
+                                    width="100%" height="100%"
+                                    style="border: none; border-radius: 8px;">
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-
-    <div class="mt-3">
-
-        <!-- 🔥 Fix enum comparison -->
-        <a th:href="@{/hr/candidates/evaluate/{id}(id=${candidate.candidateId})}"
-           class="btn btn-primary"
-           th:if="${candidate.status.name() == 'APPLIED'}">
-            Evaluate
-        </a>
-
-        <a th:href="@{/hr/candidates(postingId=${postingId})}"
-           class="btn btn-secondary">
-            Back
-        </a>
-
-    </div>
-
 </div>
 
 </body>
