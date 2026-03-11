@@ -5,97 +5,424 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HR - My Profile</title>
   <style>
-    body{font-family:system-ui,Arial;margin:0;background:#f6f7fb;color:#111}
-    .wrap{max-width:980px;margin:24px auto;padding:0 16px}
-    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .title{font-size:22px;font-weight:900}
-    .btn{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center}
-    .btn-primary{background:#f5b400;border-color:#f5b400}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-    .field{border:1px solid #eef2f7;border-radius:12px;padding:12px;background:#fafafa}
-    .label{font-size:12px;font-weight:900;color:#6b7280;margin-bottom:6px}
-    .value{font-size:14px;font-weight:700;color:#111;word-break:break-word}
-    .section{margin-top:14px}
-    .section h3{margin:0 0 8px 0;font-size:16px}
-    .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
-    .avatar{width:44px;height:44px;border-radius:50%;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:900;background:#fff}
-    @media(max-width:720px){.grid{grid-template-columns:1fr}}
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,#f8fafc 0%, #f1f5f9 100%);
+      color:#0f172a;
+    }
+
+    .page{
+      max-width:1100px;
+      margin:32px auto;
+      padding:0 20px 32px;
+    }
+
+    .profile-shell{
+      background:#ffffff;
+      border:1px solid #e2e8f0;
+      border-radius:24px;
+      overflow:hidden;
+      box-shadow:0 20px 40px rgba(15,23,42,0.06);
+    }
+
+    .hero{
+      background:linear-gradient(135deg,#1e3a8a 0%, #2563eb 45%, #60a5fa 100%);
+      padding:28px 28px 24px;
+      color:#fff;
+    }
+
+    .hero-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .hero-left{
+      display:flex;
+      align-items:center;
+      gap:16px;
+    }
+
+    .avatar{
+      width:64px;
+      height:64px;
+      border-radius:18px;
+      background:rgba(255,255,255,0.18);
+      border:1px solid rgba(255,255,255,0.25);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      font-weight:900;
+      color:#fff;
+      backdrop-filter:blur(6px);
+    }
+
+    .hero-title{
+      margin:0;
+      font-size:30px;
+      line-height:1.15;
+      font-weight:900;
+      letter-spacing:-0.02em;
+    }
+
+    .hero-subtitle{
+      margin-top:6px;
+      font-size:14px;
+      font-weight:500;
+      color:rgba(255,255,255,0.9);
+    }
+
+    .hero-chips{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+
+    .chip{
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      background:rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.2);
+      color:#fff;
+    }
+
+    .btn-back{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      height:42px;
+      padding:0 16px;
+      border-radius:12px;
+      text-decoration:none;
+      font-size:14px;
+      font-weight:800;
+      background:#fff;
+      color:#1e293b;
+      border:1px solid rgba(255,255,255,0.8);
+      box-shadow:0 6px 20px rgba(0,0,0,0.08);
+      transition:all .2s ease;
+    }
+
+    .btn-back:hover{
+      transform:translateY(-1px);
+      background:#f8fafc;
+    }
+
+    .content{
+      padding:26px;
+    }
+
+    .alert{
+      margin-bottom:18px;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid #fecaca;
+      background:#fef2f2;
+      color:#991b1b;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .section{
+      margin-top:22px;
+    }
+
+    .section:first-child{
+      margin-top:0;
+    }
+
+    .section-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+
+    .section-title{
+      margin:0;
+      font-size:18px;
+      font-weight:900;
+      color:#0f172a;
+    }
+
+    .section-desc{
+      font-size:13px;
+      color:#64748b;
+      font-weight:600;
+    }
+
+    .info-panel{
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      border-radius:20px;
+      padding:16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:14px;
+    }
+
+    .field{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:14px 15px;
+      min-height:82px;
+      transition:all .2s ease;
+    }
+
+    .field:hover{
+      border-color:#cbd5e1;
+      box-shadow:0 10px 20px rgba(15,23,42,0.05);
+    }
+
+    .label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-weight:900;
+      color:#64748b;
+      margin-bottom:8px;
+    }
+
+    .value{
+      font-size:15px;
+      line-height:1.5;
+      font-weight:800;
+      color:#111827;
+      word-break:break-word;
+    }
+
+    .empty-note{
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      color:#92400e;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    @media (max-width: 860px){
+      .grid{
+        grid-template-columns:1fr;
+      }
+
+      .hero{
+        padding:22px 20px;
+      }
+
+      .content{
+        padding:20px;
+      }
+
+      .hero-title{
+        font-size:26px;
+      }
+    }
+
+    @media (max-width: 520px){
+      .page{
+        margin:18px auto;
+        padding:0 12px 24px;
+      }
+
+      .hero-left{
+        align-items:flex-start;
+      }
+
+      .avatar{
+        width:56px;
+        height:56px;
+        font-size:22px;
+      }
+
+      .hero-title{
+        font-size:22px;
+      }
+
+      .btn-back{
+        width:100%;
+      }
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <div class="top">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div class="avatar">HR</div>
+<div class="page">
+  <div class="profile-shell">
+
+    <div class="hero">
+      <div class="hero-top">
         <div>
-          <div class="title">My Profile</div>
-          <div style="color:#6b7280;font-weight:700;font-size:13px;">
-            View all information of your account
+          <div class="hero-left">
+            <div class="avatar">HR</div>
+            <div>
+              <h1 class="hero-title">My Profile</h1>
+              <div class="hero-subtitle">
+                View all information of your account
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-chips">
+            <div class="chip">HR Portal</div>
+            <div class="chip">Account Overview</div>
+            <div class="chip">Employee Profile</div>
+          </div>
+        </div>
+
+        <a class="btn-back" th:href="@{/dashboard/hr}">← Back to Home</a>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="alert" th:if="${err != null and err != ''}" th:text="${err}"></div>
+
+      <!-- USER ACCOUNT INFO -->
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">Account Information</h3>
+
+        </div>
+
+        <div class="info-panel">
+          <div class="grid">
+            <div class="field">
+              <div class="label">User ID</div>
+              <div class="value" th:text="${u != null ? u.userId : '-'}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Username</div>
+              <div class="value" th:text="${u != null ? u.username : '-'}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Email</div>
+              <div class="value" th:text="${u != null ? u.email : '-'}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Role ID</div>
+              <div class="value" th:text="${u != null ? u.roleId : '-'}"></div>
+            </div>
+
+
+
+            <div class="field">
+              <div class="label">Created At</div>
+              <div class="value" th:text="${u != null ? u.createdAt : '-'}"></div>
+            </div>
           </div>
         </div>
       </div>
-      <a class="btn" th:href="@{/dashboard/hr}">← Back to Home</a>
-    </div>
 
-    <div class="msg" th:if="${err != null and err != ''}" th:text="${err}"></div>
+      <!-- EMPLOYEE PROFILE INFO -->
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">Employee Information</h3>
 
-    <!-- USER ACCOUNT INFO -->
-    <div class="section">
-      <h3>Account Information</h3>
-      <div class="grid">
-        <div class="field">
-          <div class="label">User ID</div>
-          <div class="value" th:text="${u != null ? u.userId : '-'}"></div>
         </div>
-        <div class="field">
-          <div class="label">Username</div>
-          <div class="value" th:text="${u != null ? u.username : '-'}"></div>
+
+        <div class="empty-note" th:if="${u != null and e == null}">
+          This user has no employee record in <b>employees</b> table (findByUserId returned null).
         </div>
-        <div class="field">
-          <div class="label">Email</div>
-          <div class="value" th:text="${u != null ? u.email : '-'}"></div>
-        </div>
-        <div class="field">
-          <div class="label">Role ID</div>
-          <div class="value" th:text="${u != null ? u.roleId : '-'}"></div>
-        </div>
-        <div class="field">
-          <div class="label">Active</div>
-          <div class="value" th:text="${u != null ? u.isActive : '-'}"></div>
-        </div>
-        <div class="field">
-          <div class="label">Created At</div>
-          <div class="value" th:text="${u != null ? u.createdAt : '-'}"></div>
+
+        <div class="info-panel" th:if="${e != null}">
+          <div class="grid">
+            <div class="field">
+              <div class="label">Emp ID</div>
+              <div class="value" th:text="${e.empId}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Full Name</div>
+              <div class="value" th:text="${e.fullName}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Gender</div>
+              <div class="value" th:text="${e.gender}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Date of birth</div>
+              <div class="value" th:text="${e.dob}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Phone</div>
+              <div class="value" th:text="${e.phone}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Address</div>
+              <div class="value" th:text="${e.address}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Identity Card</div>
+              <div class="value" th:text="${e.identityCard}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Tax Code</div>
+              <div class="value" th:text="${e.taxCode}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Department ID</div>
+              <div class="value" th:text="${e.deptId}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Job ID</div>
+              <div class="value" th:text="${e.jobId}"></div>
+            </div>
+
+
+
+            <div class="field">
+              <div class="label">Department ID</div>
+              <div class="value" th:text="|${e.deptId} - ${e.department.deptName}|"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Job ID</div>
+              <div class="value" th:text="|${e.jobId} - ${e.jobPosition.title}|"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Status</div>
+              <div class="value" th:text="${e.status}"></div>
+            </div>
+
+            <div class="field">
+              <div class="label">Join Date</div>
+              <div class="value" th:text="${e.joinDate}"></div>
+            </div>
+          </div>
         </div>
       </div>
+
     </div>
-
-    <!-- EMPLOYEE PROFILE INFO -->
-    <div class="section">
-      <h3>Employee Information</h3>
-
-      <div class="msg" th:if="${u != null and e == null}">
-        This user has no employee record in <b>employees</b> table (findByUserId returned null).
-      </div>
-
-      <div class="grid" th:if="${e != null}">
-        <div class="field"><div class="label">Emp ID</div><div class="value" th:text="${e.empId}"></div></div>
-        <div class="field"><div class="label">Full Name</div><div class="value" th:text="${e.fullName}"></div></div>
-        <div class="field"><div class="label">Gender</div><div class="value" th:text="${e.gender}"></div></div>
-        <div class="field"><div class="label">DOB</div><div class="value" th:text="${e.dob}"></div></div>
-        <div class="field"><div class="label">Phone</div><div class="value" th:text="${e.phone}"></div></div>
-        <div class="field"><div class="label">Address</div><div class="value" th:text="${e.address}"></div></div>
-        <div class="field"><div class="label">Identity Card</div><div class="value" th:text="${e.identityCard}"></div></div>
-        <div class="field"><div class="label">Tax Code</div><div class="value" th:text="${e.taxCode}"></div></div>
-        <div class="field"><div class="label">Department ID</div><div class="value"  th:text="|${e.deptId} - ${e.department.deptName}|"></div></div>
-        <div class="field"><div class="label">Job ID</div><div class="value" th:text="|${e.jobId} - ${e.jobPosition.title}|"></div></div>
-        <div class="field"><div class="label">Status</div><div class="value" th:text="${e.status}"></div></div>
-        <div class="field"><div class="label">Join Date</div><div class="value" th:text="${e.joinDate}"></div></div>
-      </div>
-    </div>
-
   </div>
 </div>
 </body>
