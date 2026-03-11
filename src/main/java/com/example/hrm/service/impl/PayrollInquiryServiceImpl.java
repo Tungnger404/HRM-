@@ -53,7 +53,7 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
             throw new SecurityException("Not allowed");
         }
 
-        if (!Boolean.TRUE.equals(p.getSentToEmployee())) {
+        if (!canEmployeeView(p)) {
             throw new IllegalStateException("Payslip not released yet");
         }
 
@@ -176,5 +176,21 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
         String n = e.getFullName();
         if (n != null && !n.trim().isEmpty()) return n.trim();
         return "NV" + e.getId();
+    }
+
+    private boolean canEmployeeView(Payslip p) {
+        if (p == null) return false;
+
+        String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
+                ? ""
+                : p.getBatch().getStatus().trim().toUpperCase();
+
+        String slipStatus = p.getSlipStatus() == null
+                ? "ACTIVE"
+                : p.getSlipStatus().trim().toUpperCase();
+
+        return Boolean.TRUE.equals(p.getSentToEmployee())
+                && !"REJECTED".equals(slipStatus)
+                && ("APPROVED".equals(batchStatus) || "PAID".equals(batchStatus));
     }
 }

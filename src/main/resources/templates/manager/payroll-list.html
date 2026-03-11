@@ -306,12 +306,13 @@
                     <tbody id="payrollTbody">
                     <tr th:each="r,st : ${rows}"
                         th:attr="data-clickable='1',
-                                 data-payslip-id=${r.payslipId},
-                                 data-batch-status=${r.batchStatus},
-                                 data-slip-status=${r.slipStatus},
-                                 data-full-name=${r.fullName},
-                                 data-base-salary=${r.baseSalary}"
-                        th:classappend="${(r.sentToEmployee or r.batchStatus == 'PAID') ? 'text-muted' : ''}">
+                         data-payslip-id=${r.payslipId},
+                         data-batch-status=${r.batchStatus},
+                         data-slip-status=${r.slipStatus},
+                         data-sent-to-employee=${r.sentToEmployee},
+                         data-full-name=${r.fullName},
+                         data-base-salary=${r.baseSalary}"
+                        th:classappend="${(r.batchStatus == 'APPROVED' or r.batchStatus == 'PAID') ? 'text-muted' : ''}">
 
                         <td class="text-center">
                             <div class="form-check d-flex justify-content-center m-0">
@@ -342,14 +343,20 @@
                         </td>
 
                         <td class="col-status">
-                            <span class="badge bg-danger" th:if="${r.slipStatus == 'REJECTED'}">Rejected</span>
-
-                            <span class="badge bg-success"
-                                  th:if="${r.slipStatus != 'REJECTED' and r.sentToEmployee}">Approved</span>
+                            <span class="badge bg-danger"
+                                  th:if="${r.slipStatus == 'REJECTED'}">Rejected</span>
 
                             <span class="badge bg-secondary"
-                                  th:if="${r.slipStatus != 'REJECTED' and !r.sentToEmployee}"
-                                  th:text="${r.statusLabel}">Draft</span>
+                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'DRAFT'}">Draft</span>
+
+                            <span class="badge bg-warning text-dark"
+                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'PENDING_APPROVAL'}">Pending</span>
+
+                            <span class="badge bg-success"
+                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'APPROVED'}">Approved</span>
+
+                            <span class="badge bg-primary"
+                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'PAID'}">Paid</span>
                         </td>
 
                         <td class="text-center">
@@ -572,22 +579,57 @@
                 return Array.from(set);
             }
 
+            function getStatusBadgeHtml(tr) {
+                const slipStatus = (tr.getAttribute("data-slip-status") || "ACTIVE").trim().toUpperCase();
+                const batchStatus = (tr.getAttribute("data-batch-status") || "").trim().toUpperCase();
+
+                if (slipStatus === "REJECTED") {
+                    return `<span class="badge bg-danger">Rejected</span>`;
+                }
+
+                switch (batchStatus) {
+                    case "PENDING_APPROVAL":
+                        return `<span class="badge bg-warning text-dark">Pending</span>`;
+                    case "APPROVED":
+                        return `<span class="badge bg-success">Approved</span>`;
+                    case "PAID":
+                        return `<span class="badge bg-primary">Paid</span>`;
+                    default:
+                        return `<span class="badge bg-secondary">Draft</span>`;
+                }
+            }
+
+            function syncRowVisualState(tr) {
+                const batchStatus = (tr.getAttribute("data-batch-status") || "").trim().toUpperCase();
+                const slipStatus = (tr.getAttribute("data-slip-status") || "ACTIVE").trim().toUpperCase();
+                const sentToEmployee = (tr.getAttribute("data-sent-to-employee") || "").trim().toLowerCase() === "true";
+
+                const statusCell = tr.querySelector(".col-status");
+                if (statusCell) {
+                    statusCell.innerHTML = getStatusBadgeHtml(tr);
+                }
+
+                const cb = tr.querySelector(".row-check");
+                if (cb) {
+                    cb.checked = false;
+                    cb.disabled = batchStatus === "PAID" || slipStatus === "REJECTED" || sentToEmployee;
+                }
+
+                if (batchStatus === "APPROVED" || batchStatus === "PAID") {
+                    tr.classList.add("text-muted");
+                } else {
+                    tr.classList.remove("text-muted");
+                }
+            }
+
             function markApprovedByPayslipIds(processedIds) {
                 const processed = new Set((processedIds || []).map(String));
                 document.querySelectorAll('tr[data-payslip-id]').forEach(tr => {
                     const id = tr.getAttribute("data-payslip-id");
                     if (!processed.has(String(id))) return;
 
-                    const statusCell = tr.querySelector(".col-status");
-                    if (statusCell) statusCell.innerHTML = `<span class="badge bg-success">Approved</span>`;
-
-                    const cb = tr.querySelector(".row-check");
-                    if (cb) {
-                        cb.checked = false;
-                        cb.disabled = true;
-                    }
-
-                    tr.classList.add("text-muted");
+                    tr.setAttribute("data-sent-to-employee", "true");
+                    syncRowVisualState(tr);
                 });
                 setCheckAllState();
             }
@@ -599,15 +641,8 @@
                     if (!processed.has(String(id))) return;
 
                     tr.setAttribute("data-slip-status", "REJECTED");
-
-                    const statusCell = tr.querySelector(".col-status");
-                    if (statusCell) statusCell.innerHTML = `<span class="badge bg-danger">Rejected</span>`;
-
-                    const cb = tr.querySelector(".row-check");
-                    if (cb) {
-                        cb.checked = false;
-                        cb.disabled = true;
-                    }
+                    tr.setAttribute("data-sent-to-employee", "false");
+                    syncRowVisualState(tr);
                 });
                 setCheckAllState();
             }
@@ -1008,9 +1043,18 @@
                 .filter(p => p.id && p.month && p.year);
 
             function buildYearOptions(selectedYear) {
-                const years = [...new Set(normalizedPeriods.map(p => p.year))].sort((a, b) => b - a);
+                const currentYear = new Date().getFullYear();
+
+                // Chỉ lấy các năm trong DB mà <= năm hiện tại
+                const dbYears = normalizedPeriods
+                    .map(p => Number(p.year))
+                    .filter(y => y && y <= currentYear);
+
+                // Luôn có năm hiện tại ở đầu, và giữ các năm cũ có dữ liệu
+                const years = [...new Set([currentYear, ...dbYears])].sort((a, b) => b - a);
 
                 filterYear.innerHTML = `<option value="">Năm</option>`;
+
                 years.forEach(y => {
                     const opt = document.createElement("option");
                     opt.value = String(y);
@@ -1021,16 +1065,15 @@
             }
 
             function buildMonthOptions(selectedMonth) {
-                const months = [...new Set(normalizedPeriods.map(p => p.month))].sort((a, b) => a - b);
-
                 filterMonth.innerHTML = `<option value="">Tháng</option>`;
-                months.forEach(m => {
+
+                for (let m = 1; m <= 12; m++) {
                     const opt = document.createElement("option");
                     opt.value = String(m);
                     opt.textContent = `Tháng ${m}`;
                     if (String(m) === String(selectedMonth)) opt.selected = true;
                     filterMonth.appendChild(opt);
-                });
+                }
             }
 
             function findPeriodIdByMonthYear(month, year) {
@@ -1116,6 +1159,7 @@
 
             initPeriodSelectors();
 
+            document.querySelectorAll('tr[data-payslip-id]').forEach(syncRowVisualState);
             ensureEmptyRow();
             setCheckAllState();
         });

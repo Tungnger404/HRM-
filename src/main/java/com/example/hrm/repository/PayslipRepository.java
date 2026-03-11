@@ -43,7 +43,14 @@ public interface PayslipRepository extends JpaRepository<Payslip, Integer> {
         left join JobPosition jp on jp.jobId = e.jobId
         where (:managerEmpId is null or e.directManagerId = :managerEmpId)
           and (:periodId is null or per.id = :periodId)
-          and (:status is null or :status = '' or b.status = :status)
+          and (
+            :status is null or :status = ''
+            or (:status = 'REJECTED' and upper(coalesce(s.slipStatus, 'ACTIVE')) = 'REJECTED')
+            or (:status = 'APPROVED' and coalesce(s.sentToEmployee, false) = true
+                and upper(coalesce(s.slipStatus, 'ACTIVE')) <> 'REJECTED')
+            or (:status = 'DRAFT' and coalesce(s.sentToEmployee, false) = false
+                and upper(coalesce(s.slipStatus, 'ACTIVE')) <> 'REJECTED')
+          )
           and (
             :kw is null or :kw = ''
             or lower(e.fullName) like lower(concat('%', :kw, '%'))

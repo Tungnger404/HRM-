@@ -39,7 +39,7 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
             throw new SecurityException("Not allowed");
         }
 
-        if (!Boolean.TRUE.equals(p.getSentToEmployee())) {
+        if (!canEmployeeView(p)) {
             throw new IllegalStateException("Payslip not released yet");
         }
 
@@ -79,7 +79,7 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
 
         return payslipRepo.findByEmployeeOrderByIdDesc(emp)
                 .stream()
-                .filter(p -> Boolean.TRUE.equals(p.getSentToEmployee()))
+                .filter(this::canEmployeeView)
                 .map(p -> PayslipSummaryDTO.builder()
                         .payslipId(p.getId())
                         .batchId(p.getBatch().getId())
@@ -120,5 +120,21 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
             return mmYY + " (" + s + " \u2192 " + e + ")";
         }
         return mmYY;
+    }
+
+    private boolean canEmployeeView(Payslip p) {
+        if (p == null) return false;
+
+        String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
+                ? ""
+                : p.getBatch().getStatus().trim().toUpperCase();
+
+        String slipStatus = p.getSlipStatus() == null
+                ? "ACTIVE"
+                : p.getSlipStatus().trim().toUpperCase();
+
+        return Boolean.TRUE.equals(p.getSentToEmployee())
+                && !"REJECTED".equals(slipStatus)
+                && ("APPROVED".equals(batchStatus) || "PAID".equals(batchStatus));
     }
 }

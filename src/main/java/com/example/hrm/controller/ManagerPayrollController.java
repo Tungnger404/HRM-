@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.*;
 
 @Controller
@@ -145,16 +146,38 @@ public class ManagerPayrollController {
 
         List<PayrollPeriodSummaryDTO> periods = payrollManagerService.listPayrollPeriods();
 
+        Integer effectivePeriodId = periodId;
+
+        // Mới vào trang thì tự chọn kỳ hiện tại
+        if (effectivePeriodId == null) {
+            LocalDate now = LocalDate.now();
+
+            effectivePeriodId = periods.stream()
+                    .filter(p -> p.getMonth() != null && p.getYear() != null)
+                    .filter(p ->
+                            p.getMonth().equals(now.getMonthValue()) && p.getYear().equals(now.getYear()))
+                    .map(PayrollPeriodSummaryDTO::getId)
+                    .findFirst()
+                    .orElse(null);
+
+            // Nếu không có kỳ hiện tại thì fallback về kỳ mới nhất
+            if (effectivePeriodId == null && !periods.isEmpty()) {
+                effectivePeriodId = periods.get(0).getId();
+            }
+        }
+
         model.addAttribute("rows",
-                payrollManagerService.listPayrollRowsForManager(managerEmpId, q, status, periodId));
+                payrollManagerService.listPayrollRowsForManager(managerEmpId, q, status, effectivePeriodId));
         model.addAttribute("q", q);
         model.addAttribute("status", status);
-        model.addAttribute("periodId", periodId);
+        model.addAttribute("periodId", effectivePeriodId);
         model.addAttribute("periods", periods);
-        model.addAttribute("statusOptions", List.of("", "DRAFT", "APPROVED"));
+        model.addAttribute("statusOptions", List.of("", "DRAFT", "PENDING_APPROVAL", "APPROVED", "REJECTED", "PAID"));
+
+        final Integer selectedPeriodIdFinal = effectivePeriodId;
 
         String selectedPeriodLabel = periods.stream()
-                .filter(p -> Objects.equals(p.getId(), periodId))
+                .filter(p -> Objects.equals(p.getId(), selectedPeriodIdFinal))
                 .findFirst()
                 .map(p -> String.format("%02d/%d", p.getMonth(), p.getYear()))
                 .orElse("Tất cả kỳ lương");
