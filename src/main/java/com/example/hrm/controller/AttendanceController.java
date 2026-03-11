@@ -45,12 +45,9 @@ public class AttendanceController {
     }
 
     @PostMapping("/check-out")
-    public String checkOut(HttpSession session, RedirectAttributes ra) {
-
-        Integer empId = (Integer) session.getAttribute("EMP_ID");
-        if (empId == null) return "redirect:/login";
-
+    public String checkOut( RedirectAttributes ra) {
         try {
+            Integer empId = attendanceService.getEmpIdFromSecurity();
             attendanceService.checkOut(empId);
             ra.addFlashAttribute("message", "Check-out successful!");
         } catch (Exception e) {

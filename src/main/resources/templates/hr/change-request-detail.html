@@ -66,17 +66,14 @@
                     th:disabled="${r.status != 'PENDING'}">
               Approve
             </button>
-          </form>
-        </div>
-
-        <div class="col-md-6">
-          <form th:action="@{/hr/change-requests/{id}/reject(id=${r.id})}" method="post">
-            <label class="form-label">Decision note (optional)</label>
-            <textarea class="form-control" name="decisionNote" rows="3"></textarea>
             <button class="btn btn-danger mt-2"
                     th:disabled="${r.status != 'PENDING'}">
               Reject
             </button>
+          </form>
+        </div>
+
+
           </form>
         </div>
       </div>

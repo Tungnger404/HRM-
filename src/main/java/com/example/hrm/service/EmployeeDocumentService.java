@@ -8,7 +8,8 @@ import java.util.List;
 public interface EmployeeDocumentService {
     List<EmployeeDocument> search(Integer empId, String docType, String status, String q);
 
-    // ✅ NEW: có uploaderUserId
+    List<EmployeeDocument> findByEmployee(Integer empId);
+
     EmployeeDocument upload(Integer empId, String title, String docType, String status,
                             MultipartFile file, Integer uploaderUserId);
 

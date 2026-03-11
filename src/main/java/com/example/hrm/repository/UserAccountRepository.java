@@ -8,7 +8,21 @@ import java.util.Optional;
 
 public interface UserAccountRepository extends JpaRepository<UserAccount, Integer> {
 
-    // ✅ Load kèm role để tránh LazyInitializationException
     @EntityGraph(attributePaths = "role")
     Optional<UserAccount> findByUsername(String username);
+
+    @EntityGraph(attributePaths = "role")
+    Optional<UserAccount> findByUsernameIgnoreCase(String username);
+
+    @EntityGraph(attributePaths = "role")
+    Optional<UserAccount> findByEmail(String email);
+
+    @EntityGraph(attributePaths = "role")
+    Optional<UserAccount> findByEmailIgnoreCase(String email);
+
+    @EntityGraph(attributePaths = "role")
+    Optional<UserAccount> findByGoogleId(String googleId);
+
+    boolean existsByEmailIgnoreCase(String email);
+    boolean existsByUsernameIgnoreCase(String username);
 }

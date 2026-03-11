@@ -1,6 +1,6 @@
 package com.example.hrm.config;
 
-import jakarta.servlet.DispatcherType;
+import com.example.hrm.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +12,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -25,58 +28,43 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
-
-                        // Forward & error
-                        .dispatcherTypeMatchers(
-                                DispatcherType.FORWARD,
-                                DispatcherType.ERROR
-                        ).permitAll()
-
-                        // ===== PUBLIC =====
                         .requestMatchers(
-                                "/login", "/logout",
+                                "/login",
+                                "/logout",
                                 "/register", "/register/**",
+                                "/forgot-password", "/forgot-password/**",
+                                "/oauth2/**", "/login/oauth2/**",
                                 "/css/**", "/js/**", "/images/**",
                                 "/vendors/**", "/assets/**",
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/evaluation/**", "/training/**", // For testing without login
-                                "/hr/kpi/**", "/manager/evaluation/**", "/api/notifications/**",
-                                "/offer/accept/**",
-                                "/offer/reject/**"// For testing KPI workflow
+                                "/v3/api-docs/**"
                         ).permitAll()
 
-                        // ===== DASHBOARD (DEMO: mở hết) =====
-                        .requestMatchers("/dashboard").permitAll()
-                        .requestMatchers("/dashboard/admin").permitAll()
-                        .requestMatchers("/dashboard/hr").permitAll()
-                        .requestMatchers("/dashboard/manager").permitAll()
-                        .requestMatchers("/dashboard/employee").permitAll()
+                        .requestMatchers("/dashboard/admin").hasRole("ADMIN")
+                        .requestMatchers("/dashboard/hr").hasRole("HR")
+                        .requestMatchers("/dashboard/manager").hasRole("MANAGER")
+                        .requestMatchers("/dashboard/employee").hasAnyRole("EMPLOYEE", "HR", "MANAGER", "ADMIN")
 
-                        // ===== MODULE PERMISSION (DEMO: mở hết) =====
-                        .requestMatchers("/hr/**").permitAll()
-                        .requestMatchers("/manager/**").permitAll()
-                        .requestMatchers("/employee/**").permitAll()
-                        .requestMatchers("/bank/**").permitAll()
+                        .requestMatchers("/hr/**").hasAnyRole("HR", "ADMIN")
+                        .requestMatchers("/manager/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers("/employee/**").authenticated()
 
-                        // ===== DEFAULT =====
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
 
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
                         .successHandler((request, response, authentication) -> {
-
                             boolean isAdmin = authentication.getAuthorities()
                                     .stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
                             boolean isHr = authentication.getAuthorities()
                                     .stream().anyMatch(a -> a.getAuthority().equals("ROLE_HR"));
                             boolean isManager = authentication.getAuthorities()
                                     .stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
-                            boolean isEmployee = authentication.getAuthorities()
-                                    .stream().anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"));
 
                             if (isAdmin) {
                                 response.sendRedirect("/dashboard/admin");
@@ -84,17 +72,20 @@ public class SecurityConfig {
                                 response.sendRedirect("/dashboard/hr");
                             } else if (isManager) {
                                 response.sendRedirect("/dashboard/manager");
-                            } else if (isEmployee) {
-                                response.sendRedirect("/dashboard/employee");
                             } else {
-                                response.sendRedirect("/login");
+                                response.sendRedirect("/dashboard/employee");
                             }
                         })
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
 
-                // ===== LOGOUT =====
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2LoginSuccessHandler)
+                )
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")

@@ -1,7 +1,7 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.service.CurrentEmployeeService;
-import com.example.hrm.service.PayrollService;
+import com.example.hrm.service.PayrollInquiryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,7 +14,7 @@ import java.security.Principal;
 @RequestMapping("/manager/inquiries")
 public class ManagerInquiryController {
 
-    private final PayrollService payrollService;
+    private final PayrollInquiryService payrollInquiryService;
     private final CurrentEmployeeService currentEmployeeService;
 
     @GetMapping
@@ -24,13 +24,14 @@ public class ManagerInquiryController {
 
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
         model.addAttribute("status", status);
-        model.addAttribute("inquiries", payrollService.listInquiriesForManager(managerEmpId, status));
+        model.addAttribute("inquiries"
+                , payrollInquiryService.listInquiriesForManager(managerEmpId, status));
         return "manager/inquiry-list";
     }
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Integer id, Model model) {
-        model.addAttribute("inq", payrollService.getInquiry(id));
+        model.addAttribute("inq", payrollInquiryService.getInquiry(id));
         return "manager/inquiry-detail";
     }
 
@@ -40,7 +41,7 @@ public class ManagerInquiryController {
                           Principal principal) {
 
         Integer managerEmpId = currentEmployeeService.requireEmployee(principal).getId();
-        payrollService.resolveInquiry(managerEmpId, id, answer);
+        payrollInquiryService.resolveInquiry(managerEmpId, id, answer);
         return "redirect:/manager/inquiries?status=OPEN";
     }
 }

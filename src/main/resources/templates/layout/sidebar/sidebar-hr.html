@@ -1,8 +1,9 @@
 <div th:fragment="sidebar">
 
   <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
-
-
+    <li class="nav-title" style="font-size: 18px; font-weight: 700;">
+      Human Resources
+    </li>
     <li class="nav-item">
       <a class="nav-link" th:href="@{/dashboard/hr}">
         <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use></svg>
@@ -39,6 +40,17 @@
           <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-briefcase"></use>
         </svg>
         Job Positions
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/view-request}">
+      <!--   th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">-->
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-briefcase"></use>
+        </svg>
+        View request
       </a>
     </li>
 

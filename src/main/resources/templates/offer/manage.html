@@ -5,20 +5,25 @@
       layout:decorate="~{layout/layout}"
       th:with="sidebar='sidebar-hr.html'">
 
+
 <head>
     <title>Offer Management</title>
 </head>
+
 
 <body>
 <div layout:fragment="content">
     <div class="container-fluid px-4">
 
+
         <h2 class="mb-4 fw-bold">Offer Management</h2>
+
 
         <!-- 🔍 SEARCH -->
         <form class="row mb-3"
               th:action="@{/offer/manage}"
               method="get">
+
 
             <div class="col-md-4">
                 <input type="text"
@@ -28,6 +33,7 @@
                        placeholder="Search candidate name...">
             </div>
 
+
             <div class="col-md-2">
                 <button class="btn btn-primary w-100">
                     Search
@@ -35,10 +41,13 @@
             </div>
         </form>
 
+
         <div class="table-responsive shadow-sm rounded-3"
              style="background: #1e1e2f; padding: 20px;">
 
+
             <table class="table table-hover align-middle table-bordered table-dark">
+
 
                 <thead class="table-light text-dark">
                 <tr>
@@ -51,23 +60,31 @@
                 </tr>
                 </thead>
 
+
                 <tbody>
+
 
                 <tr th:each="offer : ${offers}">
 
+
                     <td th:text="${offer.offerId}"></td>
+
 
                     <td th:text="${offer.candidate.fullName}"></td>
 
+
                     <td th:text="${offer.candidate.jobPosting.title}"></td>
+
 
                     <td th:text="${offer.salaryOffered}"></td>
 
+
                     <td>
-                        <span class="badge bg-secondary"
-                              th:text="${offer.status}">
-                        </span>
+                       <span class="badge bg-secondary"
+                             th:text="${offer.status}">
+                       </span>
                     </td>
+
 
                     <td>
 
@@ -108,16 +125,20 @@
                     </td>
                 </tr>
 
+
                 <tr th:if="${#lists.isEmpty(offers)}">
                     <td colspan="6" class="text-center py-4 text-muted">
                         No offers found.
                     </td>
                 </tr>
 
+
                 </tbody>
+
 
             </table>
         </div>
+
 
     </div>
 </div>

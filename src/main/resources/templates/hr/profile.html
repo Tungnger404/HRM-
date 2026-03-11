@@ -89,9 +89,8 @@
         <div class="field"><div class="label">Address</div><div class="value" th:text="${e.address}"></div></div>
         <div class="field"><div class="label">Identity Card</div><div class="value" th:text="${e.identityCard}"></div></div>
         <div class="field"><div class="label">Tax Code</div><div class="value" th:text="${e.taxCode}"></div></div>
-        <div class="field"><div class="label">Department ID</div><div class="value" th:text="${e.deptId}"></div></div>
-        <div class="field"><div class="label">Job ID</div><div class="value" th:text="${e.jobId}"></div></div>
-        <div class="field"><div class="label">Direct Manager ID</div><div class="value" th:text="${e.directManagerId}"></div></div>
+        <div class="field"><div class="label">Department ID</div><div class="value"  th:text="|${e.deptId} - ${e.department.deptName}|"></div></div>
+        <div class="field"><div class="label">Job ID</div><div class="value" th:text="|${e.jobId} - ${e.jobPosition.title}|"></div></div>
         <div class="field"><div class="label">Status</div><div class="value" th:text="${e.status}"></div></div>
         <div class="field"><div class="label">Join Date</div><div class="value" th:text="${e.joinDate}"></div></div>
       </div>

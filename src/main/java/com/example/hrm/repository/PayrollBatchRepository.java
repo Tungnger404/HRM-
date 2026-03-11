@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface PayrollBatchRepository extends JpaRepository<PayrollBatch, Integer> {
     List<PayrollBatch> findByPeriodOrderByIdDesc(PayrollPeriod period);
+
+    List<PayrollBatch> findByStatusOrderByIdDesc(String status);
 }

@@ -1,9 +1,11 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.EmployeeDocument;
 import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.EmployeeDocumentService;
+import com.example.hrm.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -27,26 +29,46 @@ public class HrDocumentController {
     private final EmployeeDocumentService docService;
     private final DocumentStorageService storage;
     private final CurrentEmployeeService currentEmployeeService;
+    private final EmployeeService employeeService;
 
     public HrDocumentController(EmployeeDocumentService docService,
                                 DocumentStorageService storage,
-                                CurrentEmployeeService currentEmployeeService) {
+                                CurrentEmployeeService currentEmployeeService,
+                                EmployeeService employeeService) {
         this.docService = docService;
         this.storage = storage;
         this.currentEmployeeService = currentEmployeeService;
+        this.employeeService = employeeService;
     }
 
+    // Màn 1: danh sách employee
     @GetMapping
-    public String list(@RequestParam(value = "empId", required = false) Integer empId,
-                       @RequestParam(value = "docType", required = false) String docType,
-                       @RequestParam(value = "status", required = false) String status,
-                       @RequestParam(value = "q", required = false) String q,
-                       Model model,
-                       @ModelAttribute("msg") String msg,
-                       @ModelAttribute("err") String err) {
+    public String employees(@RequestParam(value = "q", required = false) String q,
+                            @RequestParam(value = "status", required = false) String status,
+                            Model model,
+                            @ModelAttribute("msg") String msg,
+                            @ModelAttribute("err") String err) {
 
+        model.addAttribute("q", q);
+        model.addAttribute("status", status);
+        model.addAttribute("employees", employeeService.list(q, status));
+        return "hr/documents_employees";
+    }
+
+    // Màn 2: documents của 1 employee
+    @GetMapping("/{empId}")
+    public String detail(@PathVariable Integer empId,
+                         @RequestParam(value = "docType", required = false) String docType,
+                         @RequestParam(value = "status", required = false) String status,
+                         @RequestParam(value = "q", required = false) String q,
+                         Model model,
+                         @ModelAttribute("msg") String msg,
+                         @ModelAttribute("err") String err) {
+
+        Employee employee = employeeService.getById(empId);
         List<EmployeeDocument> docs = docService.search(empId, docType, status, q);
 
+        model.addAttribute("employee", employee);
         model.addAttribute("docs", docs);
         model.addAttribute("empId", empId);
         model.addAttribute("docType", docType);
@@ -56,8 +78,8 @@ public class HrDocumentController {
         return "hr/documents_list";
     }
 
-    @PostMapping("/upload")
-    public String upload(@RequestParam("empId") Integer empId,
+    @PostMapping("/{empId}/upload")
+    public String upload(@PathVariable Integer empId,
                          @RequestParam(value = "title", required = false) String title,
                          @RequestParam(value = "docType", required = false) String docType,
                          @RequestParam(value = "status", required = false) String status,
@@ -71,7 +93,7 @@ public class HrDocumentController {
         } catch (Exception ex) {
             ra.addFlashAttribute("err", ex.getMessage());
         }
-        return "redirect:/hr/documents?empId=" + empId;
+        return "redirect:/hr/documents/" + empId;
     }
 
     @PostMapping("/{id}/update")
@@ -83,7 +105,7 @@ public class HrDocumentController {
         try {
             EmployeeDocument d = docService.updateMeta(id, title, docType, status);
             ra.addFlashAttribute("msg", "Updated document!");
-            return "redirect:/hr/documents?empId=" + d.getEmployeeId();
+            return "redirect:/hr/documents/" + d.getEmployeeId();
         } catch (Exception ex) {
             ra.addFlashAttribute("err", ex.getMessage());
             return "redirect:/hr/documents";
@@ -97,7 +119,7 @@ public class HrDocumentController {
             Integer empId = d.getEmployeeId();
             docService.delete(id);
             ra.addFlashAttribute("msg", "Deleted document!");
-            return "redirect:/hr/documents?empId=" + empId;
+            return "redirect:/hr/documents/" + empId;
         } catch (Exception ex) {
             ra.addFlashAttribute("err", ex.getMessage());
             return "redirect:/hr/documents";

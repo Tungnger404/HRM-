@@ -55,8 +55,7 @@
                             <!-- Certificate Number -->
                             <div class="mb-3">
                                 <label for="certificateNumber" class="form-label">Certificate Number</label>
-                                <input type="text" class="form-control" id="certificateNumber" name="certificateNumber"
-                                       placeholder="Enter certificate ID or number (if applicable)">
+                                <input type="text" class="form-control" id="certificateNumber" name="certificateNumber">
                             </div>
 
                             <!-- Issue Date -->
@@ -70,9 +69,6 @@
                                 <label for="certificateFile" class="form-label">Upload Certificate/Evidence <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="certificateFile" name="certificateFile"
                                        accept=".pdf,.jpg,.jpeg,.png" required>
-                                <div class="form-text">
-                                    Accepted formats: PDF, JPG, PNG. Max size: 5MB
-                                </div>
                             </div>
 
                             <!-- Preview -->
@@ -90,19 +86,14 @@
                             <!-- Additional Notes -->
                             <div class="mb-3">
                                 <label for="notes" class="form-label">Additional Notes</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3" 
-                                          placeholder="Any additional information about the training or certificate..."></textarea>
+                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                             </div>
 
                             <!-- Key Learnings -->
                             <div class="mb-3">
                                 <label for="keyLearnings" class="form-label">Key Learnings <span class="text-danger">*</span></label>
                                 <textarea class="form-control" id="keyLearnings" name="keyLearnings" rows="4" 
-                                          placeholder="Summarize what you learned and how you plan to apply it in your work..."
                                           required></textarea>
-                                <div class="form-text">
-                                    Please provide a brief summary of the key takeaways from this training.
-                                </div>
                             </div>
 
                             <!-- Important Notice -->
