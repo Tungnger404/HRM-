@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface PayrollManagerService {
+    Integer createPayrollPeriod(Integer month, Integer year);
 
     record SalaryUpdateResult(BigDecimal baseSalary, BigDecimal netSalary, String slipStatus) {}
 

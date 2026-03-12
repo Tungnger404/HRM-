@@ -368,6 +368,39 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     }
 
     @Override
+    public Integer createPayrollPeriod(Integer month, Integer year) {
+        if (month == null || month < 1 || month > 12) {
+            throw new IllegalArgumentException("Tháng không hợp lệ.");
+        }
+
+        if (year == null || year < 2000 || year > 3000) {
+            throw new IllegalArgumentException("Năm không hợp lệ.");
+        }
+
+        if (periodRepo.existsByMonthAndYear(month, year)) {
+            throw new IllegalStateException("Kỳ lương này đã tồn tại.");
+        }
+
+        YearMonth ym = YearMonth.of(year, month);
+
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
+
+        PayrollPeriod period = PayrollPeriod.builder()
+                .name(String.format("Payroll %02d/%d", month, year))
+                .month(month)
+                .year(year)
+                .startDate(startDate)
+                .endDate(endDate)
+                .status("OPEN")
+                .locked(false)
+                .build();
+
+        period = periodRepo.save(period);
+        return period.getId();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public PayslipDetailDTO getPayslipDetailForManager(Integer managerEmpId, Integer payslipId) {
         Payslip p = payslipRepo.findById(payslipId)
@@ -712,7 +745,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     @Override
     @Transactional(readOnly = true)
     public List<PayrollBatchSummaryDTO> listDraftBatches() {
-        return batchRepo.findByStatusOrderByIdDesc("DRAFT")
+        return batchRepo.findByStatusInOrderByIdDesc(List.of("DRAFT", "PENDING_APPROVAL"))
                 .stream()
                 .map(b -> PayrollBatchSummaryDTO.builder()
                         .id(b.getId())
