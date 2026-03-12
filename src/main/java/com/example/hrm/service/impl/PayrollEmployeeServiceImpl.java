@@ -74,17 +74,13 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
     @Override
     @Transactional(readOnly = true)
     public List<PayslipSummaryDTO> listEmployeePayslips(Integer empId) {
-        Employee emp = employeeRepo.findById(empId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + empId));
-
-        return payslipRepo.findByEmployeeOrderByIdDesc(emp)
+        return payslipRepo.findReleasedByEmployeeId(empId)
                 .stream()
-                .filter(this::canEmployeeView)
                 .map(p -> PayslipSummaryDTO.builder()
                         .payslipId(p.getId())
                         .batchId(p.getBatch().getId())
                         .empId(empId)
-                        .employeeName(empName(emp))
+                        .employeeName(empName(p.getEmployee()))
                         .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null))
                         .totalIncome(nz(p.getTotalIncome()))
                         .totalDeduction(nz(p.getTotalDeduction()))
@@ -133,8 +129,7 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
                 ? "ACTIVE"
                 : p.getSlipStatus().trim().toUpperCase();
 
-        return Boolean.TRUE.equals(p.getSentToEmployee())
-                && !"REJECTED".equals(slipStatus)
+        return !"REJECTED".equals(slipStatus)
                 && ("APPROVED".equals(batchStatus) || "PAID".equals(batchStatus));
     }
 }

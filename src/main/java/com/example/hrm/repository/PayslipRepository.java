@@ -79,6 +79,18 @@ public interface PayslipRepository extends JpaRepository<Payslip, Integer> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from PayslipItem it where it.payslip.id = :payslipId")
     int deleteByPayslipId(@Param("payslipId") Integer payslipId);
+
+    @Query("""
+    select p from Payslip p
+    join fetch p.batch b
+    join fetch b.period per
+    join fetch p.employee e
+    where e.empId = :empId
+      and upper(coalesce(p.slipStatus, 'ACTIVE')) <> 'REJECTED'
+      and upper(coalesce(b.status, '')) in ('APPROVED', 'PAID')
+    order by per.year desc, per.month desc, p.id desc
+""")
+    List<Payslip> findReleasedByEmployeeId(@Param("empId") Integer empId);
 }
 
 

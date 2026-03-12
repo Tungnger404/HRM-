@@ -110,16 +110,16 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
         String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
                 ? "" : p.getBatch().getStatus().trim().toUpperCase();
 
-        if ("PAID".equals(batchStatus)) {
-            throw new IllegalStateException("Batch PAID không cho approve.");
+        if ("PAID".equals(batchStatus) || "APPROVED".equals(batchStatus)) {
+            throw new IllegalStateException("Batch đã chốt, không approve từng payslip nữa.");
         }
 
         if ("REJECTED".equalsIgnoreCase(p.getSlipStatus())) {
-            throw new IllegalStateException("Payslip REJECTED không approve được (hãy sửa lương rồi ACTIVE lại).");
+            throw new IllegalStateException("Payslip REJECTED không approve được.");
         }
 
-        p.setSentToEmployee(true);
-        payslipRepo.save(p);
+        // Approve ở payroll list chỉ là bước review nội bộ
+        // KHÔNG release cho employee ở đây nữa
     }
 
     @Override
@@ -240,21 +240,56 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
             LocalDate start = toLocalDate(r[6]);
             LocalDate end = toLocalDate(r[7]);
 
-            BigDecimal totalIncome = toBigDecimal(r[8]);
-            BigDecimal totalDeduction = toBigDecimal(r[9]);
-            BigDecimal net = toBigDecimal(r[10]);
+            BigDecimal savedTotalIncome = toBigDecimal(r[8]);
+            BigDecimal savedTotalDeduction = toBigDecimal(r[9]);
+            BigDecimal savedNet = toBigDecimal(r[10]);
 
             String batchStatus = (String) r[11];
             String batchName = (String) r[12];
 
             BigDecimal baseSalary = toBigDecimal(r[13]);
             BigDecimal standardDays = toBigDecimal(r[14]);
-            BigDecimal actualDays = toBigDecimal(r[15]);
-            BigDecimal otHours = toBigDecimal(r[16]);
+            BigDecimal savedActualDays = toBigDecimal(r[15]);
+            BigDecimal savedOtHours = toBigDecimal(r[16]);
 
             String jobTitle = (String) r[17];
             Boolean sentToEmployee = (r[18] instanceof Boolean b) ? b : Boolean.FALSE;
             String slipStatus = (String) r[19];
+
+            BigDecimal actualDays = savedActualDays;
+            BigDecimal otHours = savedOtHours;
+            BigDecimal totalIncome = savedTotalIncome;
+            BigDecimal totalDeduction = savedTotalDeduction;
+            BigDecimal net = savedNet;
+
+            // Lấy attendance thật để đổ lên manager payroll list
+            if (start != null && end != null && eId > 0) {
+                long actualDaysLong = attendanceRepo.countActualWorkDays(eId, start, end);
+                actualDays = BigDecimal.valueOf(actualDaysLong);
+
+                long otMinutes = requestRepo.sumApprovedOvertimeMinutes(
+                        eId,
+                        start.atStartOfDay(),
+                        end.atTime(LocalTime.MAX)
+                );
+
+                otHours = BigDecimal.valueOf(otMinutes)
+                        .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+
+                PayrollCalculationService.PayslipComputation c = payrollCalculationService.compute(
+                        eId,
+                        start,
+                        end,
+                        baseSalary,
+                        standardDays,
+                        actualDays,
+                        otHours
+                );
+
+                totalIncome = nz(c.totalIncome());
+                totalDeduction = nz(c.totalDeduction());
+                net = nz(c.netSalary());
+            }
 
             BigDecimal dailySalary = BigDecimal.ZERO;
             if (standardDays.compareTo(BigDecimal.ZERO) > 0) {
