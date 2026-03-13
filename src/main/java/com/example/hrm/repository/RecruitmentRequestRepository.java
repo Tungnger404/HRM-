@@ -46,7 +46,7 @@ public interface RecruitmentRequestRepository
     Optional<RecruitmentRequest> findByIdWithDetails(@Param("id") Integer id);
 
 
-    // SEARCH + FILTER
+    // --- SEARCH + FILTER (ĐÃ CẬP NHẬT THÊM PRIORITY) ---
     @Query("""
         SELECT r
         FROM RecruitmentRequest r
@@ -55,13 +55,24 @@ public interface RecruitmentRequestRepository
         WHERE
             (:keyword IS NULL
                 OR LOWER(r.jobPosition.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                OR LOWER(r.department.deptName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                OR LOWER(r.department.deptName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR CAST(r.reqId AS string) LIKE %:keyword%)
         AND
             (:status IS NULL OR r.status = :status)
+        AND
+            (:priority IS NULL OR r.priority = :priority)
         ORDER BY r.createdAt DESC
     """)
     List<RecruitmentRequest> searchRequests(
             @Param("keyword") String keyword,
-            @Param("status") RecruitmentRequestStatus status
+            @Param("status") RecruitmentRequestStatus status,
+            @Param("priority") String priority // Thêm tham số thứ 3 ở đây
     );
+
+    @Query("""
+        SELECT r FROM RecruitmentRequest r 
+        WHERE r.status = 'APPROVED' 
+        AND r.jobDescription IS NULL
+    """)
+    List<RecruitmentRequest> findApprovedWithoutJD();
 }

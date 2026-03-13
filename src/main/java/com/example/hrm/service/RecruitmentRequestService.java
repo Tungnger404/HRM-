@@ -16,7 +16,8 @@ public interface RecruitmentRequestService {
 
     // search + filter
     List<RecruitmentRequest> searchRequests(String keyword,
-                                            RecruitmentRequestStatus status);
+                                            RecruitmentRequestStatus status,
+                                            String priority);
 
     // detail
     RecruitmentRequest getById(Integer id);

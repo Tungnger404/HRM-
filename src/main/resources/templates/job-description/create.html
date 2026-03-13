@@ -6,34 +6,26 @@
       th:with="sidebar='sidebar-hr'">
 
 <head>
-    <title>Create Job Description</title>
+    <title>Create Job Description | HRM</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .form-card { border: none; border-radius: 12px; }
+        .form-card { border: none; border-radius: 12px; transition: all 0.3s; }
         .section-header {
             background-color: #f8fafc;
             padding: 1rem 1.5rem;
             border-bottom: 1px solid #e2e8f0;
-            font-weight: 600;
+            font-weight: 700;
             color: #1e293b;
             border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
         }
-        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; }
+        .form-label { font-weight: 600; color: #475569; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .input-group-text { background-color: #f8fafc; color: #64748b; border-right: none; }
-        .form-control, .form-select { border-left: none; }
-        .form-control:focus, .form-select:focus {
-            border-color: #dee2e6;
-            box-shadow: none;
-            background-color: #fff;
-        }
-        .input-group:focus-within {
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
-            border-radius: 0.375rem;
-        }
-        .input-group:focus-within .input-group-text,
-        .input-group:focus-within .form-control {
-            border-color: #86b7fe;
-        }
+        .form-control, .form-select { border-left: none; transition: all 0.2s; }
+        .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        .sticky-top { top: 20px; }
+        .audit-badge { background: #f1f5f9; border-radius: 8px; padding: 12px; border-left: 4px solid #64748b; }
     </style>
 </head>
 
@@ -43,99 +35,119 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h2 class="fw-bold text-primary mb-1">Create Job Description</h2>
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a th:href="@{/hr/job-description}" class="text-decoration-none">JD List</a></li>
-                        <li class="breadcrumb-item active">New JD</li>
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a th:href="@{/hr/job-description}" class="text-decoration-none">Recruitment</a></li>
+                        <li class="breadcrumb-item active">New Job Description</li>
                     </ol>
                 </nav>
+                <h2 class="fw-bold text-dark mb-0">Thiết lập bản mô tả công việc</h2>
             </div>
-            <i class="bi bi-file-earmark-plus fs-1 text-muted opacity-25"></i>
+            <div class="text-end">
+                <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+                    <i class="bi bi-info-circle me-1"></i> Mode: HR Edit
+                </span>
+            </div>
         </div>
 
-        <form th:action="@{/hr/job-description/create}"
-              th:object="${dto}"
-              method="post">
+        <form th:action="@{/hr/job-description/create}" th:object="${dto}" method="post">
+
+            <input type="hidden" th:field="*{requestId}" />
+            <input type="hidden" th:field="*{jobId}" />
 
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <div class="card form-card shadow-sm mb-4">
+                    <div class="card form-card shadow-sm mb-4 sticky-top">
                         <div class="section-header">
-                            <i class="bi bi-briefcase me-2 text-primary"></i>Position Detail
+                            <i class="bi bi-info-square me-2 text-primary"></i> Phần A: Thông tin chung
                         </div>
                         <div class="card-body p-4">
                             <div class="mb-4">
-                                <label class="form-label">Job Position <span class="text-danger">*</span></label>
+                                <label class="form-label">Vị trí công việc</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                                    <select class="form-select" th:field="*{jobId}" required>
-                                        <option value="">-- Select job --</option>
-                                        <option th:each="j : ${jobs}" th:value="${j.jobId}" th:text="${j.title}"></option>
-                                    </select>
+                                    <input type="text" class="form-control bg-light"
+                                           th:field="*{jobTitle}"
+                                           readonly>
+                                </div>
+                                <small class="text-muted mt-1 d-block">Dữ liệu từ hệ thống</small>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Mức lương dự kiến <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-cash-stack"></i></span>
+                                    <input type="text" class="form-control" th:field="*{salaryRange}"
+                                           placeholder="Ví dụ: 15M - 25M VNĐ" required>
                                 </div>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label">Salary Range <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-cash-stack"></i></span>
-                                    <input type="text" class="form-control" th:field="*{salaryRange}"
-                                           placeholder="e.g. 15M - 20M VNĐ" required>
-                                </div>
-                            </div>
-
-                            <div class="mb-0">
-                                <label class="form-label">Working Location</label>
+                                <label class="form-label">Địa điểm làm việc</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                    <input type="text" class="form-control" th:field="*{workingLocation}"
-                                           placeholder="e.g. Hanoi Office">
+                                    <input type="text" class="form-control" th:field="*{workingLocation}" required>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="alert alert-info border-0 shadow-sm rounded-3">
-                        <h6 class="fw-bold"><i class="bi bi-lightbulb me-2"></i>Tips</h6>
-                        <small class="d-block mb-2">Be specific about the salary to attract more qualified candidates.</small>
-                        <small>Active JDs will be visible immediately after saving.</small>
+                            <hr class="my-4 opacity-50">
+
+                            <div class="audit-badge shadow-sm">
+                                <h6 class="fw-bold mb-1" style="font-size: 0.8rem;">AUDIT TRAIL LOG</h6>
+                                <p class="small mb-0 text-secondary">
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    <span th:text="${dto.description}"></span>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-lg-8">
                     <div class="card form-card shadow-sm">
                         <div class="section-header">
-                            <i class="bi bi-pencil-square me-2 text-primary"></i>Detailed Content
+                            <i class="bi bi-file-earmark-text me-2 text-primary"></i> Phần B & C: Nội dung chi tiết
                         </div>
-                        <div class="card-body p-4">
-                            <div class="mb-4">
-                                <label class="form-label">Responsibilities</label>
-                                <textarea class="form-control" rows="5" th:field="*{responsibilities}"
-                                          placeholder="• What will this person do daily?&#10;• Key targets and goals..."></textarea>
+                        <div class="card-body p-4 p-lg-5">
+                            <div class="mb-5">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Trách nhiệm công việc (Responsibilities)</span>
+                                    <span class="text-primary small" style="text-transform: none;">Đã Clone từ yêu cầu <i class="bi bi-check2-all"></i></span>
+                                </label>
+                                <textarea class="form-control shadow-none border" rows="8" th:field="*{responsibilities}"
+                                          placeholder="Nhập các đầu việc chính ứng viên phải thực hiện hàng ngày..."></textarea>
                             </div>
 
-                            <div class="mb-4">
-                                <label class="form-label">Requirements</label>
-                                <textarea class="form-control" rows="5" th:field="*{requirements}"
-                                          placeholder="• Experience needed?&#10;• Skills & Tools..."></textarea>
+                            <div class="mb-5">
+                                <label class="form-label">Yêu cầu ứng viên (Requirements)</label>
+                                <textarea class="form-control shadow-none border" rows="8" th:field="*{requirements}"
+                                          placeholder="Kỹ năng chuyên môn, trình độ học vấn, kinh nghiệm..."></textarea>
                             </div>
 
                             <div class="mb-0">
-                                <label class="form-label">Benefits</label>
-                                <textarea class="form-control" rows="4" th:field="*{benefits}"
-                                          placeholder="• Social insurance, 13th-month salary...&#10;• Team building, training..."></textarea>
+                                <label class="form-label">Chế độ đãi ngộ (Benefits)</label>
+                                <textarea class="form-control shadow-none border" rows="6" th:field="*{benefits}"
+                                          placeholder="Thưởng, bảo hiểm, môi trường làm việc..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white p-4 border-top-0 d-flex justify-content-between align-items-center">
+                            <a th:href="@{/hr/job-description}" class="text-decoration-none text-muted fw-bold small">
+                                <i class="bi bi-arrow-left me-1"></i> QUAY LẠI DANH SÁCH
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="reset" class="btn btn-light px-4 rounded-pill border fw-bold">Hủy bỏ</button>
+                                <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-bold">
+                                    <i class="bi bi-check-circle-fill me-2"></i>LƯU & ĐĂNG TUYỂN
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4 d-flex gap-2 justify-content-end">
-                        <a th:href="@{/hr/job-description}" class="btn btn-light px-4 border rounded-pill">
-                            Cancel
-                        </a>
-                        <button class="btn btn-primary px-5 rounded-pill shadow fw-bold" type="submit">
-                            <i class="bi bi-cloud-arrow-up me-2"></i>Save JD
-                        </button>
+                    <div class="mt-3 p-3 text-muted" style="font-size: 0.85rem; border-left: 3px solid #dee2e6;">
+                        <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+                        Lưu ý: Sau khi bấm <strong>Lưu & Đăng tuyển</strong>, trạng thái yêu cầu
+                        <span class="badge bg-secondary">Request</span> sẽ được cập nhật và JD sẽ hiển thị công khai.
                     </div>
                 </div>
             </div>

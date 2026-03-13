@@ -6,6 +6,9 @@ import com.example.hrm.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -36,24 +39,28 @@ public class AutoFillController {
     // =============================
     // AUTO FILL FROM JD
     // =============================
-    @GetMapping("/jd/{id}")
-    public JobDescriptionResponseDTO getJD(@PathVariable Integer id) {
+    public void create(JobDescriptionCreateDTO dto, Principal principal) {
+        // 1. Tìm Request gốc
+        RecruitmentRequest request = requestRepo.findById(dto.getRequestId())
+                .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        JobDescription jd = jdRepo.findByIdWithJob(id)
-                .orElseThrow(() -> new RuntimeException("JD not found"));
+        // 2. Map dữ liệu từ DTO và một phần từ Request sang JD
+        JobDescription jd = JobDescription.builder()
+                .recruitmentRequest(request)
+                .job(request.getJobPosition()) // Lấy luôn Job từ Request
+                .responsibilities(dto.getResponsibilities())
+                .requirements(dto.getRequirements()) // HR đã chỉnh sửa từ technicalRequirements
+                .benefits(dto.getBenefits())
+                .salaryRange(dto.getSalaryRange())
+                .workingLocation(dto.getWorkingLocation())
+                .status(JobDescriptionStatus.DRAFT)
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        JobDescriptionResponseDTO dto = new JobDescriptionResponseDTO();
+        jdRepo.save(jd);
 
-        dto.setId(jd.getId());
-        dto.setJobTitle(jd.getJob().getTitle());
-        dto.setSalaryRange(jd.getSalaryRange());
-        dto.setWorkingLocation(jd.getWorkingLocation());
-        dto.setStatus(jd.getStatus());
-        dto.setCreatedAt(jd.getCreatedAt());
-        dto.setResponsibilities(jd.getResponsibilities());
-        dto.setRequirements(jd.getRequirements());
-        dto.setBenefits(jd.getBenefits());
-
-        return dto;
+        // 3. Cập nhật trạng thái Request để không cho tạo JD lần thứ 2
+        request.setStatus(RecruitmentRequestStatus.CLOSED);
+        requestRepo.save(request);
     }
 }

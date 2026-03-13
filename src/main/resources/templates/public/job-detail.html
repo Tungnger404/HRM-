@@ -261,4 +261,292 @@
 </footer>
 
 </body>
+</html><!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${job.title + ' | Tuyển dụng doanh nghiệp'}">Job Detail</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --primary-corporate: #1e293b; /* Xanh đậm doanh nghiệp */
+            --accent-blue: #3b82f6;
+            --soft-bg: #f1f5f9;
+            --text-main: #334155;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--soft-bg);
+            color: var(--text-main);
+            line-height: 1.7;
+        }
+
+        /* NAVBAR */
+        .navbar-custom {
+            background: white;
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .logo-brand {
+            font-weight: 800;
+            color: var(--primary-corporate);
+            font-size: 24px;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        /* HERO AREA WITH BACKGROUND IMAGE */
+        .hero-banner {
+            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.7)),
+            url('/assets/img/hero.jpg') no-repeat center center;
+            background-size: cover;
+            height: 400px; /* Tăng độ cao cho chuyên nghiệp */
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-title-area {
+            color: white;
+            padding-bottom: 100px;
+        }
+
+        /* JOB HEADER CARD */
+        .job-header-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            margin-top: -120px; /* Đè lên ảnh hero */
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);
+            border: 1px solid white;
+        }
+
+        .dept-tag {
+            background: #eff6ff;
+            color: var(--accent-blue);
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .job-main-title {
+            font-weight: 800;
+            font-size: 2.2rem;
+            color: var(--primary-corporate);
+            margin: 15px 0;
+        }
+
+        .apply-btn-main {
+            background: var(--accent-blue);
+            color: white;
+            padding: 16px 40px;
+            border-radius: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.3s;
+            display: inline-block;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+            border: none;
+        }
+
+        .apply-btn-main:hover {
+            background: #2563eb;
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        /* CONTENT SECTIONS */
+        .section-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        }
+
+        .section-title {
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--primary-corporate);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            border-left: 5px solid var(--accent-blue);
+            padding-left: 15px;
+        }
+
+        /* SIDEBAR INFO */
+        .sidebar-box {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: #f8fafc;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+        }
+
+        .info-label { color: #94a3b8; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+        .info-data { font-weight: 700; color: var(--primary-corporate); font-size: 0.95rem; }
+
+        .rich-text {
+            color: #475569;
+            font-size: 1.05rem;
+            white-space: pre-line;
+        }
+
+        footer {
+            background: white;
+            padding: 60px 0;
+            margin-top: 80px;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-custom sticky-top shadow-sm">
+    <div class="container">
+        <a href="/" class="logo-brand">
+            <i class="bi bi-hexagon-half text-primary"></i> HRM<span class="text-primary">CORP</span>
+        </a>
+        <div class="d-flex gap-3">
+            <a href="/careers" class="btn fw-bold text-muted mt-1">Việc làm</a>
+            <a href="/login" class="btn btn-dark px-4 rounded-pill fw-bold">Đăng Nhập</a>
+        </div>
+    </div>
+</nav>
+
+<div class="hero-banner">
+    <div class="container hero-title-area text-center text-lg-start">
+        <div class="col-lg-8">
+            <h5 class="text-white-50 fw-bold mb-3 text-uppercase" style="letter-spacing: 2px;">Trang chi tiết tuyển dụng</h5>
+            <h2 class="display-4 fw-800 text-white" th:text="${job.title}">Senior Mechanical Engineer</h2>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+
+    <div class="job-header-card">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="dept-tag" th:text="${job.recruitmentRequest.department.deptName}">Engineering Dept</span>
+                <h1 class="job-main-title" th:text="${job.title}">Position Title</h1>
+                <div class="d-flex flex-wrap gap-4 text-muted mt-2">
+                    <span><i class="bi bi-geo-alt-fill text-danger me-2"></i><span th:text="${job.location}">Hà Nội</span></span>
+                    <span><i class="bi bi-briefcase-fill text-primary me-2"></i>Toàn thời gian</span>
+                    <span><i class="bi bi-eye-fill text-secondary me-2"></i><span th:text="${job.viewCount}">0</span> lượt xem</span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <a class="apply-btn-main shadow" th:href="@{'/careers/' + ${job.slug} + '/apply'}">
+                    ỨNG TUYỂN VỊ TRÍ NÀY <i class="bi bi-chevron-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-lg-8">
+            <div class="section-card">
+                <div class="section-title">Mô tả công việc</div>
+                <div class="rich-text" th:utext="${job.description}"></div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title">Yêu cầu ứng viên</div>
+                <div class="rich-text" th:utext="${job.requirements}"></div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title">Quyền lợi dành cho bạn</div>
+                <div class="rich-text" th:utext="${job.benefits}"></div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="sidebar-box shadow-sm">
+                <h5 class="fw-800 mb-4 pb-2 border-bottom">Tóm tắt công việc</h5>
+
+                <div class="info-item">
+                    <div class="info-icon"><i class="bi bi-calendar-event"></i></div>
+                    <div>
+                        <div class="info-label">Ngày đăng bài</div>
+                        <div class="info-data" th:text="${#temporals.format(job.publishDate,'dd/MM/yyyy')}">12/03/2026</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon"><i class="bi bi-hourglass-split"></i></div>
+                    <div>
+                        <div class="info-label">Hạn cuối nộp hồ sơ</div>
+                        <div class="info-data text-danger" th:text="${#temporals.format(job.expiryDate,'dd/MM/yyyy')}">30/04/2026</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon"><i class="bi bi-currency-dollar"></i></div>
+                    <div>
+                        <div class="info-label">Mức lương dự kiến</div>
+                        <div class="info-data text-success" th:text="${job.recruitmentRequest.proposedSalary ?: 'Thỏa thuận trực tiếp'}">Thỏa thuận</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon"><i class="bi bi-people"></i></div>
+                    <div>
+                        <div class="info-label">Số lượng cần tuyển</div>
+                        <div class="info-data" th:text="${job.recruitmentRequest.quantity + ' nhân sự'}">02 nhân sự</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-box shadow-sm bg-light">
+                <h5 class="fw-800 mb-4">Chia sẻ tuyển dụng</h5>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-primary border-2 rounded-circle w-100 p-2"><i class="bi bi-facebook"></i></button>
+                    <button class="btn btn-outline-info border-2 rounded-circle w-100 p-2"><i class="bi bi-linkedin"></i></button>
+                    <button class="btn btn-outline-secondary border-2 rounded-circle w-100 p-2"><i class="bi bi-link-45deg"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container text-center">
+        <h4 class="fw-800 mb-4">HRM RECRUITMENT SYSTEM</h4>
+        <p class="text-muted">Đơn vị tuyển dụng nhân sự hàng đầu chuyên nghiệp và minh bạch.</p>
+        <div class="mt-4 text-muted small">© 2026 Corporate Recruitment Portal. All rights reserved.</div>
+    </div>
+</footer>
+
+</body>
 </html>

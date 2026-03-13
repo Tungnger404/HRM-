@@ -4,9 +4,9 @@ import com.example.hrm.entity.JobDescriptionStatus;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+
 @Data
 public class JobDescriptionResponseDTO {
-
     private Integer id;
     private String jobTitle;
     private String salaryRange;
@@ -17,4 +17,5 @@ public class JobDescriptionResponseDTO {
     private String requirements;
     private String benefits;
     private String description;
+    private Integer requestId;
 }
