@@ -55,6 +55,7 @@ public class AttendanceService {
                 .workDate(today)
                 .checkIn(now)
                 .status(now.getHour() >= 8 ? "LATE" : "ON_TIME")
+                .workType("NOMAL")
                 .build();
 
         attendanceLogRepository.save(log);
@@ -68,6 +69,9 @@ public class AttendanceService {
         AttendanceLog log = attendanceLogRepository
                 .findByEmployee_EmpIdAndWorkDate(empId, today)
                 .orElseThrow(() -> new RuntimeException("You have not checked in today."));
+        if ("ABSENT".equals(log.getStatus())) {
+            throw new RuntimeException("You are marked absent today, cannot check out.");
+        }
 
         if (log.getCheckOut() != null) {
             throw new RuntimeException("You already checked out.");

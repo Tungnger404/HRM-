@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+
 @Service
 public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
 
@@ -28,10 +29,14 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
         return repo.search(empId, docType, status, q);
     }
 
+    @Override
+    public List<EmployeeDocument> findByEmployee(Integer empId) {
+        return repo.search(empId, null, null, null);
+    }
+
     private String normalizeDocType(String docType) {
         if (docType == null || docType.isBlank()) return DocumentType.DOCUMENT.name();
         String v = docType.trim().toUpperCase();
-        // chỉ cho phép 2 loại theo enum
         if (!v.equals(DocumentType.CONTRACT.name()) && !v.equals(DocumentType.DOCUMENT.name())) {
             return DocumentType.DOCUMENT.name();
         }
@@ -41,7 +46,6 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
     private String normalizeStatus(String status) {
         if (status == null || status.isBlank()) return DocumentStatus.DRAFT.name();
         String v = status.trim().toUpperCase();
-        // validate theo enum
         try {
             DocumentStatus.valueOf(v);
             return v;
@@ -71,7 +75,6 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
         String normStatus = normalizeStatus(status);
         String normTitle = normalizeTitle(title, file);
 
-        // ✅ versioning: tăng theo max version hiện có
         Integer maxVer = repo.findMaxVersion(empId, normType, normTitle);
         int nextVer = (maxVer == null ? 0 : maxVer) + 1;
 
@@ -81,11 +84,9 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
         d.setDocType(normType);
         d.setStatus(normStatus);
         d.setVersion(nextVer);
-
         d.setFileName(file.getOriginalFilename());
         d.setContentType(file.getContentType());
         d.setStoredPath(stored);
-
         d.setUploadedByUserId(uploaderUserId);
 
         return repo.save(d);

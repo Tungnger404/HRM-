@@ -20,11 +20,11 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
     private final DepartmentRepository departmentRepository;
     private final JobPositionRepository jobPositionRepository;
     private final EmployeeRepository employeeRepository;
-    private final RecruitmentRequestRepository repository;
 
-
+    // CREATE REQUEST
     @Override
     public void createRecruitmentRequest(RecruitmentRequestCreateDTO dto) {
+
         Department department = departmentRepository.findById(dto.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
@@ -35,6 +35,7 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
         RecruitmentRequest request = new RecruitmentRequest();
+
         request.setDepartment(department);
         request.setJobPosition(jobPosition);
         request.setQuantity(dto.getQuantity());
@@ -48,38 +49,57 @@ public class RecruitmentRequestServiceImpl implements RecruitmentRequestService 
         recruitmentRequestRepository.save(request);
     }
 
+    // HR LIST
     @Override
     public List<RecruitmentRequest> getRequestsForHR() {
-        return recruitmentRequestRepository.findForHR(
-                RecruitmentRequestStatus.DRAFT
-        );
+        return recruitmentRequestRepository.findForHR();
     }
 
+    // SEARCH + FILTER
+    @Override
+    public List<RecruitmentRequest> searchRequests(String keyword,
+                                                   RecruitmentRequestStatus status) {
+
+        if(keyword != null && keyword.trim().isEmpty()){
+            keyword = null;
+        }
+
+        return recruitmentRequestRepository.searchRequests(keyword, status);
+    }
+
+    // DETAIL
     @Override
     public RecruitmentRequest getById(Integer id) {
-        return repository.findById(id)
+        return recruitmentRequestRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
     }
 
+    // APPROVE
     @Override
     public void approveRequest(Integer id) {
+
         RecruitmentRequest request = getById(id);
+
         request.setStatus(RecruitmentRequestStatus.APPROVED);
-        request.setReason(null);
-        repository.save(request);
+
+        recruitmentRequestRepository.save(request);
     }
 
+    // REJECT
     @Override
     public void rejectRequest(Integer id, String reason) {
+
         RecruitmentRequest request = getById(id);
+
         request.setStatus(RecruitmentRequestStatus.REJECTED);
         request.setReason(reason);
-        repository.save(request);
-    }
-    @Override
-    public List<RecruitmentRequest> getRequestsByEmployee(Integer empId) {
-        return recruitmentRequestRepository
-                .findByCreatedBy_EmpId(empId);
+
+        recruitmentRequestRepository.save(request);
     }
 
+    // REQUEST BY EMPLOYEE
+    @Override
+    public List<RecruitmentRequest> getRequestsByEmployee(Integer empId) {
+        return recruitmentRequestRepository.findByCreatedBy_EmpId(empId);
+    }
 }

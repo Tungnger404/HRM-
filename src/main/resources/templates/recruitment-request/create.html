@@ -7,108 +7,137 @@
 
 <head>
     <title>Create Recruitment Request</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #4361ee; }
+        .form-card { border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .form-header {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white; border-radius: 16px 16px 0 0 !important; padding: 25px;
+        }
+        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; margin-bottom: 8px; }
+        .input-group-text { background-color: #f8fafc; border-right: none; color: #94a3b8; }
+        .form-control, .form-select { border-left: none; border-radius: 0 8px 8px 0; padding: 10px 15px; border-color: #e2e8f0; }
+        .form-control:focus, .form-select:focus { border-color: #e2e8f0; box-shadow: none; background-color: #fcfdfe; }
+        .btn-submit {
+            background: var(--primary-color); border: none; padding: 12px 30px;
+            border-radius: 10px; font-weight: 700; transition: all 0.3s;
+        }
+        .btn-submit:hover { background: #3046c5; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3); }
+        .section-title { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+    </style>
 </head>
 
 <body>
 
 <main layout:fragment="content">
+    <div class="container-fluid py-4">
 
-    <div class="container-fluid">
-
-        <div class="row mb-3">
-            <div class="col">
-                <h2>Create Recruitment Request</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="#">Management</a></li>
+                        <li class="breadcrumb-item active">Recruitment Request</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold text-dark mb-0">New Recruitment Request</h2>
             </div>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <strong>Recruitment Request Form</strong>
-            </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8">
 
-            <div class="card-body">
+                <div class="card form-card">
+                    <div class="card-header form-header border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                                <i class="bi bi-person-plus-fill fs-3"></i>
+                            </div>
+                            <div>
+                                <h4 class="mb-0 fw-bold">Request Form</h4>
 
-                <form th:action="@{/recruitment-request/create}"
-                      th:object="${dto}"
-                      method="post"
-                      class="row g-3">
-
-                    <!-- Department -->
-                    <div class="col-md-6">
-                        <label class="form-label">Department</label>
-                        <select class="form-select"
-                                th:field="*{departmentId}"
-                                required>
-                            <option value="">-- Select department --</option>
-                            <option th:each="d : ${departments}"
-                                    th:value="${d.deptId}"
-                                    th:text="${d.deptName}">
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Job -->
-                    <div class="col-md-6">
-                        <label class="form-label">Job Position</label>
-                        <select class="form-select"
-                                th:field="*{jobId}"
-                                required>
-                            <option value="">-- Select job --</option>
-                            <option th:each="j : ${jobs}"
-                                    th:value="${j.jobId}"
-                                    th:text="${j.title}">
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Quantity -->
-                    <div class="col-md-4">
-                        <label class="form-label">Quantity</label>
-                        <input type="number"
-                               class="form-control"
-                               th:field="*{quantity}"
-                               min="1"
-                               required>
-                    </div>
-
-                    <!-- Deadline -->
-                    <div class="col-md-4">
-                        <label class="form-label">Deadline</label>
-                        <input type="date"
-                               class="form-control"
-                               th:field="*{deadline}"
-                               required>
-                    </div>
-
-                    <!-- Reason -->
-                    <div class="col-12">
-                        <label class="form-label">Reason</label>
-                        <textarea class="form-control"
-                                  th:field="*{reason}"
-                                  rows="4"></textarea>
-                    </div>
-
-                    <!-- Submit -->
-                    <div class="col-12">
-                        <button class="btn btn-primary" type="submit">
-                            Submit Request
-                        </button>
-                    </div>
-
-                    <!-- Success -->
-                    <div class="col-12" th:if="${param.success}">
-                        <div class="alert alert-success mt-2">
-                            ✔ Submit request successfully!
+                            </div>
                         </div>
                     </div>
 
-                </form>
+                    <div class="card-body p-4 p-md-5">
+                        <form th:action="@{/recruitment-request/create}" th:object="${dto}" method="post" class="row g-4">
+
+                            <div class="col-12"><div class="section-title">Position Details</div></div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Target Department</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                    <select class="form-select" th:field="*{departmentId}" required>
+                                        <option value="">-- Select department --</option>
+                                        <option th:each="d : ${departments}" th:value="${d.deptId}" th:text="${d.deptName}"></option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Job Position</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                    <select class="form-select" th:field="*{jobId}" required>
+                                        <option value="">-- Select job --</option>
+                                        <option th:each="j : ${jobs}" th:value="${j.jobId}" th:text="${j.title}"></option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-5"><div class="section-title">Requirements & Timing</div></div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Quantity (Headcount)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-people"></i></span>
+                                    <input type="number" class="form-control" th:field="*{quantity}" min="1" placeholder="e.g. 2" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Expected Deadline</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                    <input type="date" class="form-control" th:field="*{deadline}" required>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Justification / Reason for Hiring</label>
+                                <textarea class="form-control border-start" th:field="*{reason}" rows="4"
+                                          placeholder="Explain why this position is needed (e.g. Project X expansion, backfill...)"
+                                          style="border-radius: 8px;"></textarea>
+                            </div>
+
+                            <div class="col-12 mt-5 text-end">
+                                <button class="btn btn-primary btn-submit shadow-sm" type="submit">
+                                    <i class="bi bi-send-fill me-2"></i> Submit Request
+                                </button>
+                            </div>
+
+                            <div class="col-12" th:if="${param.success}">
+                                <div class="alert alert-success d-flex align-items-center border-0 shadow-sm" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                                    <div>Request submitted successfully! HR will review it shortly.</div>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+
 
             </div>
         </div>
-
     </div>
-
 </main>
 
 </body>

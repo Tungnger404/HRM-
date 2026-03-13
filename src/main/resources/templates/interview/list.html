@@ -1,55 +1,162 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.w3.org/1999/xhtml"
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}"
       th:with="sidebar=${#authorization.expression('hasRole(''MANAGER'')')} ? 'sidebar-manager' : 'sidebar-hr'">
 
 <head>
     <title>Interview Management</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .interview-card { border: none; border-radius: 16px; overflow: hidden; }
+        .table thead th {
+            background-color: #f8fafc;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #64748b;
+            padding: 1rem;
+            border-top: none;
+        }
+        .candidate-name { font-weight: 700; color: #1e293b; }
+        .round-badge {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .time-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+            font-weight: 500;
+        }
+        .btn-evaluate {
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-evaluate:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .empty-state { padding: 4rem 0; }
+    </style>
 </head>
 
 <body>
 <div layout:fragment="content">
+    <div class="container-fluid py-4">
 
-    <h2 class="mb-4">Interview Management</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">Interview Management</h2>
+                <p class="text-muted mb-0">Track and evaluate candidate interview sessions.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-white border shadow-sm rounded-pill px-3">
+                    <i class="bi bi-filter me-2"></i>Filter
+                </button>
+            </div>
+        </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
+        <div class="row mb-4" th:if="${!#lists.isEmpty(interviews)}">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-3 rounded-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary-subtle text-primary p-3 rounded-3">
+                            <i class="bi bi-calendar-check fs-4"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Today's Sessions</small>
+                            <h4 class="fw-bold mb-0" th:text="${interviews.size()}">0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <table class="table table-bordered table-hover mb-0 text-center">
-                <thead class="table-light">
-                <tr>
-                    <th>Candidate</th>
-                    <th>Round</th>
-                    <th>Scheduled Time</th>
-                    <th>Location</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
+        <div class="card interview-card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th class="ps-4">Candidate Information</th>
+                            <th class="text-center">Interview Round</th>
+                            <th>Scheduled Time</th>
+                            <th>Location / Method</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="i : ${interviews}">
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center fw-bold text-primary"
+                                         style="width: 40px; height: 40px;"
+                                         th:text="${#strings.substring(i.candidate.fullName,0,1)}">
+                                    </div>
+                                    <div>
+                                        <div class="candidate-name" th:text="${i.candidate.fullName}"></div>
+                                        <small class="text-muted" th:text="${i.candidate.email}"></small>
+                                    </div>
+                                </div>
+                            </td>
 
-                <tbody>
-                <tr th:each="i : ${interviews}">
-                    <td th:text="${i.candidate.fullName}"></td>
-                    <td th:text="${i.roundNumber}"></td>
-                    <td th:text="${i.scheduledTime}"></td>
-                    <td th:text="${i.location}"></td>
-                    <td>
-                        <a th:href="@{/interview/evaluation/{id}(id=${i.candidate.candidateId})}"
-                           class="btn btn-sm btn-primary">
-                            Evaluate
-                        </a>
-                    </td>
-                </tr>
+                            <td class="text-center">
+                                    <span class="round-badge border">
+                                        Round <span th:text="${i.roundNumber}"></span>
+                                    </span>
+                            </td>
 
-                <tr th:if="${#lists.isEmpty(interviews)}">
-                    <td colspan="5" class="text-muted">No interviews found</td>
-                </tr>
+                            <td>
+                                <div class="time-box">
+                                    <i class="bi bi-clock text-primary"></i>
+                                    <span th:text="${i.scheduledTime}"></span>
+                                </div>
+                            </td>
 
-                </tbody>
-            </table>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-geo-alt text-danger" th:if="${!#strings.contains(i.location, 'Online')}"></i>
+                                    <i class="bi bi-camera-video text-success" th:if="${#strings.contains(i.location, 'Online')}"></i>
+                                    <span th:text="${i.location}"></span>
+                                </div>
+                            </td>
 
+                            <td class="text-end pe-4">
+                                <a th:href="@{/interview/evaluation/{id}(id=${i.candidate.candidateId})}"
+                                   class="btn btn-primary btn-evaluate btn-sm shadow-sm">
+                                    <i class="bi bi-pencil-square me-2"></i>Evaluate
+                                </a>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(interviews)}">
+                            <td colspan="5">
+                                <div class="empty-state text-center">
+                                    <i class="bi bi-calendar-x fs-1 text-muted opacity-25 d-block mb-3"></i>
+                                    <h5 class="text-muted">No interviews scheduled yet</h5>
+                                    <p class="small text-muted">When you assign interviews, they will appear here.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-
 </div>
 </body>
 </html>

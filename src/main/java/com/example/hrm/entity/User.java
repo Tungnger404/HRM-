@@ -35,4 +35,7 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "avatar_path", length = 255)
+    private String avatarPath;
 }

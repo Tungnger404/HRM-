@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -70,4 +71,23 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
         ORDER BY e.empId ASC
     """)
     List<Employee> findAllEmployeesOnly();
+
+    @Query("""
+    select e from Employee e
+    where (e.status is null or e.status not in ('RESIGNED','TERMINATED'))
+      and (
+           :kw is null or :kw = ''
+           or lower(e.fullName) like lower(concat('%', :kw, '%'))
+           or str(e.id) like concat('%', :kw, '%')
+      )
+      and not exists (
+           select 1 from Payslip p
+           where p.batch.id = :batchId
+             and p.employee.id = e.id
+      )
+    order by e.fullName asc
+""")
+    List<Employee> searchAvailableForBatch(@Param("batchId") Integer batchId,
+                                           @Param("kw") String kw,
+                                           Pageable pageable);
 }

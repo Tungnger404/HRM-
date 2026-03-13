@@ -58,23 +58,31 @@
                         <th>Date</th>
                         <th>Check In</th>
                         <th>Check Out</th>
-                        <th>Status</th>
+                        <th>Attendance Status</th>
+                        <th>Work Type</th>
                     </tr>
                     </thead>
 
                     <tbody>
                     <tr th:each="log : ${logs}">
-                        <td th:text="${log.workDate}"></td>
-                        <td th:text="${log.checkIn} ?: '-'"></td>
-                        <td th:text="${log.checkOut} ?: '-'"></td>
+                        <td th:text="${#temporals.format(log.workDate, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${log.checkIn != null ? #temporals.format(log.checkIn, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
+                        <td th:text="${log.checkOut != null ? #temporals.format(log.checkOut, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
                         <td>
-                            <span class="badge"
-                                  th:classappend="
-                                        ${log.status} == 'LATE' ? ' bg-warning' :
-                                        (${log.status} == 'ON_TIME' ? ' bg-success' :
-                                        ' bg-secondary')"
-                                  th:text="${log.status}">
-                            </span>
+                <span class="badge"
+                      th:classappend="${log.status == 'LATE' ? ' bg-warning' :
+                      (log.status == 'ON_TIME' ? ' bg-success' :
+                      (log.status == 'ABSENT' ? ' bg-danger' : ' bg-secondary'))}"
+                      th:text="${log.status}">
+</span>
+                        </td>
+                        <td>
+                <span class="badge"
+                      th:classappend="
+                            ${log.workType} == 'OT' ? ' bg-primary' :
+                            ' bg-secondary'"
+                      th:text="${log.workType}">
+                </span>
                         </td>
                     </tr>
 

@@ -7,84 +7,122 @@
 
 <head>
     <title>Edit Job Description</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .form-card { border: none; border-radius: 12px; shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+        .section-header {
+            background-color: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; }
+        .input-group-text { background-color: #f8fafc; color: #64748b; }
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.1);
+        }
+    </style>
 </head>
 
 <body>
 <main layout:fragment="content">
+    <div class="container py-4">
 
-    <div class="container-fluid">
-
-        <h2 class="mb-3">Edit Job Description</h2>
-
-        <div class="card">
-            <div class="card-body">
-
-                <form th:action="@{/hr/job-description/edit/{id}(id=${id})}"
-                      th:object="${dto}"
-                      method="post"
-                      class="row g-3">
-
-                    <div class="col-md-6">
-                        <label class="form-label">Salary Range</label>
-                        <input type="text"
-                               class="form-control"
-                               th:field="*{salaryRange}">
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Working Location</label>
-                        <input type="text"
-                               class="form-control"
-                               th:field="*{workingLocation}">
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Responsibilities</label>
-                        <textarea class="form-control"
-                                  rows="4"
-                                  th:field="*{responsibilities}"></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Requirements</label>
-                        <textarea class="form-control"
-                                  rows="4"
-                                  th:field="*{requirements}"></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Benefits</label>
-                        <textarea class="form-control"
-                                  rows="4"
-                                  th:field="*{benefits}"></textarea>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" th:field="*{status}">
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="INACTIVE">INACTIVE</option>
-                        </select>
-                    </div>
-
-                    <div class="col-12">
-                        <button class="btn btn-primary" type="submit">
-                            Update
-                        </button>
-
-                        <a th:href="@{/hr/job-description}"
-                           class="btn btn-secondary ms-2">
-                            Cancel
-                        </a>
-                    </div>
-
-                </form>
-
-            </div>
+        <div class="mb-4">
+            <h2 class="fw-bold text-dark">Edit Job Description</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/hr/job-description}" class="text-decoration-none">JD List</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </nav>
         </div>
 
-    </div>
+        <form th:action="@{/hr/job-description/edit/{id}(id=${id})}"
+              th:object="${dto}"
+              method="post">
 
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card form-card shadow-sm h-100">
+                        <div class="section-header rounded-top-3">
+                            <i class="bi bi-info-circle me-2"></i>General Information
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-3">
+                                <label class="form-label">Salary Range</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-cash"></i></span>
+                                    <input type="text" class="form-control" th:field="*{salaryRange}" placeholder="e.g. 15,000,000 - 20,000,000">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Working Location</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control" th:field="*{workingLocation}" placeholder="e.g. Hanoi, Vietnam">
+                                </div>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label">Publication Status</label>
+                                <select class="form-select" th:field="*{status}">
+                                    <option value="ACTIVE">● ACTIVE</option>
+                                    <option value="INACTIVE">○ INACTIVE</option>
+                                </select>
+                                <div class="form-text mt-2 small text-muted">Active JDs will be visible to applicants.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card form-card shadow-sm">
+                        <div class="section-header rounded-top-3">
+                            <i class="bi bi-file-earmark-text me-2"></i>Job Content
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-4">
+                                <label class="form-label d-flex justify-content-between">
+                                    Responsibilities
+                                    <span class="badge bg-light text-dark border fw-normal">Required</span>
+                                </label>
+                                <textarea class="form-control" rows="5" th:field="*{responsibilities}"
+                                          placeholder="Describe the main duties..."></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label d-flex justify-content-between">
+                                    Requirements
+                                    <span class="badge bg-light text-dark border fw-normal">Required</span>
+                                </label>
+                                <textarea class="form-control" rows="5" th:field="*{requirements}"
+                                          placeholder="List skills, experience, and education..."></textarea>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label">Benefits</label>
+                                <textarea class="form-control" rows="4" th:field="*{benefits}"
+                                          placeholder="Why should candidates join your team?"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2 justify-content-end">
+                        <a th:href="@{/hr/job-description}" class="btn btn-outline-secondary px-4 rounded-pill">
+                            Cancel
+                        </a>
+                        <button class="btn btn-primary px-5 rounded-pill shadow-sm fw-bold" type="submit">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </main>
 </body>
 </html>

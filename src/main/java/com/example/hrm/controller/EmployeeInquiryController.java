@@ -2,7 +2,8 @@ package com.example.hrm.controller;
 
 import com.example.hrm.dto.PayrollInquiryCreateDTO;
 import com.example.hrm.service.CurrentEmployeeService;
-import com.example.hrm.service.PayrollService;
+import com.example.hrm.service.PayrollEmployeeService;
+import com.example.hrm.service.PayrollInquiryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -18,7 +19,8 @@ import java.security.Principal;
 @RequestMapping("/employee/inquiries")
 public class EmployeeInquiryController {
 
-    private final PayrollService payrollService;
+    private final PayrollInquiryService payrollInquiryService;
+    private final PayrollEmployeeService payrollEmployeeService;
     private final CurrentEmployeeService currentEmployeeService;
 
     @GetMapping
@@ -29,10 +31,10 @@ public class EmployeeInquiryController {
         Integer empId = currentEmployeeService.requireCurrentEmpId(principal);
 
         model.addAttribute("status", status == null ? "" : status);
-        model.addAttribute("inquiries", payrollService.listAllInquiriesForEmployee(empId, status));
-        model.addAttribute("payslips", payrollService.listEmployeePayslips(empId));
-
+        model.addAttribute("inquiries", payrollInquiryService.listAllInquiriesForEmployee(empId, status));
+        model.addAttribute("payslips", payrollEmployeeService.listEmployeePayslips(empId));
         model.addAttribute("inq", new PayrollInquiryCreateDTO(null, ""));
+
         return "employee/inquiry-list";
     }
 
@@ -48,12 +50,12 @@ public class EmployeeInquiryController {
 
         if (br.hasErrors()) {
             model.addAttribute("status", status == null ? "" : status);
-            model.addAttribute("inquiries", payrollService.listAllInquiriesForEmployee(empId, status));
-            model.addAttribute("payslips", payrollService.listEmployeePayslips(empId));
+            model.addAttribute("inquiries", payrollInquiryService.listAllInquiriesForEmployee(empId, status));
+            model.addAttribute("payslips", payrollEmployeeService.listEmployeePayslips(empId));
             return "employee/inquiry-list";
         }
 
-        payrollService.submitInquiry(empId, req);
+        payrollInquiryService.submitInquiry(empId, req);
         ra.addFlashAttribute("msg", "Đã gửi thắc mắc. Vui lòng chờ quản lý phản hồi.");
         return "redirect:/employee/inquiries";
     }

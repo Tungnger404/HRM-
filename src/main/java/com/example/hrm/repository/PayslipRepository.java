@@ -12,47 +12,57 @@ public interface PayslipRepository extends JpaRepository<Payslip, Integer> {
     List<Payslip> findByEmployeeOrderByIdDesc(Employee employee);
 
     List<Payslip> findByBatch_IdOrderByIdAsc(Integer batchId);
+    boolean existsByBatch_IdAndEmployee_Id(Integer batchId, Integer empId);
 
     @Query("""
-            select
-            s.id,
-            b.id,
-            e.empId,
-            e.fullName,
-            per.month,
-            per.year,
-            per.startDate,
-            per.endDate,
-            s.totalIncome,
-            s.totalDeduction,
-            s.netSalary,
-            b.status,
-            b.name,
-            s.baseSalary,
-            s.standardWorkDays,
-            s.actualWorkDays,
-            s.otHours,
-            jp.title,
-            s.sentToEmployee,
-            s.slipStatus
-            from Payslip s
-            join s.batch b
-            join b.period per
-            join s.employee e
-            left join JobPosition jp on jp.jobId = e.jobId
-            where (:managerEmpId is null or e.directManagerId = :managerEmpId)
-            and (:status is null or :status = '' or b.status = :status)
-            and (
-              :kw is null or :kw = ''
-              or lower(e.fullName) like lower(concat('%', :kw, '%'))
-              or (:empId is not null and e.empId = :empId)
-            )
-            order by per.year desc, per.month desc, e.empId asc, s.id desc
-            """)
+        select
+        s.id,
+        b.id,
+        e.empId,
+        e.fullName,
+        per.month,
+        per.year,
+        per.startDate,
+        per.endDate,
+        s.totalIncome,
+        s.totalDeduction,
+        s.netSalary,
+        b.status,
+        b.name,
+        s.baseSalary,
+        s.standardWorkDays,
+        s.actualWorkDays,
+        s.otHours,
+        jp.title,
+        s.sentToEmployee,
+        s.slipStatus
+        from Payslip s
+        join s.batch b
+        join b.period per
+        join s.employee e
+        left join JobPosition jp on jp.jobId = e.jobId
+        where (:managerEmpId is null or e.directManagerId = :managerEmpId)
+          and (:periodId is null or per.id = :periodId)
+          and (
+            :status is null or :status = ''
+            or (:status = 'REJECTED' and upper(coalesce(s.slipStatus, 'ACTIVE')) = 'REJECTED')
+            or (:status = 'APPROVED' and coalesce(s.sentToEmployee, false) = true
+                and upper(coalesce(s.slipStatus, 'ACTIVE')) <> 'REJECTED')
+            or (:status = 'DRAFT' and coalesce(s.sentToEmployee, false) = false
+                and upper(coalesce(s.slipStatus, 'ACTIVE')) <> 'REJECTED')
+          )
+          and (
+            :kw is null or :kw = ''
+            or lower(e.fullName) like lower(concat('%', :kw, '%'))
+            or (:empId is not null and e.empId = :empId)
+          )
+        order by per.year desc, per.month desc, e.empId asc, s.id desc
+        """)
     List<Object[]> findPayrollRowsRaw(@Param("managerEmpId") Integer managerEmpId,
                                       @Param("status") String status,
                                       @Param("kw") String kw,
-                                      @Param("empId") Integer empId);
+                                      @Param("empId") Integer empId,
+                                      @Param("periodId") Integer periodId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

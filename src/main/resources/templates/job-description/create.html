@@ -7,88 +7,140 @@
 
 <head>
     <title>Create Job Description</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .form-card { border: none; border-radius: 12px; }
+        .section-header {
+            background-color: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #1e293b;
+            border-radius: 12px 12px 0 0;
+        }
+        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; }
+        .input-group-text { background-color: #f8fafc; color: #64748b; border-right: none; }
+        .form-control, .form-select { border-left: none; }
+        .form-control:focus, .form-select:focus {
+            border-color: #dee2e6;
+            box-shadow: none;
+            background-color: #fff;
+        }
+        .input-group:focus-within {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+            border-radius: 0.375rem;
+        }
+        .input-group:focus-within .input-group-text,
+        .input-group:focus-within .form-control {
+            border-color: #86b7fe;
+        }
+    </style>
 </head>
 
 <body>
 <main layout:fragment="content">
+    <div class="container py-4">
 
-    <div class="container-fluid">
-
-        <h2 class="mb-3">Create Job Description</h2>
-
-        <div class="card">
-            <div class="card-body">
-
-                <form th:action="@{/hr/job-description/create}"
-                      th:object="${dto}"
-                      method="post"
-                      class="row g-3">
-
-                    <div class="col-md-6">
-                        <label class="form-label">Job Position</label>
-                        <select class="form-select" th:field="*{jobId}" required>
-                            <option value="">-- Select job --</option>
-                            <option th:each="j : ${jobs}"
-                                    th:value="${j.jobId}"
-                                    th:text="${j.title}">
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Salary Range</label>
-                        <input type="text"
-                               class="form-control"
-                               th:field="*{salaryRange}"
-                               required>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Working Location</label>
-                        <input type="text"
-                               class="form-control"
-                               th:field="*{workingLocation}">
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Responsibilities</label>
-                        <textarea class="form-control"
-                                  rows="4"
-                                  th:field="*{responsibilities}"></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Requirements</label>
-                        <textarea class="form-control"
-                                  rows="4"
-                                  th:field="*{requirements}"></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Benefits</label>
-                        <textarea class="form-control"
-                                  rows="4"
-                                  th:field="*{benefits}"></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <button class="btn btn-primary" type="submit">
-                            Save
-                        </button>
-
-                        <a th:href="@{/hr/job-description}"
-                           class="btn btn-secondary ms-2">
-                            Cancel
-                        </a>
-                    </div>
-
-                </form>
-
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-primary mb-1">Create Job Description</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a th:href="@{/hr/job-description}" class="text-decoration-none">JD List</a></li>
+                        <li class="breadcrumb-item active">New JD</li>
+                    </ol>
+                </nav>
             </div>
+            <i class="bi bi-file-earmark-plus fs-1 text-muted opacity-25"></i>
         </div>
 
-    </div>
+        <form th:action="@{/hr/job-description/create}"
+              th:object="${dto}"
+              method="post">
 
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card form-card shadow-sm mb-4">
+                        <div class="section-header">
+                            <i class="bi bi-briefcase me-2 text-primary"></i>Position Detail
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-4">
+                                <label class="form-label">Job Position <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                    <select class="form-select" th:field="*{jobId}" required>
+                                        <option value="">-- Select job --</option>
+                                        <option th:each="j : ${jobs}" th:value="${j.jobId}" th:text="${j.title}"></option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Salary Range <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-cash-stack"></i></span>
+                                    <input type="text" class="form-control" th:field="*{salaryRange}"
+                                           placeholder="e.g. 15M - 20M VNĐ" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label">Working Location</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control" th:field="*{workingLocation}"
+                                           placeholder="e.g. Hanoi Office">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 shadow-sm rounded-3">
+                        <h6 class="fw-bold"><i class="bi bi-lightbulb me-2"></i>Tips</h6>
+                        <small class="d-block mb-2">Be specific about the salary to attract more qualified candidates.</small>
+                        <small>Active JDs will be visible immediately after saving.</small>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card form-card shadow-sm">
+                        <div class="section-header">
+                            <i class="bi bi-pencil-square me-2 text-primary"></i>Detailed Content
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-4">
+                                <label class="form-label">Responsibilities</label>
+                                <textarea class="form-control" rows="5" th:field="*{responsibilities}"
+                                          placeholder="• What will this person do daily?&#10;• Key targets and goals..."></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Requirements</label>
+                                <textarea class="form-control" rows="5" th:field="*{requirements}"
+                                          placeholder="• Experience needed?&#10;• Skills & Tools..."></textarea>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label">Benefits</label>
+                                <textarea class="form-control" rows="4" th:field="*{benefits}"
+                                          placeholder="• Social insurance, 13th-month salary...&#10;• Team building, training..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2 justify-content-end">
+                        <a th:href="@{/hr/job-description}" class="btn btn-light px-4 border rounded-pill">
+                            Cancel
+                        </a>
+                        <button class="btn btn-primary px-5 rounded-pill shadow fw-bold" type="submit">
+                            <i class="bi bi-cloud-arrow-up me-2"></i>Save JD
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </main>
 </body>
 </html>

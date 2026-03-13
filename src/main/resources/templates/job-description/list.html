@@ -7,63 +7,122 @@
 
 <head>
     <title>Job Description List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        /* Tùy chỉnh thêm để UI mềm mại hơn */
+        .card { border: none; border-radius: 12px; }
+        .table thead th {
+            background-color: #f8f9fa;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: #6c757d;
+            border-top: none;
+        }
+        .btn-action {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-action:hover { transform: translateY(-1px); }
+        .salary-text { color: #28a745; font-weight: 600; }
+    </style>
 </head>
 
 <body>
 <main layout:fragment="content">
 
-    <div class="container-fluid">
+    <div class="container-fluid py-4">
 
-        <div class="row mb-3">
-            <div class="col">
-                <h2>Job Description List</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0">Job Descriptions</h3>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Recruitment</a></li>
+                        <li class="breadcrumb-item active">Job Description List</li>
+                    </ol>
+                </nav>
             </div>
-            <div class="col text-end">
-                <a th:href="@{/hr/job-description/create}"
-                   class="btn btn-primary">
-                    + Create JD
-                </a>
-            </div>
+            <a th:href="@{/hr/job-description/create}" class="btn btn-primary px-4 shadow-sm rounded-pill">
+                <i class="bi bi-plus-lg me-1"></i> Create JD
+            </a>
         </div>
 
-        <div class="card">
-            <div class="card-body">
-
-                <table class="table table-bordered table-hover">
-                    <thead>
+        <div class="card shadow-sm">
+            <div class="card-body p-0"> <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                     <tr>
-                        <th>ID</th>
-                        <th>Job</th>
-                        <th>Salary</th>
-                        <th>Location</th>
-                        <th>Status</th>
-                        <th width="180">Action</th>
+                        <th class="ps-4">ID</th>
+                        <th>Job Title</th>
+                        <th>Salary Range</th>
+                        <th>Working Location</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end pe-4">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="jd : ${list}">
-                        <td th:text="${jd.id}"></td>
-                        <td th:text="${jd.jobTitle}"></td>
-                        <td th:text="${jd.salaryRange}"></td>
-                        <td th:text="${jd.workingLocation}"></td>
+                        <td class="ps-4 fw-bold text-muted" th:text="${'#' + jd.id}"></td>
 
                         <td>
-                            <span class="badge bg-success"
-                                  th:if="${jd.status == 'ACTIVE'}">ACTIVE</span>
-                            <span class="badge bg-secondary"
-                                  th:if="${jd.status == 'INACTIVE'}">INACTIVE</span>
+                            <div class="fw-bold text-dark" th:text="${jd.jobTitle}"></div>
                         </td>
 
                         <td>
-                            <a th:href="@{'/hr/job-description/' + ${jd.id}}"
-                               class="btn btn-sm btn-info">View</a>
+                                    <span class="salary-text">
+                                        <i class="bi bi-cash-stack me-1"></i>
+                                        <span th:text="${jd.salaryRange}"></span>
+                                    </span>
+                        </td>
 
-                            <a th:href="@{'/hr/job-description/edit/' + ${jd.id}}"
-                               class="btn btn-sm btn-warning">Edit</a>
+                        <td>
+                            <i class="bi bi-geo-alt text-danger me-1"></i>
+                            <span th:text="${jd.workingLocation}"></span>
+                        </td>
+
+                        <td class="text-center">
+                                    <span class="badge rounded-pill px-3 py-2"
+                                          th:if="${jd.status == 'ACTIVE'}"
+                                          th:classappend="'bg-success-subtle text-success border border-success-subtle'">
+                                        <i class="bi bi-check-circle-fill me-1"></i> ACTIVE
+                                    </span>
+                            <span class="badge rounded-pill px-3 py-2 text-secondary bg-light border"
+                                  th:if="${jd.status == 'INACTIVE'}">
+                                        <i class="bi bi-pause-circle me-1"></i> INACTIVE
+                                    </span>
+                        </td>
+
+                        <td class="text-end pe-4">
+                            <div class="btn-group gap-2">
+                                <a th:href="@{'/hr/job-description/' + ${jd.id}}"
+                                   class="btn btn-sm btn-outline-info btn-action"
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                <a th:href="@{'/hr/job-description/edit/' + ${jd.id}}"
+                                   class="btn btn-sm btn-outline-warning btn-action"
+                                   title="Edit JD">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(list)}">
+                        <td colspan="6" class="text-center py-5">
+                            <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="80" class="opacity-25 mb-3">
+                            <p class="text-muted">No Job Descriptions found.</p>
                         </td>
                     </tr>
                     </tbody>
                 </table>
+            </div>
 
             </div>
         </div>
