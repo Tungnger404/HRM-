@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Promotion Proposals</title>
+</head>
+<body>
+<h2>Promotion Proposals</h2>
+
+<p>
+    Manager:
+    <strong th:text="${manager.fullName}">Manager Name</strong>
+</p>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+    <tr>
+        <th>Emp ID</th>
+        <th>Full Name</th>
+        <th>Department ID</th>
+        <th>Job ID</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="emp : ${employees}">
+        <td th:text="${emp.empId}"></td>
+        <td th:text="${emp.fullName}"></td>
+        <td th:text="${emp.deptId}"></td>
+        <td th:text="${emp.jobId}"></td>
+        <td th:text="${emp.status}"></td>
+        <td>
+            <a th:href="@{/manager/promotion/{empId}(empId=${emp.empId})}">View</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

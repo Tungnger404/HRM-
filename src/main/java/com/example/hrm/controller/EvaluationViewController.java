@@ -1,9 +1,14 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.entity.Employee;
+import com.example.hrm.entity.EvalCycle;
 import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.KpiEvidence;
+import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.repository.EvalCycleRepository;
 import com.example.hrm.repository.KpiAssignmentRepository;
 import com.example.hrm.repository.KpiEvidenceRepository;
+import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.FileValidationService;
 import com.example.hrm.service.KpiEvidenceService;
@@ -26,6 +31,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,6 +45,9 @@ public class EvaluationViewController {
 
     @Autowired
     private KpiAssignmentRepository kpiAssignmentRepository;
+
+    @Autowired
+    private EvalCycleRepository evalCycleRepository;
 
     @Autowired
     private KpiEvidenceRepository kpiEvidenceRepository;
@@ -55,21 +64,46 @@ public class EvaluationViewController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private CurrentEmployeeService currentEmployeeService;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
     /**
      * STEP 1: Show KPI + Evidence submission form
      */
     @GetMapping("/submit-kpi")
-    public String showKpiSubmissionForm(Model model,
+    public String showKpiSubmissionForm(Principal principal,
+                                       Model model,
                                        @ModelAttribute("msg") String msg,
                                        @ModelAttribute("err") String err) {
-        Integer employeeId = 1;
+        Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
+        System.out.println("=== SUBMIT KPI DEBUG ===");
+        System.out.println("Employee ID: " + employeeId);
         
-        Integer cycleId = 1;
-        KpiAssignment assignment = kpiAssignmentRepository
-                .findByEmpIdAndCycleId(employeeId, cycleId)
-                .stream()
+        java.util.List<KpiAssignment> allAssignments = kpiAssignmentRepository
+                .findByEmpIdOrderByAssignedAtDesc(employeeId);
+        System.out.println("Total assignments found: " + allAssignments.size());
+        
+        for (KpiAssignment a : allAssignments) {
+            System.out.println("  - Assignment ID: " + a.getAssignmentId() + 
+                             ", Cycle: " + a.getCycleId() +
+                             ", Status: " + a.getStatus() + 
+                             ", Assigned At: " + a.getAssignedAt());
+        }
+        
+        KpiAssignment assignment = allAssignments.stream()
+                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.ASSIGNED 
+                          || a.getStatus() == KpiAssignment.AssignmentStatus.DRAFT)
                 .findFirst()
                 .orElse(null);
+        
+        Integer cycleId = assignment != null ? assignment.getCycleId() : 1;
+        
+        System.out.println("Selected assignment: " + (assignment != null ? assignment.getAssignmentId() : "NULL"));
+        System.out.println("Cycle ID: " + cycleId);
+        System.out.println("========================");
         
         if (assignment != null) {
             List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignment.getAssignmentId());
@@ -89,26 +123,36 @@ public class EvaluationViewController {
      */
     @PostMapping("/submit-kpi")
     public String handleKpiSubmission(
-            @RequestParam Integer cycleId,
+            Principal principal,
+            @RequestParam Integer assignmentId,
             @RequestParam(required = false) MultipartFile kpiExcelFile,
             @RequestParam(required = false) List<MultipartFile> evidenceFiles,
             @RequestParam String employeeComment,
             RedirectAttributes ra) {
         
         try {
-            Integer employeeId = 1;
+            Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
+            
+            KpiAssignment assignment = kpiAssignmentRepository
+                    .findById(assignmentId)
+                    .orElse(null);
+            
+            if (assignment == null || !assignment.getEmpId().equals(employeeId)) {
+                ra.addFlashAttribute("err", "Invalid KPI assignment. Please contact HR.");
+                return "redirect:/evaluation/submit-kpi";
+            }
+            
+            if (assignment.getStatus() != KpiAssignment.AssignmentStatus.ASSIGNED
+                && assignment.getStatus() != KpiAssignment.AssignmentStatus.DRAFT) {
+                ra.addFlashAttribute("err", "This KPI assignment cannot be edited in its current status.");
+                return "redirect:/evaluation/submit-kpi";
+            }
             
             String validationError = fileValidationService.validateFiles(kpiExcelFile, evidenceFiles);
             if (validationError != null) {
                 ra.addFlashAttribute("err", validationError);
                 return "redirect:/evaluation/submit-kpi";
             }
-            
-            KpiAssignment assignment = kpiAssignmentRepository
-                    .findByEmpIdAndCycleId(employeeId, cycleId)
-                    .stream()
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("KPI assignment not found"));
             
             if (kpiExcelFile != null && !kpiExcelFile.isEmpty()) {
                 String excelPath = documentStorageService.store(kpiExcelFile);
@@ -140,17 +184,20 @@ public class EvaluationViewController {
      * STEP 2: Show employee self-evaluation form (loads KPI draft from step 1)
      */
     @GetMapping("/self-review")
-    public String showSelfReviewForm(Model model,
+    public String showSelfReviewForm(Principal principal,
+                                    Model model,
                                     @ModelAttribute("msg") String msg,
                                     @ModelAttribute("err") String err) {
-        Integer employeeId = 1;
-        Integer cycleId = 1;
+        Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
         
         KpiAssignment assignment = kpiAssignmentRepository
-                .findByEmpIdAndCycleId(employeeId, cycleId)
+                .findByEmpIdOrderByAssignedAtDesc(employeeId)
                 .stream()
+                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.DRAFT)
                 .findFirst()
                 .orElse(null);
+        
+        Integer cycleId = assignment != null ? assignment.getCycleId() : 1;
         
         if (assignment != null && assignment.getStatus() == KpiAssignment.AssignmentStatus.DRAFT) {
             List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignment.getAssignmentId());
@@ -173,7 +220,8 @@ public class EvaluationViewController {
      */
     @PostMapping("/self-review/submit")
     public String submitSelfReview(
-            @RequestParam Integer cycleId,
+            Principal principal,
+            @RequestParam Integer assignmentId,
             @RequestParam String selfAssessment,
             @RequestParam Integer selfScore,
             @RequestParam(required = false) String challenges,
@@ -181,36 +229,50 @@ public class EvaluationViewController {
             RedirectAttributes ra
     ) {
         try {
-            Integer employeeId = 1;
+            Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
             
             KpiAssignment assignment = kpiAssignmentRepository
-                    .findByEmpIdAndCycleId(employeeId, cycleId)
-                    .stream()
-                    .findFirst()
+                    .findById(assignmentId)
                     .orElseThrow(() -> new RuntimeException("KPI assignment not found"));
             
-            if (assignment.getStatus() != KpiAssignment.AssignmentStatus.DRAFT) {
-                ra.addFlashAttribute("err", "You need to complete Step 1 first");
+            if (!assignment.getEmpId().equals(employeeId)) {
+                ra.addFlashAttribute("err", "Invalid assignment access");
                 return "redirect:/evaluation/submit-kpi";
             }
             
-            // Save employee self-assessment data (NEW!)
+            KpiAssignment.AssignmentStatus currentStatus = assignment.getStatus();
+            
+            if (currentStatus != KpiAssignment.AssignmentStatus.DRAFT 
+                && currentStatus != KpiAssignment.AssignmentStatus.HR_REJECTED
+                && currentStatus != KpiAssignment.AssignmentStatus.MANAGER_REJECTED) {
+                ra.addFlashAttribute("err", "Invalid status for submission");
+                return "redirect:/evaluation/submit-kpi";
+            }
+            
             assignment.setSelfAssessment(selfAssessment);
             assignment.setSelfScore(selfScore);
             assignment.setChallenges(challenges);
             assignment.setDevelopmentGoals(developmentGoals);
             
-            assignment.setStatus(KpiAssignment.AssignmentStatus.EMPLOYEE_SUBMITTED);
+            if (currentStatus == KpiAssignment.AssignmentStatus.HR_REJECTED 
+                || currentStatus == KpiAssignment.AssignmentStatus.MANAGER_REJECTED) {
+                assignment.setStatus(KpiAssignment.AssignmentStatus.EMPLOYEE_RESUBMITTED);
+            } else {
+                assignment.setStatus(KpiAssignment.AssignmentStatus.EMPLOYEE_SUBMITTED);
+            }
+            
             assignment.setEmployeeSubmittedAt(LocalDateTime.now());
             kpiAssignmentRepository.save(assignment);
             
-            // Notify HR staff about new KPI submission
-            Integer hrStaffId = 2; // TODO: Get actual HR staff ID from assignment or config
-            notificationService.createKpiSubmittedNotification(
-                    hrStaffId,
-                    assignment.getAssignmentId(),
-                    "Employee #" + employeeId
-            );
+            List<Employee> hrStaffList = employeeRepository.findHrStaff();
+            if (!hrStaffList.isEmpty()) {
+                Integer hrStaffId = hrStaffList.get(0).getEmpId();
+                notificationService.createKpiSubmittedNotification(
+                        hrStaffId,
+                        assignment.getAssignmentId(),
+                        "Employee #" + employeeId
+                );
+            }
             
             ra.addFlashAttribute("msg", "Evaluation submitted successfully! Waiting for HR verification.");
             return "redirect:/evaluation/history";
@@ -276,17 +338,10 @@ public class EvaluationViewController {
      * Show performance ranking dashboard
      */
     @GetMapping("/ranking/{cycleId}")
-    public String showPerformanceRanking(@PathVariable Integer cycleId, Model model) {
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
-        model.addAttribute("cycleId", cycleId);
-        model.addAttribute("pageTitle", "Performance Ranking");
-        return "evaluation/ranking";
+    public String showPerformanceRanking(@PathVariable Integer cycleId) {
+        return "redirect:/dashboard/employee";
     }
 
-    /**
-     * Show promotion recommendations
-     */
     @GetMapping("/promotion-recommendations/{cycleId}")
     public String showPromotionRecommendations(@PathVariable Integer cycleId, Model model) {
         // TODO: Fetch real data from service when database has data
@@ -300,9 +355,8 @@ public class EvaluationViewController {
      * Show employee's evaluation history
      */
     @GetMapping("/history")
-    public String showEvaluationHistory(Model model) {
-        // TODO: Get current employee ID from security context
-        Integer employeeId = 1; // Placeholder
+    public String showEvaluationHistory(Principal principal, Model model) {
+        Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
         
         // TODO: Fetch real data from service when database has data
         // For now, use mock data in template for testing

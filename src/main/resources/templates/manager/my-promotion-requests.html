@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>My Promotion Requests - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>My Promotion Requests</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                        <li class="breadcrumb-item active">My Promotion Requests</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong><i class="fa fa-list"></i> Promotion Requests History</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Request ID</th>
+                                        <th>Employee ID</th>
+                                        <th>Employee Name</th>
+                                        <th>Proposed Position</th>
+                                        <th>Avg Score</th>
+                                        <th>Status</th>
+                                        <th>Requested At</th>
+                                        <th>Reviewed At</th>
+                                        <th>HR Comment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="req : ${requests}">
+                                        <td th:text="${req.requestId}">1</td>
+                                        <td th:text="${req.empId}">001</td>
+                                        <td>
+                                            <span th:text="${req.empId}">Employee Name</span>
+                                        </td>
+                                        <td th:text="'Position ID: ' + ${req.proposedPositionId}">Position ID: 2</td>
+                                        <td>
+                                            <span class="badge bg-primary" th:text="${req.avgScore} + ' / 100'">85 / 100</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${req.status.name() == 'PENDING'} ? 'bg-warning' : (${req.status.name() == 'APPROVED'} ? 'bg-success' : 'bg-danger')"
+                                                  th:text="${req.status}">PENDING</span>
+                                        </td>
+                                        <td th:text="${#temporals.format(req.requestedAt, 'dd/MM/yyyy HH:mm')}">01/03/2026 10:30</td>
+                                        <td>
+                                            <span th:if="${req.reviewedAt != null}" 
+                                                  th:text="${#temporals.format(req.reviewedAt, 'dd/MM/yyyy HH:mm')}">02/03/2026 14:20</span>
+                                            <span th:unless="${req.reviewedAt != null}" class="text-muted">-</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${req.hrComment != null}" th:text="${req.hrComment}">Good performance</span>
+                                            <span th:unless="${req.hrComment != null}" class="text-muted">-</span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(requests)}">
+                                        <td colspan="9" class="text-center text-muted">You have not submitted any promotion requests yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

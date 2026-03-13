@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Pending Promotion Requests - HRM System</title>
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <meta name="_csrf_parameter" th:content="${_csrf?.parameterName}"/>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Pending Promotion Requests</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                        <li class="breadcrumb-item active">Promotion Requests</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong><i class="fa fa-arrow-up"></i> Promotion Requests Awaiting Review</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Request ID</th>
+                                        <th>Employee</th>
+                                        <th>Current Position</th>
+                                        <th>Proposed Position</th>
+                                        <th>Avg Score</th>
+                                        <th>Evaluations</th>
+                                        <th>Requested By</th>
+                                        <th>Requested At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="req : ${requests}">
+                                        <td th:text="${req.requestId}">1</td>
+                                        <td>
+                                            <strong th:text="'EMP-' + ${req.empId}">EMP-001</strong>
+                                        </td>
+                                        <td th:text="'Position ID: ' + ${req.currentPositionId}">Position ID: 1</td>
+                                        <td th:text="'Position ID: ' + ${req.proposedPositionId}">Position ID: 2</td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${req.avgScore >= 85} ? 'bg-success' : 'bg-primary'"
+                                                  th:text="${req.avgScore} + ' / 100'">85 / 100</span>
+                                        </td>
+                                        <td th:text="${req.evaluationCount}">3</td>
+                                        <td th:text="'EMP-' + ${req.requestedBy}">EMP-002</td>
+                                        <td th:text="${#temporals.format(req.requestedAt, 'dd/MM/yyyy HH:mm')}">01/03/2026 10:30</td>
+                                        <td>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-info me-1"
+                                                    onclick="showRequestDetail(this)"
+                                                    th:attr="data-request-id=${req.requestId}">
+                                                <i class="fa fa-eye"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(requests)}">
+                                        <td colspan="9" class="text-center text-muted">No pending promotion requests</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Request Detail & Approval -->
+    <div class="modal fade" id="requestDetailModal" tabindex="-1" aria-labelledby="requestDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="requestDetailModalLabel">
+                        <i class="fa fa-file-alt"></i> Promotion Request Detail
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="requestDetailContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || '';
+    const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
+    
+    function showRequestDetail(button) {
+        const requestId = button.getAttribute('data-request-id');
+        const modal = new coreui.Modal(document.getElementById('requestDetailModal'));
+        modal.show();
+        
+        const request = /*[[${requests}]]*/ [];
+        const selectedRequest = request.find(r => r.requestId == requestId);
+        
+        if (!selectedRequest) {
+            document.getElementById('requestDetailContent').innerHTML = `
+                <div class="alert alert-danger">Request not found</div>
+            `;
+            return;
+        }
+        
+        const html = `
+            <div class="card border-0">
+                <div class="card-body">
+                    <h6 class="mb-3"><strong>Request Information</strong></h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Employee ID:</strong> ${selectedRequest.empId}</p>
+                            <p class="mb-1"><strong>Current Position:</strong> Position ID ${selectedRequest.currentPositionId}</p>
+                            <p class="mb-1"><strong>Proposed Position:</strong> Position ID ${selectedRequest.proposedPositionId}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Average Score:</strong> <span class="badge bg-primary">${selectedRequest.avgScore} / 100</span></p>
+                            <p class="mb-1"><strong>Total Evaluations:</strong> ${selectedRequest.evaluationCount}</p>
+                            <p class="mb-1"><strong>Requested By:</strong> EMP-${selectedRequest.requestedBy}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Evaluation Summary:</strong></label>
+                        <p class="border rounded p-2 bg-light">${selectedRequest.evaluationSummary || 'N/A'}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Reason for Promotion:</strong></label>
+                        <p class="border rounded p-2 bg-light">${selectedRequest.requestReason || 'N/A'}</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6 class="mb-3"><strong>HR Decision</strong></h6>
+                    
+                    <form id="approveForm" method="post" action="/hr/promotions/${requestId}/approve">
+                        <input type="hidden" name="${csrfParamName}" value="${csrfToken}">
+                        <div class="mb-3">
+                            <label class="form-label">HR Comment</label>
+                            <textarea class="form-control" name="hrComment" rows="3"></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-danger" onclick="rejectRequest(${requestId})">
+                                <i class="fa fa-times"></i> Reject
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fa fa-check"></i> Approve Promotion
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('requestDetailContent').innerHTML = html;
+    }
+    
+    function rejectRequest(requestId) {
+        const comment = prompt('Enter rejection reason:');
+        if (!comment) return;
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/hr/promotions/' + requestId + '/reject';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = csrfParamName;
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        const commentInput = document.createElement('input');
+        commentInput.type = 'hidden';
+        commentInput.name = 'hrComment';
+        commentInput.value = comment;
+        form.appendChild(commentInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+</div>
+</body>
+</html>

@@ -364,10 +364,10 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     private String getClassificationLabel(String classification) {
         return switch (classification) {
-            case "A" -> "Excellent";
-            case "B" -> "Good";
-            case "C" -> "Average";
-            case "D" -> "Poor";
+            case "A" -> "Outstanding";
+            case "B" -> "Strong";
+            case "C" -> "Meets Expectations";
+            case "D" -> "Needs Improvement";
             default -> "Unknown";
         };
     }
