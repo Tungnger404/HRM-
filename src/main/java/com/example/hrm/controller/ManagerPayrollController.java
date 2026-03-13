@@ -37,6 +37,36 @@ public class ManagerPayrollController {
         return "manager/payroll-period-list";
     }
 
+    @PostMapping("/periods/create")
+    public String createPeriod(@RequestParam("month") Integer month,
+                               @RequestParam("year") Integer year,
+                               RedirectAttributes ra) {
+        try {
+            payrollManagerService.createPayrollPeriod(month, year);
+            ra.addFlashAttribute("msgType", "success");
+            ra.addFlashAttribute("msg", "Tạo kỳ lương thành công.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("msgType", "danger");
+            ra.addFlashAttribute("msg", e.getMessage());
+        }
+        return "redirect:/manager/payroll/periods";
+    }
+
+    @PostMapping("/periods/create-current")
+    public String createCurrentPeriod(RedirectAttributes ra) {
+        try {
+            LocalDate now = LocalDate.now();
+            payrollManagerService.createPayrollPeriod(now.getMonthValue(), now.getYear());
+
+            ra.addFlashAttribute("msgType", "success");
+            ra.addFlashAttribute("msg", "Đã tạo kỳ lương tháng hiện tại.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("msgType", "danger");
+            ra.addFlashAttribute("msg", e.getMessage());
+        }
+        return "redirect:/manager/payroll/periods";
+    }
+
     @GetMapping("/periods/{periodId}/batches")
     public String batches(@PathVariable Integer periodId, Model model) {
         model.addAttribute("periodId", periodId);
@@ -154,8 +184,7 @@ public class ManagerPayrollController {
 
             effectivePeriodId = periods.stream()
                     .filter(p -> p.getMonth() != null && p.getYear() != null)
-                    .filter(p ->
-                            p.getMonth().equals(now.getMonthValue()) && p.getYear().equals(now.getYear()))
+                    .filter(p -> p.getMonth().equals(now.getMonthValue()) && p.getYear().equals(now.getYear()))
                     .map(PayrollPeriodSummaryDTO::getId)
                     .findFirst()
                     .orElse(null);

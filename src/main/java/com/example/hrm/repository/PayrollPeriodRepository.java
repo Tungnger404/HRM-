@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Integer> {
     List<PayrollPeriod> findAllByOrderByYearDescMonthDesc();
+    boolean existsByMonthAndYear(Integer month, Integer year);
 }

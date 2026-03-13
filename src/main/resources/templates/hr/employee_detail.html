@@ -98,18 +98,15 @@
 
           <div class="field">
             <label>Dept ID</label>
-            <input name="deptId" th:value="${e.deptId}">
+            <input name="deptId" th:value="${e.department.deptName}">
           </div>
 
           <div class="field">
             <label>Job ID</label>
-            <input name="jobId" th:value="${e.jobId}">
+            <input name="jobId" th:value="${e.jobPosition.title}">
           </div>
 
-          <div class="field">
-            <label>Direct Manager ID</label>
-            <input name="directManagerId" th:value="${e.directManagerId}">
-          </div>
+
 
           <div class="field">
             <label>Join Date</label>
@@ -123,17 +120,20 @@
         </div>
 
         <div class="row-actions">
+
           <button class="btn btn-primary" type="submit">Save</button>
 
           <button class="btn btn-danger" type="button"
                   onclick="if(confirm('Delete this employee?')) document.getElementById('delForm').submit();">
             Delete
           </button>
-        </div>
-      </form>
 
-      <!-- DELETE -->
-      <form id="delForm" method="post" th:action="@{'/hr/employees/' + ${e.empId} + '/delete'}"></form>
+          <a class="btn btn-outline"
+             th:href="@{'/hr/employees/' + ${e.empId} + '/assignment'}">
+            Change Dept / Job
+          </a>
+
+        </div>
 
     </div>
   </div>

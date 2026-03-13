@@ -6,17 +6,38 @@
     <title>Payroll List</title>
 
     <style>
-        .wrapper, .content, main, .container-fluid { min-width: 0; }
-        #payrollTable th, #payrollTable td { white-space: nowrap; }
-        .table-responsive { overflow-x: auto; }
+        .wrapper, .content, main, .container-fluid {
+            min-width: 0;
+        }
 
-        .btn-edit-salary {
+        #payrollTable th, #payrollTable td {
+            white-space: nowrap;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .btn-edit-salary,
+        .btn-view-payslip {
             width: 34px;
             height: 30px;
             padding: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .payroll-col-center {
+            text-align: center !important;
+            vertical-align: middle !important;
+        }
+
+        .payroll-action-wrap {
+            display: inline-flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
         }
 
         dialog#salaryDialog,
@@ -28,7 +49,9 @@
             box-shadow: 0 10px 35px rgba(0, 0, 0, .25);
         }
 
-        dialog::backdrop { background: rgba(0, 0, 0, .25); }
+        dialog::backdrop {
+            background: rgba(0, 0, 0, .25);
+        }
 
         .dialog-head {
             padding: 14px 16px;
@@ -38,7 +61,9 @@
             align-items: center;
         }
 
-        .dialog-body { padding: 16px; }
+        .dialog-body {
+            padding: 16px;
+        }
 
         .dialog-foot {
             padding: 14px 16px;
@@ -150,7 +175,6 @@
             }
         }
 
-        /* --- CSS CHO TOAST NOTIFICATION --- */
         .toast-notification {
             position: fixed;
             top: 70px;
@@ -172,9 +196,18 @@
             transform: translateX(0);
         }
 
-        .toast-success { background-color: #28a745; }
-        .toast-danger { background-color: #dc3545; }
-        .toast-warning { background-color: #ffc107; color: #212529; }
+        .toast-success {
+            background-color: #28a745;
+        }
+
+        .toast-danger {
+            background-color: #dc3545;
+        }
+
+        .toast-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
 
         .toast-note {
             font-size: 12px;
@@ -204,7 +237,6 @@
 
     <div id="clientAlert" class="toast-notification" style="display:none"></div>
 
-
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h2 class="mb-1">Payroll Payslips</h2>
@@ -228,11 +260,8 @@
                 <div class="payroll-filter-left">
                     <div class="filter-inline-label">Kỳ lương:</div>
 
-                    <select class="form-select form-select-sm filter-select-sm" id="filterMonth">
-                    </select>
-
-                    <select class="form-select form-select-sm filter-select-sm" id="filterYear">
-                    </select>
+                    <select class="form-select form-select-sm filter-select-sm" id="filterMonth"></select>
+                    <select class="form-select form-select-sm filter-select-sm" id="filterYear"></select>
                 </div>
 
                 <div class="payroll-filter-right">
@@ -294,24 +323,24 @@
                             <label for="checkAll" class="ms-1">All</label>
                         </th>
                         <th>Name</th>
-                        <th class="text-end">Công thực tế</th>
-                        <th>Vị trí</th>
-                        <th class="text-end">Lương cơ bản</th>
-                        <th class="text-end">Thực nhận (Net)</th>
-                        <th>Trạng thái</th>
-                        <th style="width:120px" class="text-center">Xem</th>
+                        <th class="payroll-col-center">Công thực tế</th>
+                        <th class="payroll-col-center">Vị trí</th>
+                        <th class="payroll-col-center">Lương cơ bản</th>
+                        <th class="payroll-col-center">Thực nhận (Net)</th>
+                        <th class="payroll-col-center">Trạng thái</th>
+                        <th style="width:120px" class="payroll-col-center">Xem</th>
                     </tr>
                     </thead>
 
                     <tbody id="payrollTbody">
                     <tr th:each="r,st : ${rows}"
                         th:attr="data-clickable='1',
-                         data-payslip-id=${r.payslipId},
-                         data-batch-status=${r.batchStatus},
-                         data-slip-status=${r.slipStatus},
-                         data-sent-to-employee=${r.sentToEmployee},
-                         data-full-name=${r.fullName},
-                         data-base-salary=${r.baseSalary}"
+                                 data-payslip-id=${r.payslipId},
+                                 data-batch-status=${r.batchStatus},
+                                 data-slip-status=${r.slipStatus},
+                                 data-sent-to-employee=${r.sentToEmployee},
+                                 data-full-name=${r.fullName},
+                                 data-base-salary=${r.baseSalary}"
                         th:classappend="${(r.batchStatus == 'APPROVED' or r.batchStatus == 'PAID') ? 'text-muted' : ''}">
 
                         <td class="text-center">
@@ -326,23 +355,25 @@
 
                         <td th:text="${r.fullName}"></td>
 
-                        <td class="text-end"
-                            th:text="${r.actualWorkDays == null ? '0' : #numbers.formatDecimal(r.actualWorkDays, 1, 'COMMA', 0, 'POINT')}">
+                        <td class="payroll-col-center"
+                            th:text="${(r.actualWorkDays == null ? '0' : #numbers.formatDecimal(r.actualWorkDays, 1, 'COMMA', 0, 'POINT'))
+              + '/' +
+              (r.standardWorkDays == null ? '0' : #numbers.formatDecimal(r.standardWorkDays, 1, 'COMMA', 0, 'POINT'))}">
                         </td>
 
-                        <td th:text="${r.jobTitle}"></td>
+                        <td class="payroll-col-center" th:text="${r.jobTitle}"></td>
 
-                        <td class="text-end">
+                        <td class="payroll-col-center">
                             <span class="col-base"
                                   th:text="${r.baseSalary == null ? '0' : #numbers.formatDecimal(r.baseSalary, 1, 'COMMA', 0, 'POINT')}"></span>
                         </td>
 
-                        <td class="text-end">
+                        <td class="payroll-col-center">
                             <span class="col-net"
                                   th:text="${r.netSalary == null ? '0' : #numbers.formatDecimal(r.netSalary, 1, 'COMMA', 0, 'POINT')}"></span>
                         </td>
 
-                        <td class="col-status">
+                        <td class="col-status payroll-col-center">
                             <span class="badge bg-danger"
                                   th:if="${r.slipStatus == 'REJECTED'}">Rejected</span>
 
@@ -359,8 +390,8 @@
                                   th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'PAID'}">Paid</span>
                         </td>
 
-                        <td class="text-center">
-                            <div class="d-inline-flex gap-2">
+                        <td class="payroll-col-center">
+                            <div class="payroll-action-wrap">
                                 <button type="button"
                                         class="btn btn-sm btn-outline-secondary btn-edit-salary"
                                         title="Sửa lương cơ bản"
@@ -373,9 +404,14 @@
                                     </svg>
                                 </button>
 
-                                <a class="btn btn-sm btn-outline-primary view-link"
+                                <a class="btn btn-sm btn-outline-primary btn-view-payslip"
+                                   title="Xem chi tiết"
                                    th:href="@{/manager/payroll/payslips/{id}(id=${r.payslipId})}">
-                                    View
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                         fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.12 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.133 13.133 0 0 1 1.172 8z"/>
+                                        <path d="M8 5.5A2.5 2.5 0 1 0 8 10.5A2.5 2.5 0 0 0 8 5.5zm0 1A1.5 1.5 0 1 1 8 9.5A1.5 1.5 0 0 1 8 6.5z"/>
+                                    </svg>
                                 </a>
                             </div>
                         </td>
@@ -483,25 +519,23 @@
 
             let toastTimer = null;
 
-            // XỬ LÝ TOAST TỪ SERVER (LOAD TRANG)
             function initServerToasts() {
                 const sToast = document.getElementById("serverToastMsg");
                 const eToast = document.getElementById("serverToastError");
 
                 if (sToast) {
                     setTimeout(() => sToast.classList.add("show"), 50);
-                    setTimeout(() => sToast.classList.remove("show"), 5000); // Tắt sau 5 giây
+                    setTimeout(() => sToast.classList.remove("show"), 5000);
                 }
                 if (eToast) {
                     setTimeout(() => eToast.classList.add("show"), 50);
                     setTimeout(() => eToast.classList.remove("show"), 4000);
                 }
             }
+
             initServerToasts();
 
-            // HÀM SHOW TOAST CHO AJAX (BẤM NÚT)
             function showAlert(type, text) {
-                // Ẩn các toast server đi nếu đang hiện
                 document.getElementById("serverToastMsg")?.classList.remove("show");
                 document.getElementById("serverToastError")?.classList.remove("show");
 
@@ -509,7 +543,6 @@
                 clientAlert.innerHTML = `<span>${text || ""}</span>`;
                 clientAlert.style.display = "block";
 
-                // Timeout nhỏ để kịp render css
                 setTimeout(() => {
                     clientAlert.classList.add("show");
                 }, 10);
@@ -518,7 +551,9 @@
 
                 toastTimer = setTimeout(() => {
                     clientAlert.classList.remove("show");
-                    setTimeout(() => { clientAlert.style.display = "none"; }, 400);
+                    setTimeout(() => {
+                        clientAlert.style.display = "none";
+                    }, 400);
                 }, 3000);
             }
 
@@ -892,12 +927,32 @@
                 }
 
                 addSalaryBatchSelect.disabled = false;
+
                 list.forEach(b => {
-                    appendOption(addSalaryBatchSelect, b.id, `${b.name || ('Batch #' + b.id)}`);
+                    const opt = document.createElement("option");
+                    opt.value = b.id;
+
+                    const status = (b.status || "").toUpperCase();
+                    const label = `${b.name || ('Batch #' + b.id)}${status === 'PENDING_APPROVAL' ? ' (Pending Approval)' : ''}`;
+
+                    opt.textContent = label;
+
+                    if (status !== "DRAFT") {
+                        opt.disabled = true;
+                    }
+
+                    addSalaryBatchSelect.appendChild(opt);
                 });
 
-                const selectedBatchText = addSalaryBatchSelect.options[addSalaryBatchSelect.selectedIndex]?.text || "";
-                addSalaryInfo.textContent = `Batch: ${selectedBatchText}`;
+                const firstDraft = list.find(b => (b.status || "").toUpperCase() === "DRAFT");
+
+                if (firstDraft) {
+                    addSalaryBatchSelect.value = String(firstDraft.id);
+                    const selectedBatchText = addSalaryBatchSelect.options[addSalaryBatchSelect.selectedIndex]?.text || "";
+                    addSalaryInfo.textContent = `Batch: ${selectedBatchText}`;
+                } else {
+                    addSalaryInfo.textContent = "Không có batch DRAFT để thêm nhân viên.";
+                }
             }
 
             async function searchEmployees() {
@@ -1045,12 +1100,10 @@
             function buildYearOptions(selectedYear) {
                 const currentYear = new Date().getFullYear();
 
-                // Chỉ lấy các năm trong DB mà <= năm hiện tại
                 const dbYears = normalizedPeriods
                     .map(p => Number(p.year))
                     .filter(y => y && y <= currentYear);
 
-                // Luôn có năm hiện tại ở đầu, và giữ các năm cũ có dữ liệu
                 const years = [...new Set([currentYear, ...dbYears])].sort((a, b) => b - a);
 
                 filterYear.innerHTML = `<option value="">Năm</option>`;
@@ -1084,17 +1137,10 @@
                 return found ? String(found.id) : "";
             }
 
-            function syncPeriodIdOnly() {
-                const m = filterMonth?.value || "";
-                const y = filterYear?.value || "";
-                periodIdInput.value = findPeriodIdByMonthYear(m, y);
-            }
-
             function trySubmitWhenEnough() {
                 const m = filterMonth?.value || "";
                 const y = filterYear?.value || "";
 
-                // chưa đủ tháng + năm thì KHÔNG submit
                 if (!m || !y) {
                     periodIdInput.value = "";
                     return;
@@ -1115,13 +1161,23 @@
             function initPeriodSelectors() {
                 const selected = normalizedPeriods.find(p => String(p.id) === String(selectedPeriodId));
 
-                buildMonthOptions(selected ? selected.month : "");
-                buildYearOptions(selected ? selected.year : "");
+                const now = new Date();
+                const currentMonth = now.getMonth() + 1;
+                const currentYear = now.getFullYear();
 
-                if (selected) {
-                    filterMonth.value = String(selected.month);
-                    filterYear.value = String(selected.year);
-                    periodIdInput.value = String(selected.id);
+                const currentPeriod = normalizedPeriods.find(p =>
+                    Number(p.month) === currentMonth && Number(p.year) === currentYear
+                );
+
+                const fallback = selected || currentPeriod || normalizedPeriods[0] || null;
+
+                buildMonthOptions(fallback ? fallback.month : "");
+                buildYearOptions(fallback ? fallback.year : "");
+
+                if (fallback) {
+                    filterMonth.value = String(fallback.month);
+                    filterYear.value = String(fallback.year);
+                    periodIdInput.value = String(fallback.id);
                 } else {
                     filterMonth.value = "";
                     filterYear.value = "";
@@ -1141,7 +1197,6 @@
                 const m = filterMonth?.value || "";
                 const y = filterYear?.value || "";
 
-                // nếu user bấm Search mà chỉ chọn 1 trong 2 thì không ép reload theo period
                 if (!m || !y) {
                     periodIdInput.value = "";
                     return;
@@ -1158,7 +1213,6 @@
             });
 
             initPeriodSelectors();
-
             document.querySelectorAll('tr[data-payslip-id]').forEach(syncRowVisualState);
             ensureEmptyRow();
             setCheckAllState();

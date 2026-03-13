@@ -10,4 +10,6 @@ public interface PayrollBatchRepository extends JpaRepository<PayrollBatch, Inte
     List<PayrollBatch> findByPeriodOrderByIdDesc(PayrollPeriod period);
 
     List<PayrollBatch> findByStatusOrderByIdDesc(String status);
+
+    List<PayrollBatch> findByStatusInOrderByIdDesc(List<String> statuses);
 }

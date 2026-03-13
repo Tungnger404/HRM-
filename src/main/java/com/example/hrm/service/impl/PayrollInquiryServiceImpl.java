@@ -80,7 +80,7 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
             throw new SecurityException("Not allowed");
         }
 
-        if (!Boolean.TRUE.equals(p.getSentToEmployee())) {
+        if (!canEmployeeView(p)) {
             throw new IllegalStateException("Payslip not released yet");
         }
 
