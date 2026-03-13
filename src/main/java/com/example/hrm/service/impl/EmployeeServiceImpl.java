@@ -26,7 +26,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // ✅ Constructor injection đầy đủ
     public EmployeeServiceImpl(EmployeeRepository repo,
                                CandidateRepository candidateRepository,
                                UserRepository userRepository,
@@ -37,9 +36,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // ==============================
-    // LIST
-    // ==============================
     @Override
     public List<Employee> list(String q, String status) {
         String qq = (q == null) ? "" : q.trim();
@@ -47,24 +43,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         return repo.search(qq, st);
     }
 
-    // ==============================
-    // GET BY ID
-    // ==============================
     @Override
     public Employee getById(Integer id) {
         return repo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + id));
     }
 
-    // ==============================
-    // CREATE
-    // ==============================
     @Override
     public Employee create(EmployeeAdd form) {
         validate(form, false);
 
         Employee e = new Employee();
-        applyForm(e, form);
+        applyCreateForm(e, form);
 
         if (e.getStatus() == null || e.getStatus().isBlank()) {
             e.setStatus("PROBATION");
@@ -77,15 +67,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         return repo.save(e);
     }
 
-    // ==============================
-    // UPDATE
-    // ==============================
     @Override
     public Employee update(EmployeeAdd form) {
         validate(form, true);
 
         Employee e = getById(form.getEmpId());
-        applyForm(e, form);
+
+        // Chỉ update general information
+        // KHÔNG update deptId / jobId ở màn hình này
+        applyGeneralInfoForUpdate(e, form);
 
         if (e.getStatus() == null || e.getStatus().isBlank()) {
             e.setStatus("PROBATION");
@@ -94,9 +84,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return repo.save(e);
     }
 
-    // ==============================
-    // DELETE
-    // ==============================
     @Override
     public void delete(Integer id) {
         if (!repo.existsById(id)) {
@@ -105,9 +92,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         repo.deleteById(id);
     }
 
-    // ==============================
-    // MAP ENTITY → FORM
-    // ==============================
     @Override
     public EmployeeAdd toForm(Employee e) {
         EmployeeAdd f = new EmployeeAdd();
@@ -128,10 +112,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         return f;
     }
 
-    // ==============================
-    // APPLY FORM → ENTITY
-    // ==============================
-    private void applyForm(Employee e, EmployeeAdd f) {
+    /**
+     * Dùng cho create employee mới
+     */
+    private void applyCreateForm(Employee e, EmployeeAdd f) {
         e.setUserId(f.getUserId());
         e.setFullName(f.getFullName());
         e.setGender(f.getGender());
@@ -147,9 +131,28 @@ public class EmployeeServiceImpl implements EmployeeService {
         e.setJoinDate(f.getJoinDate());
     }
 
-    // ==============================
-    // VALIDATION
-    // ==============================
+    /**
+     * Dùng cho màn hình HR employee detail
+     * Chỉ cập nhật thông tin chung, không đụng department/job
+     */
+    private void applyGeneralInfoForUpdate(Employee e, EmployeeAdd f) {
+        e.setFullName(f.getFullName());
+        e.setGender(f.getGender());
+        e.setDob(f.getDob());
+        e.setPhone(f.getPhone());
+        e.setAddress(f.getAddress());
+        e.setIdentityCard(f.getIdentityCard());
+        e.setTaxCode(f.getTaxCode());
+        e.setStatus(f.getStatus());
+        e.setJoinDate(f.getJoinDate());
+
+        // KHÔNG set:
+        // e.setDeptId(...)
+        // e.setJobId(...)
+        // e.setUserId(...)
+        // e.setDirectManagerId(...)
+    }
+
     private void validate(EmployeeAdd f, boolean requireId) {
 
         if (requireId && f.getEmpId() == null) {
@@ -167,9 +170,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    // ============================================================
-    // CREATE EMPLOYEE FROM CANDIDATE (ONBOARDING → HIRED)
-    // ============================================================
     @Override
     public void createEmployeeFromCandidate(Integer candidateId,
                                             LocalDate joinDate) {
@@ -181,19 +181,17 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new RuntimeException("Candidate not in onboarding stage");
         }
 
-        // 1️⃣ Create User
         User user = User.builder()
                 .username(candidate.getEmail())
                 .passwordHash(passwordEncoder.encode("123456"))
                 .email(candidate.getEmail())
-                .roleId(3) // Employee role
+                .roleId(3)
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         user = userRepository.save(user);
 
-        // 2️⃣ Create Employee
         Employee employee = Employee.builder()
                 .userId(user.getUserId())
                 .fullName(candidate.getFullName())
@@ -204,7 +202,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         repo.save(employee);
 
-        // 3️⃣ Update Candidate status
         candidate.setStatus(CandidateStatus.HIRED);
         candidateRepository.save(candidate);
     }

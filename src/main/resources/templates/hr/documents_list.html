@@ -21,7 +21,63 @@
     .table{width:100%;border-collapse:collapse;margin-top:12px}
     .table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:14px;vertical-align:top}
     .table th{color:#6b7280;font-weight:800}
-    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;border:1px solid #e5e7eb;background:#f9fafb}
+
+    .badge{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid #e5e7eb;
+      background:#f9fafb;
+      min-width:84px;
+      text-align:center;
+    }
+
+    /* TYPE */
+    .badge-type-document{
+      background:#dbeafe;
+      color:#1d4ed8;
+      border-color:#bfdbfe;
+    }
+    .badge-type-contract{
+      background:#ede9fe;
+      color:#6d28d9;
+      border-color:#ddd6fe;
+    }
+    .badge-type-other{
+      background:#f3f4f6;
+      color:#4b5563;
+      border-color:#e5e7eb;
+    }
+
+    /* STATUS */
+    .badge-status-draft{
+      background:#fef3c7;
+      color:#b45309;
+      border-color:#fde68a;
+    }
+    .badge-status-active{
+      background:#dcfce7;
+      color:#15803d;
+      border-color:#bbf7d0;
+    }
+    .badge-status-expired{
+      background:#fee2e2;
+      color:#dc2626;
+      border-color:#fecaca;
+    }
+    .badge-status-archived{
+      background:#e5e7eb;
+      color:#4b5563;
+      border-color:#d1d5db;
+    }
+    .badge-status-other{
+      background:#f3f4f6;
+      color:#4b5563;
+      border-color:#e5e7eb;
+    }
+
     .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
     .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
     .row{display:flex;gap:10px;flex-wrap:wrap}
@@ -155,8 +211,27 @@
             </form>
           </td>
 
-          <td><span class="badge" th:text="${d.docType}"></span></td>
-          <td><span class="badge" th:text="${d.status}"></span></td>
+          <td>
+            <span class="badge"
+                  th:text="${d.docType}"
+                  th:classappend="${
+                    d.docType == 'DOCUMENT' ? ' badge-type-document' :
+                    (d.docType == 'CONTRACT' ? ' badge-type-contract' : ' badge-type-other')
+                  }">
+            </span>
+          </td>
+
+          <td>
+            <span class="badge"
+                  th:text="${d.status}"
+                  th:classappend="${
+                    d.status == 'DRAFT' ? ' badge-status-draft' :
+                    (d.status == 'ACTIVE' ? ' badge-status-active' :
+                    (d.status == 'EXPIRED' ? ' badge-status-expired' :
+                    (d.status == 'ARCHIVED' ? ' badge-status-archived' : ' badge-status-other')))
+                  }">
+            </span>
+          </td>
 
           <td>
             <div th:text="${d.fileName}"></div>
