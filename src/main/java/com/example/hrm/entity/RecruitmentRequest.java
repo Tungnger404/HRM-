@@ -1,12 +1,13 @@
 package com.example.hrm.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "recruitment_requests")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class RecruitmentRequest {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer reqId;
@@ -24,20 +25,16 @@ public class RecruitmentRequest {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String reason;
 
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String technicalRequirements;
+
+    private String proposedSalary;
+    private String priority;
+
     private LocalDateTime deadline;
 
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private RecruitmentRequestStatus status;
-
-    public RecruitmentRequestStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(RecruitmentRequestStatus status) {
-        this.status = status;
-    }
 
     @ManyToOne
     @JoinColumn(name = "created_by")
@@ -45,67 +42,14 @@ public class RecruitmentRequest {
 
     private LocalDateTime createdAt;
 
-    public Department getDepartment() {
-        return department;
-    }
 
-    public void setDepartment(Department department) {
-        this.department = department;
-    }
+    @ManyToOne
+    @JoinColumn(name = "approved_by")
+    private Employee approvedBy;
 
-    public Integer getReqId() {
-        return reqId;
-    }
+    private LocalDateTime approvedAt;
+    // ------------------------------------------
 
-    public void setReqId(Integer reqId) {
-        this.reqId = reqId;
-    }
-
-    public JobPosition getJobPosition() {
-        return jobPosition;
-    }
-
-    public void setJobPosition(JobPosition jobPosition) {
-        this.jobPosition = jobPosition;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
-
-    public LocalDateTime getDeadline() {
-        return deadline;
-    }
-
-    public void setDeadline(LocalDateTime deadline) {
-        this.deadline = deadline;
-    }
-
-    public Employee getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(Employee createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    @OneToOne(mappedBy = "recruitmentRequest")
+    private JobDescription jobDescription;
 }

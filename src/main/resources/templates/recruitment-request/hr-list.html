@@ -2,187 +2,259 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/layout}">
-
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-hr'">
 <head>
-    <title>Recruitment Requests Management</title>
+    <title>Recruitment Management | HRM System</title>
     <style>
-        .stat-card { border: none; border-radius: 12px; transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-5px); }
-        .req-table thead th {
-            background-color: #f8fafc;
-            text-transform: uppercase;
-            font-size: 0.7rem;
-            letter-spacing: 1px;
-            font-weight: 700;
-            color: #64748b;
-            border-top: none;
+        /* Modern Enterprise UI Root */
+        :root {
+            --primary-blue: #4361ee;
+            --border-color: #eaecf0;
+            --bg-light: #fcfcfd;
+            --text-main: #101828;
+            --text-muted: #667085;
         }
-        .job-title-link { color: #1e293b; text-decoration: none; transition: 0.2s; }
-        .job-title-link:hover { color: #4361ee; }
-        .table-row-hover:hover { background-color: #f1f5f9 !important; cursor: pointer; }
-        .quantity-badge { background: #f1f5f9; color: #475569; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 700; }
-        .pagination .page-link { border: none; margin: 0 3px; border-radius: 8px; color: #64748b; font-weight: 600; }
-        .pagination .page-item.active .page-link { background-color: #4361ee; color: white; }
+
+        body { background-color: #f8f9fc; }
+
+        /* Filter Section */
+        .filter-container {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem;
+        }
+
+        .form-select-custom {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            padding: 0.5rem 0.75rem;
+            background-color: #fff;
+        }
+
+        /* Table Styling */
+        .card-table {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+        }
+
+        .req-table thead th {
+            background-color: var(--bg-light);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .req-table tbody td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            color: var(--text-main);
+        }
+
+        .table-row-hover:hover {
+            background-color: #f9fafb;
+            cursor: pointer;
+        }
+
+        /* Status Badges - Subtle Style */
+        .badge-subtle {
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .status-approved { background-color: #ecfdf3; color: #027a48; }
+        .status-rejected { background-color: #fef3f2; color: #b42318; }
+        .status-submitted { background-color: #fffaeb; color: #b54708; }
+
+        /* Priority Indicators */
+        .priority-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .bg-high { background-color: #f04438; }
+        .bg-medium { background-color: #f79009; }
+        .bg-low { background-color: #12b76a; }
+
+        /* Action Button */
+        .btn-view {
+            color: var(--primary-blue);
+            background: #fff;
+            border: 1px solid var(--primary-blue);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.813rem;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-view:hover {
+            background: var(--primary-blue);
+            color: #fff;
+        }
+
+        /* Search Input */
+        .search-wrapper { position: relative; }
+        .search-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        .search-wrapper input {
+            padding-left: 36px !important;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
     </style>
 </head>
 
 <body>
 
 <div layout:fragment="content">
-    <div class="container-fluid py-4">
+    <div class="container-fluid py-4 px-4">
 
-        <div class="row align-items-end mb-4">
-            <div class="col-lg-4">
-                <h2 class="fw-bold text-dark mb-1">Recruitment Requests</h2>
-                <p class="text-muted small mb-0">Review and manage headcount requests from department managers.</p>
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Recruitment Requests</h3>
+
             </div>
-            <div class="col-lg-8 mt-3 mt-lg-0">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card stat-card bg-warning bg-opacity-10 border-warning border-opacity-25 p-3">
-                            <div class="d-flex justify-content-between">
-                                <div><small class="text-warning fw-bold text-uppercase">Pending</small><h4 class="fw-bold mb-0">12</h4></div>
-                                <i class="bi bi-hourglass-split text-warning fs-3"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card bg-success bg-opacity-10 border-success border-opacity-25 p-3">
-                            <div class="d-flex justify-content-between">
-                                <div><small class="text-success fw-bold text-uppercase">Approved</small><h4 class="fw-bold mb-0">45</h4></div>
-                                <i class="bi bi-check-circle text-success fs-3"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card bg-primary bg-opacity-10 border-primary border-opacity-25 p-3">
-                            <div class="d-flex justify-content-between">
-                                <div><small class="text-primary fw-bold text-uppercase">Total YTD</small><h4 class="fw-bold mb-0">128</h4></div>
-                                <i class="bi bi-bar-chart text-primary fs-3"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="text-end">
+                <span class="badge bg-white text-dark border shadow-sm py-2 px-3">
+                    Total: <span class="fw-bold" th:text="${requests.size()}">0</span> Requests
+                </span>
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div th:if="${param.approved}" class="alert alert-success border-0 shadow-sm d-flex align-items-center rounded-3">
+            <i class="bi bi-check-circle-fill me-2"></i> Request approved successfully.
+        </div>
 
-            <div class="card-body bg-white border-bottom p-4">
+        <div class="card-table">
+            <div class="filter-container">
                 <form method="get" th:action="@{/hr/recruitment-request/list}" class="row g-3">
-                    <div class="col-lg-6">
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
+                    <div class="col-lg-4">
+                        <div class="search-wrapper">
+                            <i class="bi bi-search"></i>
                             <input type="text" name="keyword" th:value="${keyword}"
-                                   class="form-control bg-light border-0 ps-0 fs-6"
-                                   placeholder="Search by job title, department...">
+                                   class="form-control form-control-sm shadow-none"
+                                   placeholder="Search by ID or Position...">
                         </div>
                     </div>
 
-                    <div class="col-lg-3">
-                        <select name="status" class="form-select form-select-lg border-0 bg-light fs-6">
+                    <div class="col-lg-2">
+                        <select name="status" class="form-select-custom w-100" onchange="this.form.submit()">
                             <option value="">All Statuses</option>
-                            <option value="SUBMITTED" th:selected="${status=='SUBMITTED'}">⏳ Submitted</option>
-                            <option value="APPROVED" th:selected="${status=='APPROVED'}">✅ Approved</option>
-                            <option value="REJECTED" th:selected="${status=='REJECTED'}">❌ Rejected</option>
+                            <option value="SUBMITTED" th:selected="${status == 'SUBMITTED'}">Submitted</option>
+                            <option value="APPROVED" th:selected="${status == 'APPROVED'}">Approved</option>
+                            <option value="REJECTED" th:selected="${status == 'REJECTED'}">Rejected</option>
                         </select>
                     </div>
 
-                    <div class="col-lg-3">
-                        <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" type="submit">
-                            Apply Filter
+                    <div class="col-lg-2">
+                        <select name="priority" class="form-select-custom w-100" onchange="this.form.submit()">
+                            <option value="">All Priorities</option>
+                            <option value="HIGH" th:selected="${priority == 'HIGH'}">High Priority</option>
+                            <option value="MEDIUM" th:selected="${priority == 'MEDIUM'}">Medium</option>
+                            <option value="LOW" th:selected="${priority == 'LOW'}">Low Priority</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 ms-auto">
+                        <button class="btn btn-sm btn-primary w-100 fw-bold py-2 shadow-sm" type="submit">
+                            <i class="bi bi-funnel me-1"></i> Filter
                         </button>
                     </div>
                 </form>
             </div>
 
             <div class="table-responsive">
-                <table class="table req-table align-middle mb-0">
+                <table class="table req-table mb-0">
                     <thead>
                     <tr>
-                        <th class="ps-4">Req ID</th>
+                        <th style="width: 100px;">Req ID</th>
                         <th>Job Information</th>
-                        <th class="text-center">Qty</th>
+                        <th>Priority</th>
+                        <th class="text-center">Quantity</th>
                         <th class="text-center">Status</th>
                         <th>Date Created</th>
-                        <th class="text-end pe-4">Action</th>
+                        <th class="text-end">Action</th>
                     </tr>
                     </thead>
-                    <tbody class="border-top-0">
+                    <tbody>
                     <tr th:each="req : ${requests}" class="table-row-hover"
-                        th:onclick="|window.location.href='@{/hr/recruitment-request/{id}(id=${req.reqId})}'|">
+                        th:onclick="|window.location.href='@{/hr/recruitment-request/detail/{id}(id=${req.reqId})}'|">
 
-                        <td class="ps-4">
-                            <span class="badge bg-light text-muted border" th:text="${'#' + req.reqId}"></span>
+                        <td class="fw-semibold text-primary" th:text="${'#' + req.reqId}"></td>
+
+                        <td>
+                            <div class="fw-bold mb-1" th:text="${req.jobPosition.title}">Position</div>
+                            <div class="text-muted smaller">
+                                <i class="bi bi-building me-1"></i><span th:text="${req.department.deptName}">Dept</span>
+                            </div>
                         </td>
 
                         <td>
-                            <div class="job-title-link fw-bold" th:text="${req.jobPosition.title}">Job Title</div>
-                            <div class="text-muted small mt-1">
-                                <i class="bi bi-building me-1"></i>
-                                <span th:text="${req.department != null ? req.department.deptName : 'N/A'}"></span>
+                            <div class="priority-label">
+                                <span th:class="'dot bg-' + ${#strings.toLowerCase(req.priority)}"></span>
+                                <span th:text="${req.priority}"></span>
                             </div>
                         </td>
 
                         <td class="text-center">
-                            <span class="quantity-badge shadow-sm border" th:text="${req.quantity}"></span>
+                            <span class="fw-bold" th:text="${req.quantity}">1</span>
                         </td>
 
-                        <td class="text-center" th:switch="${req.status != null ? req.status.name() : ''}">
-                                <span th:case="'APPROVED'" class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
-                                    <i class="bi bi-check-circle-fill me-1"></i> Approved
+                        <td class="text-center">
+                                <span th:if="${req.status.name() == 'APPROVED'}" class="badge-subtle status-approved">
+                                    <i class="bi bi-check2"></i> Approved
                                 </span>
-                            <span th:case="'REJECTED'" class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill">
-                                    <i class="bi bi-x-circle-fill me-1"></i> Rejected
+                            <span th:if="${req.status.name() == 'REJECTED'}" class="badge-subtle status-rejected">
+                                    <i class="bi bi-x"></i> Rejected
                                 </span>
-                            <span th:case="'SUBMITTED'" class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
-                                    <i class="bi bi-clock-fill me-1"></i> Submitted
+                            <span th:if="${req.status.name() == 'SUBMITTED'}" class="badge-subtle status-submitted">
+                                    <i class="bi bi-clock-history"></i> Submitted
                                 </span>
-                            <span th:case="*" class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill" th:text="${req.status}"></span>
                         </td>
 
                         <td>
-                            <div class="text-dark small fw-medium" th:text="${req.createdAt != null ? #temporals.format(req.createdAt,'dd MMM, yyyy') : ''}"></div>
-                            <div class="text-muted x-small" style="font-size: 0.7rem;" th:text="${#temporals.format(req.createdAt,'HH:mm')}"></div>
+                            <div class="small fw-medium" th:text="${#temporals.format(req.createdAt,'dd MMM, yyyy')}"></div>
+                            <div class="text-muted smaller" th:text="${#temporals.format(req.createdAt,'HH:mm')}"></div>
                         </td>
 
-                        <td class="text-end pe-4">
-                            <a class="btn btn-sm btn-light border rounded-circle"
-                               th:href="@{/hr/recruitment-request/{id}(id=${req.reqId})}"
-                               onclick="event.stopPropagation();">
-                                <i class="bi bi-chevron-right"></i>
+                        <td class="text-end">
+                            <a th:href="@{/hr/recruitment-request/detail/{id}(id=${req.reqId})}"
+                               class="btn-view" onclick="event.stopPropagation();">
+                                View
                             </a>
                         </td>
                     </tr>
-
                     <tr th:if="${#lists.isEmpty(requests)}">
-                        <td colspan="6" class="py-5 text-center">
-                            <div class="opacity-50 mb-3">
-                                <i class="bi bi-clipboard-x" style="font-size: 4rem;"></i>
-                            </div>
-                            <h5 class="fw-bold text-muted">No requests found</h5>
-                            <p class="text-muted small">Try refining your search keyword or changing the status filter.</p>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-folder2-open d-block fs-2 mb-2 opacity-50"></i>
+                            No recruitment requests found.
                         </td>
                     </tr>
                     </tbody>
                 </table>
-            </div>
-
-            <div class="card-footer bg-light bg-opacity-50 border-top py-4" th:if="${totalPages > 1}">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mb-0 shadow-sm d-inline-flex">
-                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                            <a class="page-link" th:href="@{/hr/recruitment-request/list(page=${currentPage-1},keyword=${keyword},status=${status})}">Prev</a>
-                        </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0,totalPages-1)}" th:classappend="${i==currentPage}? 'active'">
-                            <a class="page-link" th:text="${i+1}" th:href="@{/hr/recruitment-request/list(page=${i},keyword=${keyword},status=${status})}"></a>
-                        </li>
-                        <li class="page-item" th:classappend="${currentPage==totalPages-1}? 'disabled'">
-                            <a class="page-link" th:href="@{/hr/recruitment-request/list(page=${currentPage+1},keyword=${keyword},status=${status})}">Next</a>
-                        </li>
-                    </ul>
-                </nav>
             </div>
         </div>
     </div>

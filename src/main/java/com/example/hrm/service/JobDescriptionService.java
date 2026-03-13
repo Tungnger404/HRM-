@@ -2,11 +2,12 @@ package com.example.hrm.service;
 
 import com.example.hrm.dto.*;
 import com.example.hrm.entity.JobDescriptionStatus;
-
 import java.security.Principal;
 import java.util.List;
 
 public interface JobDescriptionService {
+
+    JobDescriptionCreateDTO prepareCreateDTO(Integer requestId);
 
     void create(JobDescriptionCreateDTO dto, Principal principal);
 

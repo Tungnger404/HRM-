@@ -2,7 +2,6 @@ package com.example.hrm.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDate;
 
 @Entity
@@ -19,12 +18,10 @@ public class JobPosting {
     @Column(name = "posting_id")
     private Integer postingId;
 
-    // ===== RELATION TO RECRUITMENT REQUEST =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "req_id", nullable = false)
     private RecruitmentRequest recruitmentRequest;
 
-    // ===== RELATION TO JOB DESCRIPTION =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "jd_id")
     private JobDescription jobDescription;
@@ -41,51 +38,31 @@ public class JobPosting {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String benefits;
 
-    // ================= NEW FILTER FIELDS =================
-
     @Column(length = 150)
-    private String location; // dùng cho dropdown filter
+    private String location;
 
     @Column(name = "employment_type", length = 100)
-    private String employmentType; // Full-time / Intern / Remote
+    private String employmentType;
 
-    @Column(
-            name = "is_hot",
-            nullable = false,
-            columnDefinition = "bit default 0"
-    )
     @Builder.Default
     private Boolean isHot = false;
 
-    // ================= DATE =================
-
-    @Column(name = "publish_date")
     private LocalDate publishDate;
-
-    @Column(name = "expiry_date")
     private LocalDate expiryDate;
-
-    // ================= STATUS =================
 
     @Column(nullable = false)
     @Builder.Default
-    private String status = "OPEN"; // OPEN / CLOSED / EXPIRED
-
-    // ================= PUBLIC PORTAL =================
+    private String status = "OPEN";
 
     @Column(unique = true, length = 200)
-    private String slug; // dùng cho SEO URL: /careers/java-developer
+    private String slug;
 
-    @Column(name = "is_public", nullable = false)
     @Builder.Default
-    private Boolean isPublic = true; // chỉ hiển thị job public
+    private Boolean isPublic = true;
 
-    @Column(name = "view_count", nullable = false)
     @Builder.Default
     private Integer viewCount = 0;
 
-    // ================= STATISTIC =================
-
     @Transient
-    private Long candidateCount; // dùng hiển thị count ngoài UI
+    private Long candidateCount;
 }
