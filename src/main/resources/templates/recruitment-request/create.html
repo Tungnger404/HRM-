@@ -6,126 +6,263 @@
       th:with="sidebar='sidebar-manager'">
 
 <head>
-    <title>Create Recruitment Request</title>
+    <title>Create Recruitment Request | Enterprise HRM</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        :root { --primary-color: #4361ee; }
-        .form-card { border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        /* Enterprise Design System */
+        :root {
+            --primary-blue: #4361ee;
+            --surface-color: #ffffff;
+            --bg-body: #f8f9fc;
+            --border-subtle: #eaecf0;
+            --text-heading: #101828;
+            --text-label: #344054;
+        }
+
+        body { background-color: var(--bg-body); font-family: 'Inter', sans-serif; }
+
+        /* Card Header Gradient */
         .form-header {
             background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
-            color: white; border-radius: 16px 16px 0 0 !important; padding: 25px;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 2rem;
         }
-        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; margin-bottom: 8px; }
-        .input-group-text { background-color: #f8fafc; border-right: none; color: #94a3b8; }
-        .form-control, .form-select { border-left: none; border-radius: 0 8px 8px 0; padding: 10px 15px; border-color: #e2e8f0; }
-        .form-control:focus, .form-select:focus { border-color: #e2e8f0; box-shadow: none; background-color: #fcfdfe; }
+
+        .form-card {
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            background: var(--surface-color);
+        }
+
+        /* Form Controls - Modern Style */
+        .section-box {
+            background: #fcfcfd;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-label);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group-text {
+            background-color: #fff;
+            border-right: none;
+            color: #667085;
+            border-color: #d0d5dd;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border-color: #d0d5dd;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+        }
+
+        /* Group Input Fix */
+        .input-group > .form-control, .input-group > .form-select {
+            border-left: none;
+        }
+
+        /* Action Buttons */
         .btn-submit {
-            background: var(--primary-color); border: none; padding: 12px 30px;
-            border-radius: 10px; font-weight: 700; transition: all 0.3s;
+            background: var(--primary-blue);
+            border: none;
+            padding: 10px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: 0.2s;
         }
-        .btn-submit:hover { background: #3046c5; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3); }
-        .section-title { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+
+        .btn-submit:hover {
+            background: #3046c5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+        }
+
+        .btn-back {
+            color: #667085;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .btn-back:hover {
+            background-color: #f9fafb;
+            color: var(--text-heading);
+        }
+
+        /* Custom Textarea */
+        textarea.form-control {
+            border-left: 1px solid #d0d5dd !important;
+        }
     </style>
 </head>
 
 <body>
 
 <main layout:fragment="content">
-    <div class="container-fluid py-4">
+    <div class="container py-5">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1">
-                        <li class="breadcrumb-item"><a href="#">Management</a></li>
-                        <li class="breadcrumb-item active">Recruitment Request</li>
-                    </ol>
-                </nav>
-                <h2 class="fw-bold text-dark mb-0">New Recruitment Request</h2>
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="fw-bold text-dark mb-1">Create Recruitment Request</h3>
+
+                    </div>
+                    <a th:href="@{/recruitment-request/my-requests}" class="btn btn-back">
+                        <i class="bi bi-arrow-left me-1"></i> Back to List
+                    </a>
+                </div>
             </div>
-            <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4">
-                <i class="bi bi-arrow-left me-1"></i> Back
-            </a>
         </div>
 
         <div class="row justify-content-center">
-            <div class="col-lg-10 col-xl-8">
+            <div class="col-lg-10">
 
                 <div class="card form-card">
                     <div class="card-header form-header border-0">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3">
-                                <i class="bi bi-person-plus-fill fs-3"></i>
+                        <div class="d-flex align-items-center text-white">
+                            <div class="bg-white bg-opacity-20 rounded-3 p-3 me-3">
+                                <i class="bi bi-clipboard-check fs-3"></i>
                             </div>
                             <div>
-                                <h4 class="mb-0 fw-bold">Request Form</h4>
+                                <h5 class="mb-0 fw-bold">Request Specification</h5>
 
                             </div>
                         </div>
                     </div>
 
                     <div class="card-body p-4 p-md-5">
-                        <form th:action="@{/recruitment-request/create}" th:object="${dto}" method="post" class="row g-4">
+                        <form th:action="@{/recruitment-request/create}" th:object="${dto}" method="post">
 
-                            <div class="col-12"><div class="section-title">Position Details</div></div>
+                            <input type="hidden" th:field="*{creatorId}" />
 
-                            <div class="col-md-6">
-                                <label class="form-label">Target Department</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-building"></i></span>
-                                    <select class="form-select" th:field="*{departmentId}" required>
-                                        <option value="">-- Select department --</option>
-                                        <option th:each="d : ${departments}" th:value="${d.deptId}" th:text="${d.deptName}"></option>
-                                    </select>
+                            <div class="section-box">
+                                <div class="section-title">
+                                    <i class="bi bi-info-circle"></i> Basic Position Info
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Target Department <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                            <select class="form-select" th:field="*{departmentId}" required>
+                                                <option value="">-- Choose Department --</option>
+                                                <option th:each="d : ${departments}" th:value="${d.deptId}" th:text="${d.deptName}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Job Position <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                            <select class="form-select" th:field="*{jobId}" required>
+                                                <option value="">-- Choose Position --</option>
+                                                <option th:each="j : ${jobs}" th:value="${j.jobId}" th:text="${j.title}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Job Position</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
-                                    <select class="form-select" th:field="*{jobId}" required>
-                                        <option value="">-- Select job --</option>
-                                        <option th:each="j : ${jobs}" th:value="${j.jobId}" th:text="${j.title}"></option>
-                                    </select>
+                            <div class="section-box">
+                                <div class="section-title">
+                                    <i class="bi bi-calendar-check"></i> Capacity & Timeline
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Quantity <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-people"></i></span>
+                                            <input type="number" class="form-control" th:field="*{quantity}" min="1" placeholder="e.g. 1" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Priority <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-flag"></i></span>
+                                            <select class="form-select" th:field="*{priority}" required>
+                                                <option value="LOW">Low</option>
+                                                <option value="MEDIUM" selected>Medium</option>
+                                                <option value="HIGH">High</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Expected Deadline <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                            <input type="date" class="form-control" th:field="*{deadline}" id="deadlineInput" required>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="col-12 mt-5"><div class="section-title">Requirements & Timing</div></div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Quantity (Headcount)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-people"></i></span>
-                                    <input type="number" class="form-control" th:field="*{quantity}" min="1" placeholder="e.g. 2" required>
+                            <div class="section-box">
+                                <div class="section-title">
+                                    <i class="bi bi-list-task"></i> Hiring Justification
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Proposed Salary Range</label>
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text"><i class="bi bi-cash-stack"></i></span>
+                                            <input type="text" class="form-control" th:field="*{proposedSalary}"
+                                                   placeholder="e.g. 15,000,000 - 25,000,000 VNĐ">
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Technical Requirements</label>
+                                        <textarea class="form-control" th:field="*{technicalRequirements}" rows="3"
+                                                  placeholder="E.g. Java, Spring Boot, 2+ years of experience..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Reason for Request <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" th:field="*{reason}" rows="3"
+                                                  placeholder="Why do we need this position right now?" required></textarea>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Expected Deadline</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                    <input type="date" class="form-control" th:field="*{deadline}" required>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label">Justification / Reason for Hiring</label>
-                                <textarea class="form-control border-start" th:field="*{reason}" rows="4"
-                                          placeholder="Explain why this position is needed (e.g. Project X expansion, backfill...)"
-                                          style="border-radius: 8px;"></textarea>
-                            </div>
-
-                            <div class="col-12 mt-5 text-end">
-                                <button class="btn btn-primary btn-submit shadow-sm" type="submit">
-                                    <i class="bi bi-send-fill me-2"></i> Submit Request
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <button class="btn btn-primary btn-submit px-5" type="submit">
+                                    Submit Request <i class="bi bi-arrow-right ms-2"></i>
                                 </button>
                             </div>
 
-                            <div class="col-12" th:if="${param.success}">
-                                <div class="alert alert-success d-flex align-items-center border-0 shadow-sm" role="alert">
-                                    <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                                    <div>Request submitted successfully! HR will review it shortly.</div>
+                            <div class="mt-4" th:if="${param.success}">
+                                <div class="alert alert-success border-0 shadow-sm d-flex align-items-center">
+                                    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">Success!</h6>
+                                        <p class="mb-0 small">Request submitted. You can track status in "My Requests".</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -133,12 +270,22 @@
                     </div>
                 </div>
 
-
-
             </div>
         </div>
     </div>
 </main>
+
+<script layout:fragment="script">
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('deadlineInput');
+        if(dateInput) {
+            // Set min date is tomorrow to be realistic
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
+        }
+    });
+</script>
 
 </body>
 </html>

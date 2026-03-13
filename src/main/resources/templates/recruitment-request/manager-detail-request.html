@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-manager'">
+
+<head>
+    <title>Request Detail | HRM Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        :root {
+            --primary-blue: #4361ee;
+            --border-color: #eaecf0;
+            --bg-body: #f8f9fc;
+        }
+
+        body { background-color: var(--bg-body); }
+
+        /* Detail Card */
+        .detail-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            background: #ffffff;
+        }
+
+        .header-section {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Subtle Badges */
+        .priority-badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .priority-HIGH { background: #fef3f2; color: #b42318; border: 1px solid #fee4e2; }
+        .priority-MEDIUM { background: #fffaeb; color: #b54708; border: 1px solid #fef0c7; }
+        .priority-LOW { background: #ecfdf3; color: #027a48; border: 1px solid #d1fadf; }
+
+        /* Information Sections */
+        .info-label {
+            color: #667085;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            color: #101828;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .content-box {
+            background: #fcfcfd;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Feedback Box for Rejected */
+        .feedback-box {
+            background: #fff1f2;
+            border: 1px solid #fda29b;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .reason-text {
+            color: #344054;
+            line-height: 1.6;
+            font-style: italic;
+            border-left: 3px solid #d0d5dd;
+            padding-left: 1rem;
+        }
+
+        /* Deadline Side Widget */
+        .deadline-widget {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .btn-back {
+            color: #667085;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: 0.2s;
+            background: #fff;
+        }
+        .btn-back:hover { background: #f9fafb; color: #101828; }
+    </style>
+</head>
+
+<body>
+
+<div layout:fragment="content">
+    <div class="container py-5">
+
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/recruitment-request/my-requests}" class="text-decoration-none text-muted">My Requests</a></li>
+                <li class="breadcrumb-item active fw-semibold text-dark">View Detail</li>
+            </ol>
+        </nav>
+
+        <div class="card detail-card overflow-hidden">
+            <div class="header-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <span class="text-muted small fw-bold" th:text="'#' + ${request.reqId}"></span>
+                            <span th:class="'priority-badge priority-' + ${request.priority}" th:text="${request.priority}"></span>
+                        </div>
+                        <h2 class="fw-bold text-dark mb-0" th:text="${request.jobPosition.title}">Position Title</h2>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <span class="badge rounded-pill px-4 py-2 fw-bold shadow-sm"
+                              th:classappend="${request.status.name() == 'SUBMITTED' ? 'bg-warning text-dark' :
+                                                request.status.name() == 'APPROVED' ? 'bg-success text-white' :
+                                                request.status.name() == 'REJECTED' ? 'bg-danger text-white' : 'bg-secondary'}"
+                              th:text="${request.status}">
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-5">
+
+                    <div class="col-lg-7">
+                        <div th:if="${request.status.name() == 'REJECTED'}" class="feedback-box animate__animated animate__headShake">
+                            <h6 class="text-danger fw-bold mb-2 small uppercase"><i class="bi bi-exclamation-triangle-fill me-2"></i>Feedback from HR</h6>
+                            <p class="mb-0 text-dark fw-medium" th:text="${request.reason}">The headcount for this department is currently full for Q1.</p>
+                        </div>
+
+                        <h6 class="info-label"><i class="bi bi-info-circle me-2"></i>Position Requirements</h6>
+                        <div class="content-box">
+                            <div class="row g-4">
+                                <div class="col-sm-6">
+                                    <label class="info-label d-block">Department</label>
+                                    <div class="info-value"><i class="bi bi-building me-2 opacity-50"></i><span th:text="${request.department.deptName}"></span></div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="info-label d-block">Quantity Requested</label>
+                                    <div class="info-value"><i class="bi bi-people me-2 opacity-50"></i><span th:text="${request.quantity + ' Positions'}"></span></div>
+                                </div>
+                                <div class="col-12 border-top pt-3">
+                                    <label class="info-label d-block">Salary Range</label>
+                                    <div class="info-value text-success" th:text="${request.proposedSalary ?: 'Negotiable'}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="info-label mt-4"><i class="bi bi-cpu me-2"></i>Technical Specification</h6>
+                        <div class="content-box">
+                            <p class="mb-0 text-dark" th:text="${request.technicalRequirements ?: 'No specific technical requirements provided.'}"></p>
+                        </div>
+
+                        <h6 class="info-label mt-4"><i class="bi bi-chat-quote me-2"></i>Justification</h6>
+                        <div class="content-box">
+                            <div class="reason-text" th:text="${request.reason}">
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5">
+                        <div class="deadline-widget mb-4 shadow-sm">
+                            <label class="info-label d-block mb-1">Expected Hiring Date</label>
+                            <div class="fs-3 fw-bold text-primary">
+                                <i class="bi bi-calendar-event me-2"></i>
+                                <span th:text="${#temporals.format(request.deadline, 'dd MMM, yyyy')}"></span>
+                            </div>
+                        </div>
+
+                        <div class="card border-light-subtle rounded-4 p-4 mb-4 bg-light bg-opacity-50">
+                            <h6 class="info-label mb-3">Lifecycle Info</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-white text-muted rounded-circle p-2 me-3 shadow-sm" style="width: 36px; height: 36px; display: flex; align-items:center; justify-content:center;">
+                                    <i class="bi bi-plus-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted smaller">Submitted On</div>
+                                    <div class="fw-bold small" th:text="${#temporals.format(request.createdAt, 'dd/MM/yyyy HH:mm')}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-4 border text-center shadow-sm"
+                             th:classappend="${request.status.name() == 'APPROVED' ? 'bg-success bg-opacity-10 border-success-subtle' : 'bg-white'}">
+                            <div th:if="${request.status.name() == 'APPROVED'}">
+                                <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                                <h6 class="fw-bold text-success mt-3 mb-1">Request Approved</h6>
+                                <p class="text-muted smaller mb-0" th:if="${request.jobDescription != null}">HR has successfully created the JD.</p>
+                                <p class="text-muted smaller mb-0" th:unless="${request.jobDescription != null}">Waiting for HR to finalize the Job Description.</p>
+                            </div>
+                            <div th:if="${request.status.name() == 'SUBMITTED'}">
+                                <i class="bi bi-hourglass-split text-warning fs-1"></i>
+                                <h6 class="fw-bold text-dark mt-3 mb-1">Under Review</h6>
+                                <p class="text-muted smaller mb-0">HR is currently evaluating your proposal.</p>
+                            </div>
+                            <div th:if="${request.status.name() == 'REJECTED'}">
+                                <i class="bi bi-x-circle-fill text-danger fs-1"></i>
+                                <h6 class="fw-bold text-danger mt-3 mb-1">Request Declined</h6>
+                                <p class="text-muted smaller mb-0">Review the feedback on the left for details.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-4 border-top text-center">
+                    <a th:href="@{/recruitment-request/my-requests}" class="btn btn-back px-5 py-2">
+                        <i class="bi bi-arrow-left me-2"></i> Back to My List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

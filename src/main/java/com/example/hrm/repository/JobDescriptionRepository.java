@@ -21,5 +21,6 @@ public interface JobDescriptionRepository
            WHERE jd.id = :id
            """)
     Optional<JobDescription> findByIdWithJob(@Param("id") Integer id);
+    boolean existsByRecruitmentRequest_ReqId(Integer reqId);
 }
 

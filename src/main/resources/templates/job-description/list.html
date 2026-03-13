@@ -46,8 +46,8 @@
                     </ol>
                 </nav>
             </div>
-            <a th:href="@{/hr/job-description/create}" class="btn btn-primary px-4 shadow-sm rounded-pill">
-                <i class="bi bi-plus-lg me-1"></i> Create JD
+            <a th:href="@{/hr/recruitment-request/list}" class="btn btn-primary px-4 shadow-sm rounded-pill">
+                <i class="bi bi-plus-lg me-1"></i> Create JD from Request
             </a>
         </div>
 
@@ -85,15 +85,20 @@
                         </td>
 
                         <td class="text-center">
-                                    <span class="badge rounded-pill px-3 py-2"
-                                          th:if="${jd.status == 'ACTIVE'}"
-                                          th:classappend="'bg-success-subtle text-success border border-success-subtle'">
-                                        <i class="bi bi-check-circle-fill me-1"></i> ACTIVE
-                                    </span>
-                            <span class="badge rounded-pill px-3 py-2 text-secondary bg-light border"
-                                  th:if="${jd.status == 'INACTIVE'}">
-                                        <i class="bi bi-pause-circle me-1"></i> INACTIVE
-                                    </span>
+                            <div th:switch="${#strings.toString(jd.status)}">
+
+        <span th:case="'ACTIVE'" class="badge rounded-pill px-3 py-2 bg-success-subtle text-success border border-success-subtle">
+            <i class="bi bi-check-circle-fill me-1"></i> ACTIVE
+        </span>
+
+                                <span th:case="'INACTIVE'" class="badge rounded-pill px-3 py-2 text-secondary bg-light border">
+            <i class="bi bi-pause-circle me-1"></i> INACTIVE
+        </span>
+
+                                <span th:case="*" class="badge rounded-pill px-3 py-2 bg-warning-subtle text-warning border border-warning-subtle">
+            <i class="bi bi-exclamation-circle me-1"></i> <span th:text="${jd.status}"></span>
+        </span>
+                            </div>
                         </td>
 
                         <td class="text-end pe-4">

@@ -27,18 +27,22 @@ public class JobDescriptionController {
     }
 
     // ================= CREATE FORM =================
+// ================= CREATE FORM (Giao diện) =================
     @GetMapping("/create")
-    public String createForm(Model model) {
-        model.addAttribute("dto", new JobDescriptionCreateDTO());
-        model.addAttribute("jobs", jobRepository.findAll());
+    public String createForm(@RequestParam(value = "requestId", required = false) Integer requestId, Model model) {
+        if (requestId != null) {
+            JobDescriptionCreateDTO dto = service.prepareCreateDTO(requestId);
+            model.addAttribute("dto", dto);
+        } else {
+            model.addAttribute("dto", new JobDescriptionCreateDTO());
+        }
         return "job-description/create";
     }
 
-    // ================= CREATE =================
+    // ================= CREATE (Xử lý lưu) =================
     @PostMapping("/create")
-    public String create(@ModelAttribute JobDescriptionCreateDTO dto,
+    public String create(@ModelAttribute("dto") JobDescriptionCreateDTO dto,
                          Principal principal) {
-
         service.create(dto, principal);
         return "redirect:/hr/job-description?success";
     }

@@ -70,4 +70,12 @@ public class RecruitmentRequestController {
         return "recruitment-request/my-request";
 
     }
+
+
+    @GetMapping("/detail/{id}")
+    public String viewManagerDetail(@PathVariable Integer id, Model model) {
+        RecruitmentRequest request = recruitmentRequestService.getById(id);
+        model.addAttribute("request", request);
+        return "recruitment-request/manager-detail-request";
+    }
 }
