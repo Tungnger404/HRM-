@@ -43,6 +43,43 @@
       </a>
     </li>
 
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/view-request}">
+      <!--   th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">-->
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-briefcase"></use>
+        </svg>
+        View request
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/schedules/monthly}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/schedules/monthly')} ? 'active' : ''">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-calendar"></use>
+        </svg>
+        Monthly Shift Schedule
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/shifts}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/shifts')} ? 'active' : ''">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-clock"></use></svg>
+        Shift Templates
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/shift-rules}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/shift-rules')} ? 'active' : ''">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-settings"></use></svg>
+        Shift Rules
+      </a>
+    </li>
     <li class="nav-title">Evaluation & KPI</li>
 
     <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/hr/kpi')} ? 'show' : ''">
@@ -65,15 +102,9 @@
             Pending Verifications
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" th:href="@{/hr/promotions/pending}"
-             th:classappend="${#strings.contains(currentUri, '/promotions/pending')} ? 'active' : ''">
-            <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-            Promotion Requests
-          </a>
-        </li>
       </ul>
     </li>
+
 
     <li class="nav-title">RECRUITMENT MANAGEMENT</li>
 
