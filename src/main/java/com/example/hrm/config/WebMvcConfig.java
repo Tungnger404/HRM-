@@ -3,6 +3,9 @@ package com.example.hrm.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.*;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
@@ -15,14 +18,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("classpath:/static/images/");
 
-        // ✅ CoreUI
         registry.addResourceHandler("/vendors/**")
                 .addResourceLocations("classpath:/static/vendors/");
         registry.addResourceHandler("/assets/**")
                 .addResourceLocations("classpath:/static/assets/");
-
         registry.addResourceHandler("/webjars/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/");
+
+        Path uploadPath = Paths.get("uploads").toAbsolutePath().normalize();
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploadPath.toString() + "/");
     }
 
     @Override

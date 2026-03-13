@@ -16,22 +16,15 @@
     <script th:src="@{/js/config.js}"></script>
 
     <style>
-        /* =========================
-           ROOT VARIABLES
-        ========================= */
         :root {
             --bg-body: #f4f6fb;
             --bg-surface: #ffffff;
             --text-primary: #1e293b;
             --text-secondary: #64748b;
             --border-color: #e2e8f0;
-
             --cui-sidebar-width: 260px;
         }
 
-        /* =========================
-           BODY
-        ========================= */
         body {
             background-color: var(--bg-body);
             color: var(--text-primary);
@@ -40,9 +33,6 @@
             transition: background 0.3s ease, color 0.3s ease;
         }
 
-        /* =========================
-           SIDEBAR (Improved SaaS Style)
-        ========================= */
         .sidebar {
             width: var(--cui-sidebar-width);
             background: linear-gradient(180deg, #0f2a5a, #123c85);
@@ -50,13 +40,11 @@
             box-shadow: 4px 0 20px rgba(0,0,0,0.2);
             transition: left 0.3s ease;
             border-right: none !important;
-
-            height: 100vh;          /* full màn hình */
-            overflow-y: auto;       /* ✅ cho phép cuộn */
-            overflow-x: hidden;     /* tránh scroll ngang */
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
-        /* Sidebar Brand */
         .sidebar-brand {
             padding: 24px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -72,7 +60,6 @@
             justify-content: center;
         }
 
-        /* Section title */
         .sidebar .nav-title {
             color: rgba(255,255,255,0.6);
             font-size: 12px;
@@ -80,7 +67,6 @@
             margin-top: 25px;
         }
 
-        /* Menu link */
         .sidebar .nav-link {
             color: #e6edf7 !important;
             font-weight: 500;
@@ -90,13 +76,11 @@
             transition: all 0.2s ease;
         }
 
-        /* Hover effect */
         .sidebar .nav-link:hover {
             background: rgba(255,255,255,0.08);
             transform: translateX(3px);
         }
 
-        /* Active effect */
         .sidebar .nav-link.active {
             background: rgba(255,255,255,0.12) !important;
             border-left: 4px solid #4facfe;
@@ -104,25 +88,21 @@
             font-weight: 600;
         }
 
-        /* Icons */
         .sidebar svg,
         .sidebar .nav-icon {
             color: rgba(255,255,255,0.85);
             fill: rgba(255,255,255,0.85);
         }
 
-
         .sidebar .nav-group-toggle {
             pointer-events: auto !important;
         }
-
 
         @media (min-width: 992px) {
             .sidebar {
                 display: block !important;
             }
         }
-
 
         .body {
             background-color: var(--bg-body);
@@ -136,9 +116,6 @@
             box-shadow: 0 6px 18px rgba(0,0,0,0.06);
         }
 
-        /* =========================
-           NAVBAR
-        ========================= */
         .header {
             height: 72px;
             background: linear-gradient(90deg, #0f2a5a, #123c85);
@@ -149,7 +126,6 @@
             z-index: 1100;
         }
 
-        /* Subtle bottom line */
         .header::after {
             content: "";
             position: absolute;
@@ -160,7 +136,6 @@
             background: rgba(255,255,255,0.1);
         }
 
-        /* Navbar icon color */
         .header .nav-link,
         .header svg {
             color: #ffffff !important;
@@ -173,32 +148,15 @@
             transition: 0.2s ease;
         }
 
-        /* Avatar */
-        .avatar-img {
-            border: 2px solid rgba(255,255,255,0.4);
-            transition: 0.3s ease;
-        }
-
-        .avatar-img:hover {
-            box-shadow: 0 0 10px rgba(79, 172, 254, 0.7);
-        }
-
-        /* =========================
-           FOOTER
-        ========================= */
         .footer {
             padding: 15px 30px;
             color: var(--text-secondary);
         }
 
-        /* =========================
-           DROPDOWN FIX
-        ========================= */
         .dropdown-menu {
             z-index: 2000 !important;
         }
 
-        /* Force sidebar always expanded, never narrow */
         .sidebar {
             width: var(--cui-sidebar-width) !important;
         }
@@ -208,6 +166,93 @@
             width: var(--cui-sidebar-width) !important;
         }
 
+        /* ===== USER HEADER ===== */
+        .header-user-trigger {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .header-user-trigger:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .header-user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            line-height: 1.1;
+        }
+
+        .header-user-name {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-user-role {
+            color: rgba(255,255,255,0.75);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .header-avatar-wrap {
+            width: 46px;
+            height: 46px;
+            min-width: 46px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.35);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+            background: rgba(255,255,255,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .header-avatar-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 800;
+            color: #ffffff;
+            background: linear-gradient(135deg, #60a5fa, #2563eb);
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            .header-user-info {
+                display: none;
+            }
+
+            .header-user-trigger {
+                padding: 4px;
+            }
+
+            .header-avatar-wrap {
+                width: 42px;
+                height: 42px;
+                min-width: 42px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -224,9 +269,9 @@
             <span style="font-size:13px; opacity:0.7;">HRM System</span>
         </div>
     </div>
+
     <div th:replace="~{layout/sidebar/__${sidebar != null ? sidebar : 'sidebar-default'}__ :: sidebar}">
     </div>
-
 </div>
 
 <div class="wrapper d-flex flex-column min-vh-100">
@@ -234,23 +279,17 @@
     <header class="header header-sticky p-0">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
 
-            <!-- LEFT SIDE -->
             <div class="d-flex align-items-center gap-4">
-
-                <!-- Sidebar Toggle -->
                 <button class="header-toggler text-white" type="button"
                         onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
                     <svg class="icon icon-lg">
                         <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-menu"></use>
                     </svg>
                 </button>
-
             </div>
 
-            <!-- RIGHT SIDE -->
             <ul class="header-nav ms-auto align-items-center">
 
-                <!-- Notification -->
                 <li class="nav-item dropdown me-4">
                     <a class="nav-link position-relative py-0" id="notificationBell" data-coreui-toggle="dropdown">
                         <svg class="icon icon-lg">
@@ -274,17 +313,39 @@
                     </div>
                 </li>
 
-                <!-- Avatar -->
+                <!-- USER AVATAR + NAME -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown">
-                        <div class="avatar avatar-md">
-                            <img class="avatar-img" th:src="@{/assets/img/avatars/8.jpg}" alt="avatar">
+                    <a class="nav-link py-0 pe-0 header-user-trigger" data-coreui-toggle="dropdown" href="javascript:void(0)">
+                        <div class="header-user-info">
+                            <div class="header-user-name"
+                                 th:text="${currentDisplayName != null and !#strings.isEmpty(currentDisplayName) ? currentDisplayName : 'User'}">
+                                User
+                            </div>
+                            <div class="header-user-role"
+                                 th:text="${currentRoleName != null and !#strings.isEmpty(currentRoleName) ? currentRoleName : 'Account'}">
+                                Account
+                            </div>
+                        </div>
+
+                        <div class="header-avatar-wrap">
+                            <img th:if="${currentAvatarPath != null and !#strings.isEmpty(currentAvatarPath)}"
+                                 th:src="@{${currentAvatarPath}}"
+                                 alt="avatar"
+                                 class="header-avatar-img">
+
+                            <div th:if="${currentAvatarPath == null or #strings.isEmpty(currentAvatarPath)}"
+                                 class="header-avatar-fallback"
+                                 th:text="${currentAvatarInitial != null and !#strings.isEmpty(currentAvatarInitial) ? currentAvatarInitial : 'U'}">
+                                U
+                            </div>
                         </div>
                     </a>
 
                     <div class="dropdown-menu dropdown-menu-end pt-0">
-                        <div class="dropdown-header bg-body-tertiary fw-semibold">Account</div>
-
+                        <div class="dropdown-header bg-body-tertiary fw-semibold"
+                             th:text="${currentRoleName != null and !#strings.isEmpty(currentRoleName) ? currentRoleName : 'Account'}">
+                            Account
+                        </div>
                         <a class="dropdown-item" th:href="@{/profile}">
                             <svg class="icon me-2">
                                 <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
@@ -311,22 +372,17 @@
 
     <footer class="footer px-4">
         <div>HRM System © 2025</div>
-
     </footer>
-
 </div>
 
 <script th:src="@{/vendors/@coreui/coreui/js/coreui.bundle.min.js}"></script>
 <script th:src="@{/vendors/simplebar/js/simplebar.min.js}"></script>
 <script>
-    // Disable sidebar narrow/minimize + prevent # navigation
     document.addEventListener('DOMContentLoaded', function() {
         const sidebar = document.getElementById('sidebar');
         if (sidebar) {
-            // Remove narrow class if added
             sidebar.classList.remove('sidebar-narrow');
 
-            // Prevent CoreUI from minimizing sidebar
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -340,7 +396,6 @@
             observer.observe(sidebar, { attributes: true });
         }
 
-        // Prevent nav-group-toggle href="#" from scrolling to top
         document.querySelectorAll('.nav-group-toggle[href="#"]').forEach(function(el) {
             el.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -408,7 +463,7 @@
         return date.toLocaleDateString('vi-VN');
     }
 </script>
-<!-- Toast Container -->
+
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
     <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -425,31 +480,23 @@
 </div>
 
 <script th:inline="javascript">
-    // Show toast notifications from flash attributes
-    /*[# th:if="${msg}"]*/
-    const successMsg = /*[[${msg}]]*/ '';
-    if (successMsg) {
-        showToast('success', successMsg);
-    }
-    /*[/]*/
+    document.addEventListener("DOMContentLoaded", function () {
+        const successMsg = /*[[${success}]]*/ null;
+        const errorMsg = /*[[${err}]]*/ null;
 
-    /*[# th:if="${err}"]*/
-    const errorMsg = /*[[${err}]]*/ '';
-    if (errorMsg) {
-        showToast('error', errorMsg);
-    }
-    /*[/]*/
+        if (successMsg) {
+            document.getElementById("successToastMessage").textContent = successMsg;
+            const toast = new coreui.Toast(document.getElementById("successToast"));
+            toast.show();
+        }
 
-    function showToast(type, message) {
-        const toastEl = document.getElementById(type === 'success' ? 'successToast' : 'errorToast');
-        const messageEl = document.getElementById(type === 'success' ? 'successToastMessage' : 'errorToastMessage');
-        messageEl.textContent = message;
-        const toast = new coreui.Toast(toastEl, { delay: 4000 });
-        toast.show();
-    }
+        if (errorMsg) {
+            document.getElementById("errorToastMessage").textContent = errorMsg;
+            const toast = new coreui.Toast(document.getElementById("errorToast"));
+            toast.show();
+        }
+    });
 </script>
 
-
-<div layout:fragment="scripts"></div>
 </body>
 </html>
