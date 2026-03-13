@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<body>
+<div layout:fragment="content">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Shift Templates</h5>
+    </div>
+    <div class="card-body">
+      <form th:action="@{/hr/shifts/create}" method="post" class="row g-3 mb-4">
+        <div class="col-md-2">
+          <label class="form-label">Code</label>
+          <input name="shiftCode" class="form-control" placeholder="DAY" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Name</label>
+          <input name="shiftName" class="form-control" placeholder="Day Shift" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Start</label>
+          <input type="time" name="startTime" class="form-control" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">End</label>
+          <input type="time" name="endTime" class="form-control" required>
+        </div>
+        <div class="col-md-1">
+          <label class="form-label">Overnight</label>
+          <select name="isOvernight" class="form-select">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label class="form-label">Active</label>
+          <select name="isActive" class="form-select">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button class="btn btn-primary w-100" type="submit">Add</button>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Code</th>
+            <th>Current</th>
+            <th>Update</th>
+            <th>Deactivate</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="s : ${shifts}">
+            <td th:text="${s.shiftId}"></td>
+            <td th:text="${s.shiftCode}"></td>
+            <td>
+              <div><b th:text="${s.shiftName}"></b></div>
+              <div class="text-muted small">
+                <span th:text="${#temporals.format(s.startTime, 'HH:mm')}"></span>
+                -
+                <span th:text="${#temporals.format(s.endTime, 'HH:mm')}"></span>
+                |
+                <span th:text="${s.isOvernight ? 'Overnight' : 'Same day'}"></span>
+                |
+                <span th:text="${s.isActive ? 'Active' : 'Inactive'}"></span>
+              </div>
+            </td>
+            <td>
+              <form th:action="@{/hr/shifts/{id}/update(id=${s.shiftId})}" method="post" class="row g-2">
+                <div class="col-12">
+                  <input name="shiftName" class="form-control form-control-sm" th:value="${s.shiftName}" required>
+                </div>
+                <div class="col-6">
+                  <input type="time" name="startTime" class="form-control form-control-sm" th:value="${s.startTime}" required>
+                </div>
+                <div class="col-6">
+                  <input type="time" name="endTime" class="form-control form-control-sm" th:value="${s.endTime}" required>
+                </div>
+                <div class="col-6">
+                  <select name="isOvernight" class="form-select form-select-sm">
+                    <option value="false" th:selected="${!s.isOvernight}">No</option>
+                    <option value="true" th:selected="${s.isOvernight}">Yes</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <select name="isActive" class="form-select form-select-sm">
+                    <option value="true" th:selected="${s.isActive}">Active</option>
+                    <option value="false" th:selected="${!s.isActive}">Inactive</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <button class="btn btn-sm btn-outline-primary w-100" type="submit">Save</button>
+                </div>
+              </form>
+            </td>
+            <td>
+              <form th:if="${s.isActive}" th:action="@{/hr/shifts/{id}/deactivate(id=${s.shiftId})}" method="post">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Deactivate</button>
+              </form>
+              <span th:if="${!s.isActive}" class="text-muted small">Already inactive</span>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(shifts)}">
+            <td colspan="5" class="text-center text-muted">No shifts found.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
