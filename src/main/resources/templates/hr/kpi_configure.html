@@ -1,5 +1,6 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 <head>
@@ -11,6 +12,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <h3 class="mb-1">KPI Configuration</h3>
+      <p class="text-body-secondary mb-0">Configure and send KPI template to employees</p>
     </div>
   </div>
 
@@ -18,33 +20,98 @@
     <div class="card-header">
       <strong>Send KPI Template</strong>
     </div>
+
     <div class="card-body">
-      <form method="post" th:action="@{/hr/kpi/configure/upload}" enctype="multipart/form-data">
-        
+      <form method="post"
+            th:action="@{/hr/kpi/configure/upload}"
+            enctype="multipart/form-data">
+
         <div class="mb-3">
-          <label class="form-label">Evaluation Cycle <span class="text-danger">*</span></label>
-          <select name="cycleId" class="form-select" required>
-            <option value="">-- Select Cycle --</option>
-            <option th:each="cycle : ${cycles}"
-                    th:value="${cycle.cycleId}"
-                    th:text="${cycle.cycleName}">
+          <label class="form-label">Apply Scope <span class="text-danger">*</span></label>
+          <select name="applyScope" id="applyScope" class="form-select" required>
+            <option value="ALL" selected>All Employees</option>
+            <option value="DEPARTMENT">By Department</option>
+            <option value="EMPLOYEE">Specific Employee</option>
+          </select>
+        </div>
+
+        <div class="mb-3 d-none" id="deptBlock">
+          <label class="form-label">Department</label>
+          <select name="deptId" class="form-select" id="deptSelect">
+            <option value="">-- Select Department --</option>
+            <option th:each="d : ${departments}"
+                    th:value="${d.deptId}"
+                    th:text="${d.deptName}">
             </option>
           </select>
         </div>
 
+        <div class="mb-3 d-none" id="empBlock">
+          <label class="form-label">Employee ID</label>
+          <input type="number"
+                 name="empId"
+                 id="empIdInput"
+                 class="form-control"
+                 placeholder="Enter employee ID">
+        </div>
+
         <div class="mb-3">
-          <label class="form-label">Employee ID <span class="text-danger">*</span></label>
-          <input type="number" name="empId" class="form-control" required>
+          <label class="form-label">Evaluation Cycle <span class="text-danger">*</span></label>
+          <select name="cycleId" id="cycleSelect" class="form-select" required>
+            <option value="">-- Select Cycle --</option>
+            <option th:each="cycle : ${cycles}"
+                    th:value="${cycle.cycleId}"
+                    th:text="${cycle.cycleName}"
+                    th:data-name="${cycle.cycleName}"
+                    th:data-start="${cycle.startDate}"
+                    th:data-end="${cycle.endDate}">
+            </option>
+          </select>
+        </div>
+
+        <div class="card bg-light mb-3" id="previewBox">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Configuration Preview</h6>
+
+            <div class="mb-1">
+              <strong>Applied Scope:</strong>
+              <span id="previewScope">All Employees</span>
+            </div>
+
+            <div class="mb-1">
+              <strong>Evaluation Period:</strong>
+              <span id="previewCycle">Not selected</span>
+            </div>
+
+            <div class="mb-1">
+              <strong>Date Range:</strong>
+              <span id="previewRange">-</span>
+            </div>
+
+            <div class="mb-1">
+              <strong>Estimated Employees:</strong>
+              <span id="previewCount" th:text="${allEmployeesCount}">0</span>
+            </div>
+          </div>
         </div>
 
         <div class="mb-3">
           <label class="form-label">Upload Excel KPI Template <span class="text-danger">*</span></label>
-          <input type="file" name="excelFile" class="form-control" accept=".xlsx,.xls" required>
+          <input type="file"
+                 name="excelFile"
+                 class="form-control"
+                 accept=".xlsx,.xls"
+                 placeholder="Choose file"
+                 required>
         </div>
 
         <div class="mb-3">
           <label class="form-label">Comment for Employee <span class="text-danger">*</span></label>
-          <textarea name="hrComment" class="form-control" rows="4" required></textarea>
+          <textarea name="hrComment"
+                    class="form-control"
+                    rows="4"
+                    required
+                    placeholder="Enter guidance or instructions for employees..."></textarea>
         </div>
 
         <div class="d-flex gap-2">
@@ -58,6 +125,70 @@
       </form>
     </div>
   </div>
+
+  <script>
+    const applyScope = document.getElementById('applyScope');
+    const deptBlock = document.getElementById('deptBlock');
+    const empBlock = document.getElementById('empBlock');
+    const deptSelect = document.getElementById('deptSelect');
+    const empIdInput = document.getElementById('empIdInput');
+
+    const previewScope = document.getElementById('previewScope');
+    const previewCount = document.getElementById('previewCount');
+
+    const cycleSelect = document.getElementById('cycleSelect');
+    const previewCycle = document.getElementById('previewCycle');
+    const previewRange = document.getElementById('previewRange');
+
+    const allEmployeesCount = /*[[${allEmployeesCount}]]*/ 0;
+
+    function updateScopeUI() {
+      const scope = applyScope.value;
+
+      deptBlock.classList.add('d-none');
+      empBlock.classList.add('d-none');
+
+      deptSelect.required = false;
+      empIdInput.required = false;
+
+      if (scope === 'ALL') {
+        previewScope.textContent = 'All Employees';
+        previewCount.textContent = allEmployeesCount;
+      } else if (scope === 'DEPARTMENT') {
+        deptBlock.classList.remove('d-none');
+        deptSelect.required = true;
+        previewScope.textContent = 'By Department';
+      } else if (scope === 'EMPLOYEE') {
+        empBlock.classList.remove('d-none');
+        empIdInput.required = true;
+        previewScope.textContent = 'Specific Employee';
+        previewCount.textContent = '1';
+      }
+    }
+
+    function updateCyclePreview() {
+      const selected = cycleSelect.options[cycleSelect.selectedIndex];
+
+      if (!selected || !selected.value) {
+        previewCycle.textContent = 'Not selected';
+        previewRange.textContent = '-';
+        return;
+      }
+
+      const name = selected.dataset.name || '';
+      const start = selected.dataset.start || '';
+      const end = selected.dataset.end || '';
+
+      previewCycle.textContent = name;
+      previewRange.textContent = start + ' - ' + end;
+    }
+
+    applyScope.addEventListener('change', updateScopeUI);
+    cycleSelect.addEventListener('change', updateCyclePreview);
+
+    updateScopeUI();
+    updateCyclePreview();
+  </script>
 
 </div>
 </body>

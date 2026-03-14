@@ -11,193 +11,148 @@
         <div class="row mb-4">
             <div class="col-12">
                 <h2>Manager Review</h2>
+                <p class="text-muted mb-0">Review employee self-assessment and complete the final manager evaluation.</p>
             </div>
         </div>
 
-        <!-- Employee Info Card -->
         <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-primary">
+            <div class="col-lg-6">
+                <div class="card border-primary h-100">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Employee Summary</strong>
+                    </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5 class="card-title">Employee Information</h5>
-                                <p class="mb-1"><strong>Name:</strong> Nguyen Van A</p>
-                                <p class="mb-1"><strong>ID:</strong> EMP001</p>
-                                <p class="mb-1"><strong>Position:</strong> Senior Developer</p>
-                                <p class="mb-1"><strong>Department:</strong> Engineering</p>
-                            </div>
-                            <div class="col-md-6">
-                                <h5 class="card-title">Evaluation Period</h5>
-                                <p class="mb-1"><strong>Cycle:</strong> Q4 2023</p>
-                                <p class="mb-1"><strong>Period:</strong> Oct 1 - Dec 31, 2023</p>
-                                <p class="mb-1"><strong>Status:</strong> <span class="badge bg-warning">Pending Manager Review</span></p>
-                            </div>
-                        </div>
+                        <p class="mb-2"><strong>Employee ID:</strong> <span th:text="${assignment.empId}">1</span></p>
+                        <p class="mb-2"><strong>Full Name:</strong> <span th:text="${employee != null ? employee.fullName : 'Unknown employee'}">Employee Name</span></p>
+                        <p class="mb-2"><strong>Department ID:</strong> <span th:text="${employee != null and employee.deptId != null ? employee.deptId : '-'}">-</span></p>
+                        <p class="mb-2"><strong>Job ID:</strong> <span th:text="${employee != null and employee.jobId != null ? employee.jobId : '-'}">-</span></p>
+                        <p class="mb-0"><strong>Status:</strong> <span class="badge bg-warning text-dark" th:text="${assignment.status}">HR_VERIFIED</span></p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Employee Self Evaluation -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
+            <div class="col-lg-6">
+                <div class="card h-100">
                     <div class="card-header bg-info text-white">
-                        <strong>Employee Self-Evaluation</strong>
+                        <strong>Employee Self-Assessment</strong>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Self Review Summary:</strong></label>
-                            <p class="border rounded p-3 bg-light">
-                                "During Q4 2023, I successfully completed all assigned tasks including the migration of legacy system to Spring Boot, 
-                                implemented new REST APIs for the mobile app, and mentored 2 junior developers. 
-                                I also improved code review processes which reduced bugs by 30%."
-                            </p>
+                        <p class="mb-2"><strong>Cycle ID:</strong> <span th:text="${assignment.cycleId}">1</span></p>
+                        <p class="mb-2"><strong>Self Score:</strong> <span class="badge bg-info" th:text="${assignment.selfScore != null ? assignment.selfScore + ' / 100' : 'Not provided'}">90 / 100</span></p>
+                        <p class="mb-2"><strong>Employee Comment:</strong></p>
+                        <div class="border rounded p-3 bg-light" th:text="${assignment.employeeComment != null and !#strings.isEmpty(assignment.employeeComment) ? assignment.employeeComment : 'Employee has not provided an additional comment.'}">
+                            Employee comment
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Overall Self Score:</strong></label>
-                            <h3 class="text-primary">92.0 / 100</h3>
+                        <p class="mt-3 mb-2"><strong>Self Assessment:</strong></p>
+                        <div class="border rounded p-3 bg-light" th:text="${assignment.selfAssessment != null and !#strings.isEmpty(assignment.selfAssessment) ? assignment.selfAssessment : 'Employee has not submitted self-assessment content.'}">
+                            Self assessment
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- KPI Scores Review -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <strong>KPI Assessment Review</strong>
+                        <strong>Evidence Submitted</strong>
                     </div>
                     <div class="card-body">
-                        <!-- KPI 1 -->
-                        <div class="card mb-3 border">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h6 class="card-title mb-1">Code Quality</h6>
-                                        <p class="text-muted small mb-0">Code review score >= 8/10</p>
-                                    </div>
-                                    <div class="text-end" style="min-width: 150px;">
-                                        <label class="form-label mb-1"><strong>Weight: <span class="text-danger">*</span></strong></label>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control kpi-weight" data-kpi="1" 
-                                                   name="weight_1" min="0" max="100" step="1" required>
-                                            <span class="input-group-text">%</span>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="mb-3">
+                            <a class="btn btn-outline-primary btn-sm"
+                               th:if="${assignment.employeeExcelPath != null and !#strings.isEmpty(assignment.employeeExcelPath)}"
+                               th:href="@{'/hr/kpi/download-employee/' + ${assignment.assignmentId}}">
+                                <i class="fa fa-download"></i> Download Employee KPI File
+                            </a>
+                        </div>
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-info"><strong>Employee Self Score:</strong></label>
-                                        <p><span class="badge bg-info">90 / 100</span></p>
-                                        <p class="small">"Maintained high code standards, all PRs approved first try."</p>
-                                    </div>
-                                    <div class="col-md-6 border-start">
-                                        <label class="form-label text-success"><strong>Manager Score (0-100):</strong> <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control kpi-score" data-kpi="1" 
-                                               name="managerScore_1" min="0" max="100" step="0.5" required>
-                                        <label class="form-label mt-2">Manager Comment:</label>
-                                        <textarea class="form-control" name="managerComment_1" 
-                                                  rows="2"></textarea>
-                                    </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Content Type</th>
+                                    <th>Uploaded At</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(evidences)}">
+                                    <td colspan="4" class="text-muted">No evidence files uploaded.</td>
+                                </tr>
+                                <tr th:each="evidence : ${evidences}">
+                                    <td th:text="${evidence.fileName}">evidence.pdf</td>
+                                    <td th:text="${evidence.contentType != null ? evidence.contentType : '-'}">application/pdf</td>
+                                    <td th:text="${evidence.uploadedAt != null ? #temporals.format(evidence.uploadedAt, 'dd/MM/yyyy HH:mm') : '-'}">08/03/2026 09:00</td>
+                                    <td>
+                                        <a class="btn btn-outline-secondary btn-sm"
+                                           th:href="@{'/hr/kpi/download-evidence/' + ${evidence.evidenceId}}">
+                                            Download
+                                        </a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Manager Scoring Worksheet</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="mb-1">Quality of Deliverables</h6>
+                                    <p class="text-muted small">Manager chooses weight and score for output quality.</p>
+                                    <label class="form-label"><strong>Weight (%)</strong></label>
+                                    <input type="number" class="form-control kpi-weight" min="0" max="100" step="1">
+                                    <label class="form-label mt-2"><strong>Manager Score (0-100)</strong></label>
+                                    <input type="number" class="form-control kpi-score" min="0" max="100" step="0.5">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="mb-1">Execution and Ownership</h6>
+                                    <p class="text-muted small">Use this section for delivery, deadline, and ownership.</p>
+                                    <label class="form-label"><strong>Weight (%)</strong></label>
+                                    <input type="number" class="form-control kpi-weight" min="0" max="100" step="1">
+                                    <label class="form-label mt-2"><strong>Manager Score (0-100)</strong></label>
+                                    <input type="number" class="form-control kpi-score" min="0" max="100" step="0.5">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="mb-1">Collaboration and Growth</h6>
+                                    <p class="text-muted small">Use this section for teamwork, learning, and behavior.</p>
+                                    <label class="form-label"><strong>Weight (%)</strong></label>
+                                    <input type="number" class="form-control kpi-weight" min="0" max="100" step="1">
+                                    <label class="form-label mt-2"><strong>Manager Score (0-100)</strong></label>
+                                    <input type="number" class="form-control kpi-score" min="0" max="100" step="0.5">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- KPI 2 -->
-                        <div class="card mb-3 border">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h6 class="card-title mb-1">Task Completion</h6>
-                                        <p class="text-muted small mb-0">Task completion rate >= 90%</p>
-                                    </div>
-                                    <div class="text-end" style="min-width: 150px;">
-                                        <label class="form-label mb-1"><strong>Weight: <span class="text-danger">*</span></strong></label>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control kpi-weight" data-kpi="2" 
-                                                   name="weight_2" min="0" max="100" step="1" required>
-                                            <span class="input-group-text">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-info"><strong>Employee Self Score:</strong></label>
-                                        <p><span class="badge bg-info">95 / 100</span></p>
-                                        <p class="small">"Completed 100% of sprint tasks on time."</p>
-                                    </div>
-                                    <div class="col-md-6 border-start">
-                                        <label class="form-label text-success"><strong>Manager Score (0-100):</strong> <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control kpi-score" data-kpi="2" 
-                                               name="managerScore_2" min="0" max="100" step="0.5" required>
-                                        <label class="form-label mt-2">Manager Comment:</label>
-                                        <textarea class="form-control" name="managerComment_2" 
-                                                  rows="2"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- KPI 3 -->
-                        <div class="card mb-3 border">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h6 class="card-title mb-1">Team Collaboration</h6>
-                                        <p class="text-muted small mb-0">Peer review score >= 8/10</p>
-                                    </div>
-                                    <div class="text-end" style="min-width: 150px;">
-                                        <label class="form-label mb-1"><strong>Weight: <span class="text-danger">*</span></strong></label>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control kpi-weight" data-kpi="3" 
-                                                   name="weight_3" min="0" max="100" step="1" required>
-                                            <span class="input-group-text">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-info"><strong>Employee Self Score:</strong></label>
-                                        <p><span class="badge bg-info">85 / 100</span></p>
-                                        <p class="small">"Active in code reviews and team discussions."</p>
-                                    </div>
-                                    <div class="col-md-6 border-start">
-                                        <label class="form-label text-success"><strong>Manager Score (0-100):</strong> <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control kpi-score" data-kpi="3" 
-                                               name="managerScore_3" min="0" max="100" step="0.5" required>
-                                        <label class="form-label mt-2">Manager Comment:</label>
-                                        <textarea class="form-control" name="managerComment_3" 
-                                                  rows="2"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Calculated Score Section -->
-                        <div class="card border-primary bg-light">
+                        <div class="card border-primary bg-light mt-3">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col-md-6">
-                                        <button type="button" class="btn btn-primary" id="calculateScoreBtn" onclick="calculateScore()">
+                                        <button type="button" class="btn btn-primary" id="calculateScoreBtn">
                                             <i class="fa fa-calculator"></i> Calculate Manager Score
                                         </button>
-                                        <small class="d-block mt-2 text-muted">
-                                            <i class="fa fa-info-circle"></i> Total weight must equal 100%
-                                        </small>
+                                        <small class="d-block mt-2 text-muted">Total weight must equal 100%.</small>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div id="calculatedScoreDisplay" class="text-end">
-                                            <h5 class="mb-0">Calculated Score:</h5>
-                                            <h2 class="text-primary mb-0" id="calculatedScoreValue">-- / 100</h2>
-                                            <small id="weightValidation" class="text-muted"></small>
-                                        </div>
+                                    <div class="col-md-6 text-md-end">
+                                        <h5 class="mb-0">Calculated Score</h5>
+                                        <h2 class="text-primary mb-0" id="calculatedScoreValue">-- / 100</h2>
+                                        <small id="weightValidation" class="text-muted"></small>
                                     </div>
                                 </div>
                             </div>
@@ -207,67 +162,79 @@
             </div>
         </div>
 
-        <!-- Manager Overall Review Form -->
         <div class="row">
             <div class="col-12">
                 <div class="card border-success">
                     <div class="card-header bg-success text-white">
-                        <strong>Manager Overall Review</strong>
+                        <strong>Final Manager Decision</strong>
                     </div>
                     <div class="card-body">
-                        <form method="post" th:action="@{/evaluation/manager-review/1/submit}">
+                        <form method="post" th:action="@{'/manager/evaluation/review/' + ${assignment.assignmentId} + '/approve'}">
                             <div th:if="${_csrf != null}">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                             </div>
 
                             <div class="mb-3">
-                                <label for="managerReview" class="form-label">Manager Review Summary <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="managerReview" name="managerReview" rows="5" 
-                                          required></textarea>
+                                <label for="managerComment" class="form-label">Manager Review Summary <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="managerComment" name="managerComment" rows="5" required
+                                          th:text="${assignment.managerComment}"></textarea>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="managerScore" class="form-label">Manager Overall Score (0-100) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="managerScore" name="managerScore" 
-                                       min="0" max="100" step="0.5" required>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="managerScore" class="form-label">Manager Overall Score (0-100) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="managerScore" name="managerScore"
+                                           min="0" max="100" step="1" required th:value="${assignment.managerScore}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="classification" class="form-label">Final Classification <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="classification" name="classification" required>
+                                        <option value="">-- Select Classification --</option>
+                                        <option value="A" th:selected="${assignment.classification == 'A'}">A - Outstanding (85-100)</option>
+                                        <option value="B" th:selected="${assignment.classification == 'B'}">B - Strong (75-84)</option>
+                                        <option value="C" th:selected="${assignment.classification == 'C'}">C - Meets Expectations (60-74)</option>
+                                        <option value="D" th:selected="${assignment.classification == 'D'}">D - Needs Improvement (&lt; 60)</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="classification" class="form-label">Final Classification <span class="text-danger">*</span></label>
-                                <select class="form-select" id="classification" name="classification" required>
-                                    <option value="">-- Select Classification --</option>
-                                    <option value="A">A - Excellent (85-100)</option>
-                                    <option value="B">B - Good (75-84)</option>
-                                    <option value="C">C - Average (60-74)</option>
-                                    <option value="D">D - Poor (< 60)</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Recommendations:</label>
+                            <div class="mt-3">
+                                <label class="form-label">Recommendations</label>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="promoteRecommendation" id="promoteRecommendation">
-                                    <label class="form-check-label" for="promoteRecommendation">
-                                        Recommend for promotion
-                                    </label>
+                                    <input class="form-check-input" type="checkbox" name="recommendPromotion" id="recommendPromotion"
+                                           th:checked="${assignment.promotionRecommendation}">
+                                    <label class="form-check-label" for="recommendPromotion">Recommend for promotion</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="trainingRecommendation" id="trainingRecommendation">
-                                    <label class="form-check-label" for="trainingRecommendation">
-                                        Recommend for training
-                                    </label>
+                                    <input class="form-check-input" type="checkbox" name="recommendTraining" id="recommendTraining"
+                                           th:checked="${assignment.trainingRecommendation != null and !#strings.isEmpty(assignment.trainingRecommendation)}">
+                                    <label class="form-check-label" for="recommendTraining">Recommend for training</label>
                                 </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label for="trainingRecommendation" class="form-label">Training Recommendation Detail</label>
+                                <textarea class="form-control" id="trainingRecommendation" name="trainingRecommendation" rows="3"
+                                          placeholder="Optional. Add suggested program or development focus."
+                                          th:text="${assignment.trainingRecommendation}"></textarea>
                             </div>
 
                             <hr>
 
-                            <div class="d-flex justify-content-between">
-                                <a th:href="@{/evaluation/ranking/1}" class="btn btn-secondary">
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <a th:href="@{'/manager/evaluation/ranking/' + ${assignment.cycleId}}" class="btn btn-secondary">
                                     <i class="fa fa-arrow-left"></i> Back to Ranking
                                 </a>
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fa fa-check"></i> Submit Review
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" formaction="#" th:formaction="@{'/manager/evaluation/review/' + ${assignment.assignmentId} + '/reject'}"
+                                            formmethod="post" class="btn btn-outline-danger"
+                                            onclick="return submitRejectReason();">
+                                        <i class="fa fa-undo"></i> Return for Revision
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fa fa-check"></i> Submit Review
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -278,150 +245,103 @@
 </div>
 
 <div layout:fragment="scripts">
-<script th:inline="javascript">
-    // Global function for button onclick
-    function calculateScore() {
-        console.log('=== CALCULATE BUTTON CLICKED ===');
-        
-        const weightInputs = document.querySelectorAll('.kpi-weight');
-        const scoreInputs = document.querySelectorAll('.kpi-score');
-        const scoreDisplay = document.getElementById('calculatedScoreValue');
-        const weightValidation = document.getElementById('weightValidation');
-        
-        console.log('Weight inputs found:', weightInputs.length);
-        console.log('Score inputs found:', scoreInputs.length);
-        
-        if (weightInputs.length === 0 || scoreInputs.length === 0) {
-            alert('ERROR: Cannot find input fields! Please refresh the page.');
-            return;
-        }
-        
-        let totalWeight = 0;
-        let weightedSum = 0;
-        let missingWeights = [];
-        let missingScores = [];
-        
-        // Check each KPI
-        weightInputs.forEach((weightInput, index) => {
-            const kpiNumber = index + 1;
-            const weight = parseFloat(weightInput.value);
-            const score = parseFloat(scoreInputs[index].value);
-            
-            console.log(`KPI ${kpiNumber}: weight="${weightInput.value}" (${weight}), score="${scoreInputs[index].value}" (${score})`);
-            
-            // Check if weight is missing or invalid
-            if (!weightInput.value || isNaN(weight) || weight <= 0) {
-                missingWeights.push(kpiNumber);
-            } else {
-                totalWeight += weight;
-            }
-            
-            // Check if score is missing or invalid
-            if (!scoreInputs[index].value && scoreInputs[index].value !== '0' || isNaN(score)) {
-                missingScores.push(kpiNumber);
-            }
-            
-            if (!isNaN(weight) && !isNaN(score) && weight > 0) {
-                weightedSum += (weight / 100) * score;
-            }
-        });
-        
-        console.log('Total weight:', totalWeight);
-        console.log('Missing weights:', missingWeights);
-        console.log('Missing scores:', missingScores);
-        
-        // Validate missing weights
-        if (missingWeights.length > 0) {
-            const kpiNames = [];
-            missingWeights.forEach(num => {
-                if (num === 1) kpiNames.push('Code Quality');
-                if (num === 2) kpiNames.push('Task Completion');
-                if (num === 3) kpiNames.push('Team Collaboration');
-            });
-            const message = `⚠️ Please fill in Weight for: ${kpiNames.join(', ')}`;
-            alert(message);
-            weightValidation.textContent = message;
-            weightValidation.className = 'text-danger';
-            scoreDisplay.textContent = '-- / 100';
-            return;
-        }
-        
-        // Validate missing scores
-        if (missingScores.length > 0) {
-            const kpiNames = [];
-            missingScores.forEach(num => {
-                if (num === 1) kpiNames.push('Code Quality');
-                if (num === 2) kpiNames.push('Task Completion');
-                if (num === 3) kpiNames.push('Team Collaboration');
-            });
-            const message = `⚠️ Please fill in Manager Score for: ${kpiNames.join(', ')}`;
-            alert(message);
-            weightValidation.textContent = message;
-            weightValidation.className = 'text-warning';
-            scoreDisplay.textContent = '-- / 100';
-            return;
-        }
-        
-        // Validate total weight must equal 100%
-        if (Math.abs(totalWeight - 100) > 0.01) {
-            const message = `⚠️ Total weight is ${totalWeight.toFixed(1)}% but must be exactly 100%`;
-            alert(message);
-            weightValidation.textContent = message;
-            weightValidation.className = 'text-danger';
-            scoreDisplay.textContent = '-- / 100';
-            return;
-        }
-        
-        // All validations passed - calculate final score
-        const finalScore = weightedSum.toFixed(1);
-        scoreDisplay.textContent = finalScore + ' / 100';
-        weightValidation.textContent = '✓ Total weight: 100%';
-        weightValidation.className = 'text-success';
-        
-        // Update the overall manager score field
-        const managerScoreField = document.getElementById('managerScore');
-        if (managerScoreField) {
-            managerScoreField.value = finalScore;
-            alert(`✓ Calculated Score: ${finalScore} / 100\n\nThe score has been filled in the "Manager Overall Score" field below.`);
-        }
-        
-        console.log('=== CALCULATION COMPLETE ===');
-        console.log('Final score:', finalScore);
-    }
-    
-    // Also set up event listeners on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('=== PAGE LOADED ===');
-        
-        const calculateBtn = document.getElementById('calculateScoreBtn');
-        const weightInputs = document.querySelectorAll('.kpi-weight');
-        const scoreInputs = document.querySelectorAll('.kpi-score');
-        const weightValidation = document.getElementById('weightValidation');
-        
-        console.log('Calculate button found:', calculateBtn !== null);
-        console.log('Weight inputs:', weightInputs.length);
-        console.log('Score inputs:', scoreInputs.length);
-        
-        // Backup event listener (in case onclick doesn't work)
-        if (calculateBtn) {
-            calculateBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                calculateScore();
-            });
-        }
-        
-        // Live update on input change
-        [...weightInputs, ...scoreInputs].forEach(input => {
-            input.addEventListener('input', function() {
-                // Auto-calculate if validation message exists (button was clicked at least once)
-                if (weightValidation && weightValidation.textContent !== '') {
-                    calculateScore();
+    <script>
+        function calculateScore() {
+            const weightInputs = document.querySelectorAll('.kpi-weight');
+            const scoreInputs = document.querySelectorAll('.kpi-score');
+            const scoreDisplay = document.getElementById('calculatedScoreValue');
+            const weightValidation = document.getElementById('weightValidation');
+            const managerScoreField = document.getElementById('managerScore');
+
+            let totalWeight = 0;
+            let weightedSum = 0;
+            let missingWeight = false;
+            let missingScore = false;
+
+            weightInputs.forEach((weightInput, index) => {
+                const weight = parseFloat(weightInput.value);
+                const score = parseFloat(scoreInputs[index].value);
+
+                if (!weightInput.value || isNaN(weight) || weight <= 0) {
+                    missingWeight = true;
+                } else {
+                    totalWeight += weight;
+                }
+
+                if (!scoreInputs[index].value || isNaN(score)) {
+                    missingScore = true;
+                }
+
+                if (!isNaN(weight) && !isNaN(score) && weight > 0) {
+                    weightedSum += (weight / 100) * score;
                 }
             });
+
+            if (missingWeight) {
+                scoreDisplay.textContent = '-- / 100';
+                weightValidation.textContent = 'Please fill in all weights before calculating.';
+                weightValidation.className = 'text-danger';
+                return;
+            }
+
+            if (missingScore) {
+                scoreDisplay.textContent = '-- / 100';
+                weightValidation.textContent = 'Please fill in all manager scores before calculating.';
+                weightValidation.className = 'text-danger';
+                return;
+            }
+
+            if (Math.abs(totalWeight - 100) > 0.01) {
+                scoreDisplay.textContent = '-- / 100';
+                weightValidation.textContent = 'Total weight must be exactly 100%. Current total: ' + totalWeight.toFixed(1) + '%.';
+                weightValidation.className = 'text-danger';
+                return;
+            }
+
+            const finalScore = weightedSum.toFixed(1);
+            scoreDisplay.textContent = finalScore + ' / 100';
+            weightValidation.textContent = 'Score calculated successfully.';
+            weightValidation.className = 'text-success';
+            managerScoreField.value = Math.round(weightedSum);
+        }
+
+        function submitRejectReason() {
+            const form = document.querySelector('form');
+            const reason = window.prompt('Enter reason for returning this evaluation to the employee:');
+
+            if (!reason) {
+                return false;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'rejectReason';
+            input.value = reason;
+            form.appendChild(input);
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculateScoreBtn');
+            const inputs = document.querySelectorAll('.kpi-weight, .kpi-score');
+
+            if (calculateBtn) {
+                calculateBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    calculateScore();
+                });
+            }
+
+            inputs.forEach(function(input) {
+                input.addEventListener('input', function() {
+                    const validationText = document.getElementById('weightValidation');
+                    if (validationText && validationText.textContent) {
+                        calculateScore();
+                    }
+                });
+            });
         });
-    });
-</script>
+    </script>
 </div>
 </body>
 </html>

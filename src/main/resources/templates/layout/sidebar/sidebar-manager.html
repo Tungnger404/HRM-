@@ -1,8 +1,6 @@
 <div th:fragment="sidebar">
 
     <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
-
-        <!-- ================= DASHBOARD ================= -->
         <li class="nav-title">Manager</li>
 
         <li class="nav-item">
@@ -136,40 +134,58 @@
         <!-- ================= EVALUATION & TRAINING ================= -->
         <li class="nav-title">Evaluation & Training</li>
 
-        <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/manager/evaluation') or #strings.startsWith(currentUri, '/training')} ? 'show' : ''">
-          <a class="nav-link nav-group-toggle" href="#">
-            <svg class="nav-icon">
-              <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-star"></use>
-            </svg>
-            Evaluation & Training
-          </a>
+        <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/manager/evaluation') or #strings.startsWith(currentUri, '/manager/promotion') or #strings.startsWith(currentUri, '/manager/training')} ? 'show' : ''">
+            <a class="nav-link nav-group-toggle" href="#">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-star"></use>
+                </svg>
+                Evaluation & Training
+            </a>
 
-          <ul class="nav-group-items compact">
-            <li class="nav-item">
-              <a class="nav-link" th:href="@{/manager/evaluation/pending}"
-                 th:classappend="${#strings.contains(currentUri, '/manager/evaluation/pending') or #strings.contains(currentUri, '/manager/evaluation/review/')} ? 'active' : ''">
-                <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Pending Evaluations
-              </a>
-            </li>
+            <ul class="nav-group-items compact">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/evaluation/pending}"
+                       th:classappend="${#strings.contains(currentUri, '/manager/evaluation/pending') or #strings.contains(currentUri, '/manager/evaluation/review/')} ? 'active' : ''">
+                        <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                        Pending Evaluations
+                    </a>
+                </li>
 
-            <li class="nav-item">
-              <a class="nav-link" th:href="@{/manager/evaluation/ranking/1}"
-                 th:classappend="${#strings.contains(currentUri, '/manager/evaluation/ranking')} ? 'active' : ''">
-                <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Performance Ranking
-              </a>
-            </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/evaluation/ranking/1}"
+                       th:classappend="${#strings.contains(currentUri, '/manager/evaluation/ranking')} ? 'active' : ''">
+                        <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                        Performance Summary
+                    </a>
+                </li>
 
-            <li class="nav-item">
-              <a class="nav-link" th:href="@{/training/assign}"
-                 th:classappend="${#strings.contains(currentUri, '/training/assign')} ? 'active' : ''">
-                <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Assign Training
-              </a>
-            </li>
-          </ul>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/training/assign}"
+                       th:classappend="${#strings.contains(currentUri, '/manager/training/assign')} ? 'active' : ''">
+                        <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                        Assign Training
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/promotion}"
+                       th:classappend="${currentUri == '/manager/promotion' or #strings.contains(currentUri, '/manager/promotion/recommendations')} ? 'active' : ''">
+                        <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                        Promotion Proposals
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/promotion/my-requests}"
+                       th:classappend="${#strings.contains(currentUri, '/manager/promotion/my-requests')} ? 'active' : ''">
+                        <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                        My Promotion Requests
+                    </a>
+                </li>
+            </ul>
         </li>
+
+
 
         <li class="nav-divider"></li>
 

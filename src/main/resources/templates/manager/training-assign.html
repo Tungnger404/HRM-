@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Assign Training - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Assign Training</h2>
+                <p class="text-muted mb-0">Create training assignments for employees in your team.</p>
+            </div>
+        </div>
+
+        <div class="row mb-3" th:if="${msg != null and !#strings.isEmpty(msg)}">
+            <div class="col-12">
+                <div class="alert alert-success" th:text="${msg}">Assigned successfully.</div>
+            </div>
+        </div>
+
+        <div class="row mb-3" th:if="${err != null and !#strings.isEmpty(err)}">
+            <div class="col-12">
+                <div class="alert alert-danger" th:text="${err}">Failed to assign.</div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <strong>New Assignment</strong>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" th:action="@{/manager/training/assign}">
+                            <div th:if="${_csrf != null}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="empId" class="form-label">Employee <span class="text-danger">*</span></label>
+                                <select id="empId" name="empId" class="form-select" required>
+                                    <option value="">-- Select employee --</option>
+                                    <option th:each="emp : ${teamMembers}"
+                                            th:value="${emp.empId}"
+                                            th:selected="${selectedEmpId != null and selectedEmpId == emp.empId}"
+                                            th:text="${emp.empId + ' - ' + emp.fullName}">1 - Employee</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="programId" class="form-label">Training Program <span class="text-danger">*</span></label>
+                                <select id="programId" name="programId" class="form-select" required>
+                                    <option value="">-- Select program --</option>
+                                    <option th:each="program : ${programs}"
+                                            th:value="${program.programId}"
+                                            th:text="${program.programCode + ' - ' + program.programName}">TR-001 - Program</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="objective" class="form-label">Training Objective <span class="text-danger">*</span></label>
+                                <textarea id="objective" name="objective" class="form-control" rows="4"
+                                          placeholder="State why this training is needed and the expected outcome."
+                                          required></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-plus-circle"></i> Assign Training
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <strong>Reference Data</strong>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="mb-3">My Team</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Full Name</th>
+                                    <th>Department</th>
+                                    <th>Job</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(teamMembers)}">
+                                    <td colspan="4" class="text-muted">No employees are assigned to your team.</td>
+                                </tr>
+                                <tr th:each="emp : ${teamMembers}">
+                                    <td th:text="${emp.empId}">1</td>
+                                    <td th:text="${emp.fullName}">Employee Name</td>
+                                    <td th:text="${emp.deptId != null ? emp.deptId : '-'}">1</td>
+                                    <td th:text="${emp.jobId != null ? emp.jobId : '-'}">2</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h6 class="mb-3">Active Training Programs</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Level</th>
+                                    <th>Hours</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(programs)}">
+                                    <td colspan="5" class="text-muted">No active training programs found.</td>
+                                </tr>
+                                <tr th:each="program : ${programs}">
+                                    <td th:text="${program.programCode}">TR-001</td>
+                                    <td th:text="${program.programName}">Java Basics</td>
+                                    <td th:text="${program.skillCategory != null ? program.skillCategory : '-'}">Technical</td>
+                                    <td th:text="${program.level != null ? program.level : '-'}">BEGINNER</td>
+                                    <td th:text="${program.durationHours != null ? program.durationHours : 0}">8</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

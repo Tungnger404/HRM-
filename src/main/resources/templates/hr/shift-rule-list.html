@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<body>
+<div layout:fragment="content">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Shift Attendance Rules</h5>
+    </div>
+    <div class="card-body">
+
+      <div class="alert alert-info">
+        Current policy: early check-in and late threshold are configured per shift.
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-light">
+          <tr>
+            <th>Shift Code</th>
+            <th>Shift Name</th>
+            <th>Early Check-in (minutes)</th>
+            <th>Late Threshold (minutes)</th>
+            <th>Active</th>
+            <th>Save</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="r : ${rules}">
+            <form th:action="@{/hr/shift-rules/upsert}" method="post">
+              <td>
+                <input type="hidden" name="shiftCode" th:value="${r.shiftTemplate.shiftCode}">
+                <b th:text="${r.shiftTemplate.shiftCode}"></b>
+              </td>
+              <td th:text="${r.shiftTemplate.shiftName}"></td>
+              <td>
+                <input type="number" min="0" name="earlyCheckinMinutes"
+                       class="form-control form-control-sm"
+                       th:value="${r.earlyCheckinMinutes}" required>
+              </td>
+              <td>
+                <input type="number" min="0" name="lateThresholdMinutes"
+                       class="form-control form-control-sm"
+                       th:value="${r.lateThresholdMinutes}" required>
+              </td>
+              <td>
+                <select name="isActive" class="form-select form-select-sm">
+                  <option value="true" th:selected="${r.isActive}">Active</option>
+                  <option value="false" th:selected="${!r.isActive}">Inactive</option>
+                </select>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" type="submit">Save</button>
+              </td>
+            </form>
+          </tr>
+
+          <tr th:if="${#lists.isEmpty(rules)}">
+            <td colspan="6" class="text-center text-muted">No rules found. Seed rules first.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr>
+      <h6>Quick Upsert by Shift Code</h6>
+      <form th:action="@{/hr/shift-rules/upsert}" method="post" class="row g-2">
+        <div class="col-md-3">
+          <input name="shiftCode" class="form-control" placeholder="DAY / EVENING / NIGHT" required>
+        </div>
+        <div class="col-md-3">
+          <input type="number" min="0" name="earlyCheckinMinutes" class="form-control" placeholder="Early minutes" required>
+        </div>
+        <div class="col-md-3">
+          <input type="number" min="0" name="lateThresholdMinutes" class="form-control" placeholder="Late threshold" required>
+        </div>
+        <div class="col-md-2">
+          <select name="isActive" class="form-select">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <button class="btn btn-primary w-100" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

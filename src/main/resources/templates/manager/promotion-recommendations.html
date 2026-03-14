@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Promotion Recommendations - HRM System</title>
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <meta name="_csrf_parameter" th:content="${_csrf?.parameterName}"/>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Promotion Recommendations</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                        <li class="breadcrumb-item active">Promotion Recommendations</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong><i class="fa fa-users"></i> Eligible Employees for Promotion</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Full Name</th>
+                                        <th>Position</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="emp : ${employees}">
+                                        <td th:text="${emp.empId}">001</td>
+                                        <td th:text="${emp.fullName}">Nguyen Van A</td>
+                                        <td>
+                                            <span th:if="${emp.currentPosition != null}" 
+                                                  th:text="'Position ID: ' + ${emp.currentPosition}">Position ID: 1</span>
+                                            <span th:unless="${emp.currentPosition != null}" class="text-muted">N/A</span>
+                                        </td>
+                                        <td>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-info"
+                                                    onclick="showReviewModal(this)"
+                                                    th:attr="data-emp-id=${emp.empId}, data-emp-name=${emp.fullName}, data-position=${emp.currentPosition}">
+                                                <i class="fa fa-eye"></i> Review
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(employees)}">
+                                        <td colspan="4" class="text-center text-muted">No employees found</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Review Employee -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="reviewModalLabel">
+                        <i class="fa fa-user-check"></i> Employee Review
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modalContent">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">
+                        <i class="fa fa-times"></i> Close
+                    </button>
+                    <button type="button" class="btn btn-success" id="submitPromotionBtn" onclick="showPromotionForm()">
+                        <i class="fa fa-arrow-up"></i> Recommend for Promotion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Promotion Form -->
+    <div class="modal fade" id="promotionFormModal" tabindex="-1" aria-labelledby="promotionFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="promotionFormModalLabel">
+                        <i class="fa fa-arrow-up"></i> Submit Promotion Recommendation
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="promotionFormContent">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+    let currentEmpData = {};
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+    const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
+    const positions = /*[[${positions}]]*/ [];
+    
+    function showReviewModal(button) {
+        currentEmpData = {
+            empId: button.getAttribute('data-emp-id'),
+            empName: button.getAttribute('data-emp-name'),
+            position: button.getAttribute('data-position'),
+            avgScore: button.getAttribute('data-avg-score'),
+            evalCount: button.getAttribute('data-eval-count')
+        };
+        
+        const modal = new coreui.Modal(document.getElementById('reviewModal'));
+        modal.show();
+        
+        document.getElementById('modalContent').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading employee data...</p>
+            </div>
+        `;
+        
+        fetch('/manager/promotion/review/' + currentEmpData.empId)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load data');
+                return response.json();
+            })
+            .then(data => {
+                renderReviewContent(data);
+            })
+            .catch(error => {
+                document.getElementById('modalContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fa fa-exclamation-circle"></i> Error: ${error.message}
+                    </div>
+                `;
+            });
+    }
+    
+    function renderReviewContent(data) {
+        const employee = data.employee;
+        const evaluations = data.evaluations || [];
+        const avgScore = data.avgScore || 0;
+        const evalCount = data.evaluationCount || 0;
+        
+        // Phần 2: Evaluation History
+        let evaluationRows = '';
+        evaluations.forEach((eval, index) => {
+            const cycleInfo = eval.cycleId ? `Cycle ${eval.cycleId}` : 'N/A';
+            const score = eval.managerScore ? eval.managerScore + ' / 100' : 'N/A';
+            const classification = eval.classification || 'N/A';
+            
+            evaluationRows += `
+                <tr>
+                    <td>${cycleInfo}</td>
+                    <td><span class="badge bg-primary">${score}</span></td>
+                    <td><span class="badge bg-info">${classification}</span></td>
+                </tr>
+            `;
+        });
+        
+        if (evaluationRows === '') {
+            evaluationRows = '<tr><td colspan="3" class="text-center text-muted">No evaluation records</td></tr>';
+        }
+        
+        // Phần 3: KPI Progress
+        let kpiProgressRows = '';
+        evaluations.forEach((eval, index) => {
+            const cycleInfo = eval.cycleId ? `Cycle ${eval.cycleId}` : 'N/A';
+            const selfScore = eval.selfScore ? eval.selfScore + ' / 100' : 'N/A';
+            const managerScore = eval.managerScore ? eval.managerScore + ' / 100' : 'N/A';
+            const status = eval.status || 'N/A';
+            
+            kpiProgressRows += `
+                <tr>
+                    <td>${cycleInfo}</td>
+                    <td><span class="badge bg-info">${selfScore}</span></td>
+                    <td><span class="badge bg-primary">${managerScore}</span></td>
+                    <td><span class="badge bg-secondary">${status}</span></td>
+                </tr>
+            `;
+        });
+        
+        if (kpiProgressRows === '') {
+            kpiProgressRows = '<tr><td colspan="4" class="text-center text-muted">No KPI progress records</td></tr>';
+        }
+        
+        const html = `
+            <!-- Phần 1: Employee Summary -->
+            <div class="card border-primary mb-3">
+                <div class="card-header bg-primary text-white">
+                    <strong><i class="fa fa-user"></i> Employee Summary</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p class="mb-2"><strong>ID:</strong> ${employee.empId}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-2"><strong>Name:</strong> ${employee.fullName}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-2"><strong>Position:</strong> Position ID ${employee.jobId || 'N/A'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Phần 2: Evaluation History -->
+            <div class="card border-info mb-3">
+                <div class="card-header bg-info text-white">
+                    <strong><i class="fa fa-star"></i> Evaluation History</strong>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Evaluation Period</th>
+                                    <th>Score</th>
+                                    <th>Classification</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${evaluationRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <strong><i class="fa fa-tasks"></i> KPI Progress</strong>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>KPI Progress by Evaluation Period</th>
+                                    <th>Self Score</th>
+                                    <th>Manager Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${kpiProgressRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('modalContent').innerHTML = html;
+    }
+    
+    function showPromotionForm() {
+        const reviewModal = coreui.Modal.getInstance(document.getElementById('reviewModal'));
+        if (reviewModal) {
+            reviewModal.hide();
+        }
+        
+        let positionOptions = '<option value="">-- Select Position --</option>';
+        positions.forEach(pos => {
+            positionOptions += `<option value="${pos.jobId}">${pos.title}</option>`;
+        });
+        
+        const formHtml = `
+            <form id="promotionSubmitForm" method="post" action="/manager/promotion/submit">
+                <input type="hidden" name="empId" value="${currentEmpData.empId}">
+                <input type="hidden" name="${csrfParamName}" value="${csrfToken}">
+                
+                <div class="mb-3">
+                    <label class="form-label"><strong>Employee:</strong></label>
+                    <p class="form-control-plaintext">${currentEmpData.empName} (ID: ${currentEmpData.empId})</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Proposed Position <span class="text-danger">*</span></label>
+                    <select class="form-select" name="proposedPositionId" required>
+                        ${positionOptions}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Reason for Promotion <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="reason" rows="5" required></textarea>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i> 
+                    This recommendation will be sent to HR for final approval.
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-paper-plane"></i> Submit to HR
+                    </button>
+                </div>
+            </form>
+        `;
+        
+        document.getElementById('promotionFormContent').innerHTML = formHtml;
+        
+        const promotionModal = new coreui.Modal(document.getElementById('promotionFormModal'));
+        promotionModal.show();
+    }
+</script>
+</div>
+</body>
+</html>

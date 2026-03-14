@@ -25,7 +25,7 @@ public class TrainingRecommendation {
     @Column(name = "eval_id")
     private Integer evalId;
 
-    @Column(name = "program_id", nullable = false)
+    @Column(name = "program_id")
     private Integer programId;
 
     @Column(name = "reason", columnDefinition = "NVARCHAR(MAX)")

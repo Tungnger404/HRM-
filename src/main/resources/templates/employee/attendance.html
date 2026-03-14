@@ -13,42 +13,31 @@
 
         <div class="card-body">
 
-            <!-- Success -->
             <div th:if="${message}" class="alert alert-success">
                 <span th:text="${message}"></span>
             </div>
 
-            <!-- Error -->
             <div th:if="${error}" class="alert alert-danger">
                 <span th:text="${error}"></span>
             </div>
 
-            <!-- Real-time Clock -->
             <div class="mb-3">
                 <h6 class="fw-bold">Current Time</h6>
                 <div id="clock" class="fs-4 text-primary fw-bold"></div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="mb-4 d-flex gap-2">
-
                 <form th:action="@{/employee/attendance/check-in}" method="post">
-                    <button type="submit" class="btn btn-success">
-                        Check In
-                    </button>
+                    <button type="submit" class="btn btn-success">Check In</button>
                 </form>
 
                 <form th:action="@{/employee/attendance/check-out}" method="post">
-                    <button type="submit" class="btn btn-danger">
-                        Check Out
-                    </button>
+                    <button type="submit" class="btn btn-danger">Check Out</button>
                 </form>
-
             </div>
 
             <hr>
 
-            <!-- Attendance History -->
             <h6 class="fw-bold mb-3">Attendance History</h6>
 
             <div class="table-responsive">
@@ -58,7 +47,9 @@
                         <th>Date</th>
                         <th>Check In</th>
                         <th>Check Out</th>
-                        <th>Attendance Status</th>
+                        <th>Status</th>
+                        <th>Late (min)</th>
+                        <th>Early Leave (min)</th>
                         <th>Work Type</th>
                     </tr>
                     </thead>
@@ -69,39 +60,39 @@
                         <td th:text="${log.checkIn != null ? #temporals.format(log.checkIn, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
                         <td th:text="${log.checkOut != null ? #temporals.format(log.checkOut, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
                         <td>
-                <span class="badge"
-                      th:classappend="${log.status == 'LATE' ? ' bg-warning' :
-                      (log.status == 'ON_TIME' ? ' bg-success' :
-                      (log.status == 'ABSENT' ? ' bg-danger' : ' bg-secondary'))}"
-                      th:text="${log.status}">
-</span>
+                            <span class="badge"
+                                  th:classappend="
+                                    ${log.status == 'ON_TIME' ? ' bg-success' :
+                                    (log.status == 'LATE' ? ' bg-warning text-dark' :
+                                    (log.status == 'EARLY_LEAVE' ? ' bg-info text-dark' :
+                                    (log.status == 'LATE_EARLY_LEAVE' ? ' bg-danger' :
+                                    (log.status == 'ABSENT' ? ' bg-dark' : ' bg-secondary'))))}"
+                                  th:text="${log.status}">
+                            </span>
                         </td>
+                        <td th:text="${log.lateMinutes != null ? log.lateMinutes : 0}"></td>
+                        <td th:text="${log.earlyLeaveMinutes != null ? log.earlyLeaveMinutes : 0}"></td>
                         <td>
-                <span class="badge"
-                      th:classappend="
-                            ${log.workType} == 'OT' ? ' bg-primary' :
-                            ' bg-secondary'"
-                      th:text="${log.workType}">
-                </span>
+                            <span class="badge bg-secondary"
+                                  th:text="${log.workType != null ? log.workType : '-'}">
+                            </span>
                         </td>
                     </tr>
 
                     <tr th:if="${#lists.isEmpty(logs)}">
-                        <td colspan="4" class="text-center text-muted">
+                        <td colspan="7" class="text-center text-muted">
                             No attendance records found.
                         </td>
                     </tr>
-
                     </tbody>
                 </table>
             </div>
 
         </div>
     </div>
+
     <script>
-
         function updateClock() {
-
             const now = new Date();
 
             const year = now.getFullYear();
@@ -113,16 +104,11 @@
             const seconds = String(now.getSeconds()).padStart(2, '0');
 
             const timeString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
             document.getElementById("clock").innerText = timeString;
         }
 
-        // cập nhật mỗi giây
         setInterval(updateClock, 1000);
-
-        // chạy ngay khi load
         updateClock();
-
     </script>
 </div>
 

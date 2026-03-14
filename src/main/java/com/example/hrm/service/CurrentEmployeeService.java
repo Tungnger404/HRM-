@@ -34,7 +34,7 @@ public class CurrentEmployeeService {
     }
 
     public Integer requireCurrentEmpId(Principal principal) {
-        return requireEmployee(principal).getId();
+        return requireEmployee(principal).getEmpId();
     }
 
     // ✅ NEW: lấy user_id để gán uploaded_by
