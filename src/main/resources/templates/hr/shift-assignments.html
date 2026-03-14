@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<body>
+<div layout:fragment="content">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Shift Assignments</h5>
+    </div>
+    <div class="card-body">
+
+      <div class="alert alert-success" th:if="${msg}" th:text="${msg}"></div>
+      <div class="alert alert-danger" th:if="${err}" th:text="${err}"></div>
+
+      <form method="get" th:action="@{/hr/schedules/assignments}" class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Select Batch</label>
+          <select class="form-select" name="batchId" required>
+            <option value="">-- Choose batch --</option>
+            <option th:each="b : ${batches}"
+                    th:value="${b.batchId}"
+                    th:selected="${selectedBatchId != null and selectedBatchId == b.batchId}"
+                    th:text="${b.batchId + ' - ' + #temporals.format(b.scheduleMonth, 'MM/yyyy')}">
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-outline-primary w-100" type="submit">Load</button>
+        </div>
+      </form>
+
+      <form th:if="${selectedBatchId != null}"
+            th:action="@{/hr/schedules/assignments/save}"
+            th:object="${form}"
+            method="post"
+            class="row g-3 mb-4">
+        <input type="hidden" th:field="*{batchId}">
+        <div class="col-md-3">
+          <label class="form-label">Employee</label>
+          <select class="form-select" th:field="*{empId}" required>
+            <option value="">-- Choose employee --</option>
+            <option th:each="e : ${employees}" th:value="${e.empId}" th:text="${e.empId + ' - ' + e.fullName}"></option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Work Date</label>
+          <input type="date" class="form-control" th:field="*{workDate}" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Type</label>
+          <select class="form-select" th:field="*{assignmentType}" required>
+            <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Shift (for WORK)</label>
+          <select class="form-select" th:field="*{shiftId}">
+            <option value="">-- None --</option>
+            <option th:each="s : ${shifts}" th:value="${s.shiftId}" th:text="${s.shiftCode + ' - ' + s.shiftName}"></option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Note</label>
+          <input class="form-control" th:field="*{note}">
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit">Save Assignment</button>
+        </div>
+      </form>
+
+      <div class="table-responsive" th:if="${selectedBatchId != null}">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Employee</th>
+            <th>Type</th>
+            <th>Shift</th>
+            <th>Assigned By</th>
+            <th>Assigned At</th>
+            <th>Note</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="a : ${assignments}">
+            <td th:text="${a.assignmentId}"></td>
+            <td th:text="${#temporals.format(a.workDate, 'dd/MM/yyyy')}"></td>
+            <td th:text="${a.employee.empId + ' - ' + a.employee.fullName}"></td>
+            <td th:text="${a.assignmentType}"></td>
+            <td th:text="${a.shiftTemplate != null ? a.shiftTemplate.shiftCode : '-'}"></td>
+            <td th:text="${a.assignedBy}"></td>
+            <td th:text="${#temporals.format(a.assignedAt, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${a.note}"></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(assignments)}">
+            <td colspan="8" class="text-center text-muted">No assignments found.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

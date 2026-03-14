@@ -22,7 +22,9 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
                              @Param("start") LocalDate start,
                              @Param("end") LocalDate end);
 
-    // ✅ lịch sử điểm danh theo nhân viên
-    List<AttendanceLog> findByEmployee_EmpId(Integer empId);
     Optional<AttendanceLog> findByEmployee_EmpIdAndWorkDate(Integer empId, LocalDate workDate);
+
+    Optional<AttendanceLog> findTopByEmployee_EmpIdAndCheckOutIsNullOrderByWorkDateDesc(Integer empId);
+
+    List<AttendanceLog> findByEmployee_EmpIdOrderByWorkDateDesc(Integer empId);
 }

@@ -40,4 +40,27 @@ public class AttendanceLog {
 
     @Column(name="work_type")
     private String workType;
+    @Column(name = "assignment_id")
+    private Long assignmentId;
+
+    @Column(name = "shift_id")
+    private Integer shiftId;
+
+    @Column(name = "scheduled_start_at")
+    private LocalDateTime scheduledStartAt;
+
+    @Column(name = "scheduled_end_at")
+    private LocalDateTime scheduledEndAt;
+
+    @Column(name = "is_late")
+    private Boolean isLate;
+
+    @Column(name = "late_minutes")
+    private Integer lateMinutes;
+
+    @Column(name = "is_early_leave")
+    private Boolean isEarlyLeave;
+
+    @Column(name = "early_leave_minutes")
+    private Integer earlyLeaveMinutes;
 }

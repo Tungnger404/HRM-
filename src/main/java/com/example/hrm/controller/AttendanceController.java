@@ -1,4 +1,5 @@
 package com.example.hrm.controller;
+import com.example.hrm.service.AttendanceAutoService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.hrm.service.AttendanceService;
@@ -15,11 +16,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
+    private final AttendanceAutoService attendanceAutoService;
 
-    public AttendanceController(AttendanceService attendanceService) {
+    public AttendanceController(AttendanceService attendanceService,
+                                AttendanceAutoService attendanceAutoService) {
         this.attendanceService = attendanceService;
+        this.attendanceAutoService = attendanceAutoService;
     }
-
     @GetMapping
     public String attendancePage(Model model) {
 
@@ -56,5 +59,15 @@ public class AttendanceController {
 
         return "redirect:/employee/attendance";
 
+    }
+    @PostMapping("/dev/mark-absent-now")
+    public String markAbsentNow(RedirectAttributes ra) {
+        try {
+            attendanceAutoService.markAbsentForToday();
+            ra.addFlashAttribute("message", "Marked absent job executed.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/employee/attendance";
     }
 }
