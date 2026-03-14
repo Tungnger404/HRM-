@@ -23,6 +23,11 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Intege
     @EntityGraph(attributePaths = "role")
     Optional<UserAccount> findByGoogleId(String googleId);
 
+    @EntityGraph(attributePaths = "role")
+    java.util.List<UserAccount> findByRole_RoleNameIgnoreCaseAndActiveTrue(String roleName);
+
     boolean existsByEmailIgnoreCase(String email);
     boolean existsByUsernameIgnoreCase(String username);
+
+
 }

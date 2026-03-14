@@ -43,6 +43,30 @@
       </a>
     </li>
 
+    <li class="nav-title">Payroll</li>
+
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/payroll/rejected}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/payroll/rejected')} ? 'active' : ''">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-money"></use>
+        </svg>
+        Rejected Payslips
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/inquiries}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/inquiries')} ? 'active' : ''">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-chat-bubble"></use>
+        </svg>
+        Payroll Inquiries
+      </a>
+    </li>
+
     <li class="nav-title">Evaluation & KPI</li>
 
     <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/hr/kpi')} ? 'show' : ''">
@@ -52,7 +76,7 @@
       </a>
       <ul class="nav-group-items compact">
         <li class="nav-item">
-          <a class="nav-link" th:href="@{/hr/kpi/configure}" 
+          <a class="nav-link" th:href="@{/hr/kpi/configure}"
              th:classappend="${#strings.endsWith(currentUri, '/configure')} ? 'active' : ''">
             <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
             Send Template

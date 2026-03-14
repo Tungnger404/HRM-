@@ -33,8 +33,9 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
         return inquiryRepo.findForEmployee(empId, null, status).stream()
                 .map(i -> PayrollInquiryDTO.builder()
                         .id(i.getId())
-                        .payslipId(i.getPayslip().getId())
+                        .payslipId(i.getPayslip() != null ? i.getPayslip().getId() : null)
                         .empId(empId)
+                        .employeeName(empName(i.getEmployee()))
                         .question(i.getQuestion())
                         .answer(i.getAnswer())
                         .status(i.getStatus())
@@ -63,6 +64,7 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
                         .id(i.getId())
                         .payslipId(payslipId)
                         .empId(empId)
+                        .employeeName(empName(i.getEmployee()))
                         .question(i.getQuestion())
                         .answer(i.getAnswer())
                         .status(i.getStatus())
@@ -108,6 +110,7 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
                 .id(inq.getId())
                 .payslipId(p.getId())
                 .empId(empId)
+                .employeeName(empName(emp))
                 .question(inq.getQuestion())
                 .answer(inq.getAnswer())
                 .status(inq.getStatus())
@@ -121,8 +124,25 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
         return inquiryRepo.findForManager(managerEmpId, status).stream()
                 .map(i -> PayrollInquiryDTO.builder()
                         .id(i.getId())
-                        .payslipId(i.getPayslip().getId())
-                        .empId(i.getEmployee().getId())
+                        .payslipId(i.getPayslip() != null ? i.getPayslip().getId() : null)
+                        .empId(i.getEmployee() != null ? i.getEmployee().getId() : null)
+                        .employeeName(empName(i.getEmployee()))
+                        .question(i.getQuestion())
+                        .answer(i.getAnswer())
+                        .status(i.getStatus())
+                        .createdAt(i.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PayrollInquiryDTO> listInquiriesForHr(String status) {
+        return inquiryRepo.findForHr(status).stream()
+                .map(i -> PayrollInquiryDTO.builder()
+                        .id(i.getId())
+                        .payslipId(i.getPayslip() != null ? i.getPayslip().getId() : null)
+                        .empId(i.getEmployee() != null ? i.getEmployee().getId() : null)
                         .employeeName(empName(i.getEmployee()))
                         .question(i.getQuestion())
                         .answer(i.getAnswer())
@@ -140,8 +160,8 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
 
         return PayrollInquiryDTO.builder()
                 .id(i.getId())
-                .payslipId(i.getPayslip().getId())
-                .empId(i.getEmployee().getId())
+                .payslipId(i.getPayslip() != null ? i.getPayslip().getId() : null)
+                .empId(i.getEmployee() != null ? i.getEmployee().getId() : null)
                 .employeeName(empName(i.getEmployee()))
                 .question(i.getQuestion())
                 .answer(i.getAnswer())
@@ -160,7 +180,23 @@ public class PayrollInquiryServiceImpl implements PayrollInquiryService {
             throw new SecurityException("Not allowed to resolve this inquiry");
         }
 
-        i.setAnswer(answer);
+        applyResolution(i, answer);
+    }
+
+    @Override
+    public void resolveInquiryByHr(Integer inquiryId, String answer) {
+        PayrollInquiry i = inquiryRepo.findById(inquiryId)
+                .orElseThrow(() -> new IllegalArgumentException("Inquiry not found"));
+
+        applyResolution(i, answer);
+    }
+
+    private void applyResolution(PayrollInquiry i, String answer) {
+        if (answer == null || answer.trim().isEmpty()) {
+            throw new IllegalArgumentException("Answer is required");
+        }
+
+        i.setAnswer(answer.trim());
         i.setStatus("RESOLVED");
         inquiryRepo.save(i);
 

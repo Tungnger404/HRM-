@@ -74,6 +74,10 @@ public class EmployeeServiceImpl implements EmployeeService {
             e.setJoinDate(LocalDate.now());
         }
 
+        if (e.getIncludeInPayroll() == null) {
+            e.setIncludeInPayroll(false);
+        }
+
         return repo.save(e);
     }
 
@@ -200,6 +204,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .phone(candidate.getPhone())
                 .status("PROBATION")
                 .joinDate(joinDate != null ? joinDate : LocalDate.now())
+                .includeInPayroll(false)
                 .build();
 
         repo.save(employee);

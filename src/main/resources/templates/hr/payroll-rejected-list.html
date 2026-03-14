@@ -1,0 +1,143 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>HR - Rejected Payslips</title>
+    <style>
+        .period-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .toast-notification {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 280px;
+            max-width: 420px;
+            padding: 14px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.15);
+            font-size: 15px;
+            font-weight: 500;
+            color: #fff;
+            transform: translateX(120%);
+            transition: transform .4s cubic-bezier(.25,.8,.25,1);
+        }
+        .toast-notification.show { transform: translateX(0); }
+        .toast-success { background-color: #28a745; }
+        .toast-danger  { background-color: #dc3545; }
+        .toast-warning { background-color: #ffc107; color: #212529; }
+        .filter-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .filter-form input, .filter-form select {
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div th:if="${msg != null}"
+         id="serverToastMsg"
+         class="toast-notification"
+         th:classappend="'toast-' + (${msgType} != null ? ${msgType} : 'success')">
+        <span th:text="${msg}"></span>
+    </div>
+
+    <div class="period-header">
+        <div>
+            <h2 class="mb-1">Rejected Payslips</h2>
+            <div class="text-body-secondary small">
+                Danh sách payslip bị manager reject — HR xem xét và reopen để xử lý lại
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <form method="get" th:action="@{/hr/payroll/rejected}" class="filter-form">
+        <input type="text" name="q"
+               th:value="${q}"
+               placeholder="Tìm tên nhân viên...">
+        <select name="periodId">
+            <option value="" th:selected="${periodId == null}">-- Tất cả kỳ lương --</option>
+            <option th:each="p : ${periods}"
+                    th:value="${p.id}"
+                    th:text="${p.month + '/' + p.year + ' (' + p.status + ')'}"
+                    th:selected="${p.id == periodId}">
+            </option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
+        <a th:href="@{/hr/payroll/rejected}" class="btn btn-outline-secondary btn-sm">Reset</a>
+    </form>
+
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Payslip ID</th>
+                    <th>Nhân viên</th>
+                    <th>Vị trí</th>
+                    <th>Kỳ lương</th>
+                    <th>Lý do reject</th>
+                    <th>Rejected At</th>
+                    <th>Net (saved)</th>
+                    <th style="width:110px">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${rows}">
+                    <td th:text="${row.payslipId}"></td>
+                    <td>
+                        <span th:text="${row.employeeName}"></span>
+                        <small class="text-muted d-block" th:text="'#' + ${row.empId}"></small>
+                    </td>
+                    <td th:text="${row.jobTitle}"></td>
+                    <td th:text="${row.periodLabel}"></td>
+                    <td class="text-danger fw-semibold" th:text="${row.rejectReason}"></td>
+                    <td th:text="${row.rejectedAt != null ? #temporals.format(row.rejectedAt,'dd/MM/yyyy HH:mm') : '-'}"></td>
+                    <td th:text="${row.savedNet != null ? #numbers.formatDecimal(row.savedNet,1,0) : '-'}"></td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:href="@{/hr/payroll/rejected/{id}(id=${row.payslipId})}">
+                            Chi tiết
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${rows == null or #lists.isEmpty(rows)}">
+                    <td colspan="8" class="text-center text-body-secondary py-3">
+                        Không có payslip nào bị reject
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sToast = document.getElementById("serverToastMsg");
+            if (sToast) {
+                setTimeout(() => sToast.classList.add("show"), 50);
+                setTimeout(() => sToast.classList.remove("show"), 4000);
+            }
+        });
+    </script>
+
+</div>
+</body>
+</html>

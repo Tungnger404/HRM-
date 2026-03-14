@@ -4,17 +4,22 @@ import com.example.hrm.dto.PayslipDetailDTO;
 import com.example.hrm.dto.PayslipItemDTO;
 import com.example.hrm.dto.PayslipSummaryDTO;
 import com.example.hrm.entity.Employee;
+import com.example.hrm.entity.JobPosition;
 import com.example.hrm.entity.PayrollPeriod;
 import com.example.hrm.entity.Payslip;
-import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.entity.User;
+import com.example.hrm.repository.AttendanceLogRepository;
+import com.example.hrm.repository.JobPositionRepository;
 import com.example.hrm.repository.PayslipItemRepository;
 import com.example.hrm.repository.PayslipRepository;
+import com.example.hrm.repository.UserRepository;
 import com.example.hrm.service.PayrollEmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -27,7 +32,9 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
 
     private final PayslipRepository payslipRepo;
     private final PayslipItemRepository itemRepo;
-    private final EmployeeRepository employeeRepo;
+    private final AttendanceLogRepository attendanceRepo;
+    private final JobPositionRepository jobRepo;
+    private final UserRepository userRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -35,7 +42,7 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found"));
 
-        if (!p.getEmployee().getId().equals(empId)) {
+        if (p.getEmployee() == null || !p.getEmployee().getId().equals(empId)) {
             throw new SecurityException("Not allowed");
         }
 
@@ -54,20 +61,65 @@ public class PayrollEmployeeServiceImpl implements PayrollEmployeeService {
                         .build())
                 .toList();
 
+        Employee emp = p.getEmployee();
+
+        String jobTitle = "";
+        String email = "";
+        String phone = "";
+
+        if (emp != null) {
+            phone = emp.getPhone() == null ? "" : emp.getPhone();
+
+            if (emp.getJobId() != null) {
+                jobTitle = jobRepo.findById(emp.getJobId())
+                        .map(JobPosition::getTitle)
+                        .orElse("");
+            }
+
+            if (emp.getUserId() != null) {
+                email = userRepo.findById(emp.getUserId())
+                        .map(User::getEmail)
+                        .orElse("");
+            }
+        }
+
+        PayrollPeriod period = p.getBatch() != null ? p.getBatch().getPeriod() : null;
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+
+        if (period != null) {
+            startDate = period.getStartDate() != null
+                    ? period.getStartDate()
+                    : LocalDate.of(period.getYear(), period.getMonth(), 1);
+
+            endDate = period.getEndDate() != null
+                    ? period.getEndDate()
+                    : startDate.withDayOfMonth(startDate.lengthOfMonth());
+        }
+
+        BigDecimal actualWorkDays = nz(p.getActualWorkDays());
+        if (emp != null && startDate != null && endDate != null) {
+            long actualDaysLong = attendanceRepo.countActualWorkDays(emp.getId(), startDate, endDate);
+            actualWorkDays = BigDecimal.valueOf(actualDaysLong);
+        }
+
         return PayslipDetailDTO.builder()
                 .payslipId(p.getId())
                 .batchId(p.getBatch().getId())
-                .empId(p.getEmployee().getId())
-                .employeeName(empName(p.getEmployee()))
-                .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null))
+                .empId(emp != null ? emp.getId() : null)
+                .employeeName(empName(emp))
+                .period(periodLabel(period))
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
-                .actualWorkDays(nz(p.getActualWorkDays()))
+                .actualWorkDays(actualWorkDays)
                 .otHours(nz(p.getOtHours()))
                 .totalIncome(nz(p.getTotalIncome()))
                 .totalDeduction(nz(p.getTotalDeduction()))
                 .netSalary(nz(p.getNetSalary()))
                 .items(items)
+                .jobTitle(jobTitle)
+                .email(email)
+                .phone(phone)
                 .build();
     }
 

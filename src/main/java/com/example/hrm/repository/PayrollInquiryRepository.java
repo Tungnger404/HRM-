@@ -14,11 +14,18 @@ public interface PayrollInquiryRepository extends JpaRepository<PayrollInquiry, 
                 select i from PayrollInquiry i
                 join i.employee e
                 where e.directManagerId = :managerEmpId
-                  and (:status is null or i.status = :status)
+                  and (:status is null or :status = '' or i.status = :status)
                 order by i.createdAt desc
             """)
     List<PayrollInquiry> findForManager(@Param("managerEmpId") Integer managerEmpId,
                                         @Param("status") String status);
+
+    @Query("""
+                select i from PayrollInquiry i
+                where (:status is null or :status = '' or i.status = :status)
+                order by i.createdAt desc
+            """)
+    List<PayrollInquiry> findForHr(@Param("status") String status);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
@@ -30,8 +37,6 @@ public interface PayrollInquiryRepository extends JpaRepository<PayrollInquiry, 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from PayrollInquiry i where i.payslip.id = :payslipId")
     int deleteByPayslipId(@Param("payslipId") Integer payslipId);
-
-    //employee
 
     @Query("""
     select i from PayrollInquiry i

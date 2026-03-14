@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.hrm.entity.UserAccount;
+import com.example.hrm.service.NotificationService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,6 +41,9 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     private final PayrollCalculationService payrollCalculationService;
     private final UserRepository userRepo;
     private final JobPositionRepository jobRepo;
+
+    private final NotificationService notificationService;
+    private final UserAccountRepository userAccountRepo;
 
     @Override
     public void addActiveBenefitToPayslip(Integer managerEmpId, Integer payslipId, Integer benefitId) {
@@ -110,16 +115,30 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
         String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
                 ? "" : p.getBatch().getStatus().trim().toUpperCase();
 
+        String slipStatus = (p.getSlipStatus() == null)
+                ? "ACTIVE" : p.getSlipStatus().trim().toUpperCase();
+
         if ("PAID".equals(batchStatus) || "APPROVED".equals(batchStatus)) {
             throw new IllegalStateException("Batch đã chốt, không approve từng payslip nữa.");
         }
 
-        if ("REJECTED".equalsIgnoreCase(p.getSlipStatus())) {
+        if ("REJECTED".equals(slipStatus)) {
             throw new IllegalStateException("Payslip REJECTED không approve được.");
         }
 
-        // Approve ở payroll list chỉ là bước review nội bộ
-        // KHÔNG release cho employee ở đây nữa
+        // approve lặp lại thì bỏ qua cho an toàn
+        if ("APPROVED".equals(slipStatus)) {
+            return;
+        }
+
+        // CHỈ approve 1 payslip, KHÔNG đụng vào batch
+        p.setSlipStatus("APPROVED");
+        p.setSentToEmployee(false); // chưa release cho employee ở bước approve từng dòng
+        p.setRejectReason(null);
+        p.setRejectedBy(null);
+        p.setRejectedAt(null);
+
+        payslipRepo.save(p);
     }
 
     @Override
@@ -188,8 +207,15 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
 
     @Override
     public void rejectPayslip(Integer payslipId) {
+        rejectPayslip(null, null, payslipId, "Rejected by manager");
+    }
+
+    @Override
+    public void rejectPayslip(Integer accessEmpId, Integer rejectedByEmpId, Integer payslipId, String reason) {
         Payslip p = payslipRepo.findById(payslipId)
                 .orElseThrow(() -> new IllegalArgumentException("Payslip not found: " + payslipId));
+
+        validatePayslipAccess(p, accessEmpId, "Not allowed to reject this payslip");
 
         String batchStatus = (p.getBatch() == null || p.getBatch().getStatus() == null)
                 ? ""
@@ -199,16 +225,87 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
             throw new IllegalStateException("Chỉ reject được khi batch là DRAFT hoặc PENDING_APPROVAL.");
         }
 
-        if ("REJECTED".equalsIgnoreCase(p.getSlipStatus())) {
-            return;
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập lý do reject.");
         }
 
         p.setSlipStatus("REJECTED");
         p.setSentToEmployee(false);
+        p.setRejectReason(reason.trim());
+        p.setRejectedBy(rejectedByEmpId);
+        p.setRejectedAt(LocalDateTime.now());
         payslipRepo.save(p);
 
         payrollCalculationService.recalcBatchTotals(p.getBatch());
+        try {
+            notifyHrAboutRejectedPayslip(p);
+        } catch (Exception ex) {
+            // Notification failure should not block the reject action
+        }
     }
+
+    private void notifyHrAboutRejectedPayslip(Payslip p) {
+        List<Integer> hrEmpIds = userAccountRepo.findByRole_RoleNameIgnoreCaseAndActiveTrue("HR")
+                .stream()
+                .map(UserAccount::getId)
+                .map(userId -> employeeRepo.findByUserId(userId).map(Employee::getId).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(empId -> !Objects.equals(empId, p.getRejectedBy()))
+                .distinct()
+                .toList();
+        if (hrEmpIds.isEmpty()) return;
+
+        String employeeName = empName(p.getEmployee());
+        String reason = p.getRejectReason() == null ? "" : p.getRejectReason();
+
+        for (Integer hrEmpId : hrEmpIds) {
+            notificationService.create(
+                    hrEmpId,
+                    "PAYROLL_REJECTED",
+                    "Payslip rejected by manager",
+                    employeeName + " - Reason: " + reason,
+                    "/hr/payroll/rejected/" + p.getId()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deletePayslipFromBatch(Integer accessEmpId, Integer payslipId) {
+        Payslip p = payslipRepo.findById(payslipId)
+                .orElseThrow(() -> new IllegalArgumentException("Payslip not found: " + payslipId));
+
+        validatePayslipAccess(p, accessEmpId, "Not allowed to delete this payslip");
+
+        PayrollBatch batch = p.getBatch();
+        if (batch == null || batch.getStatus() == null) {
+            throw new IllegalStateException("Không thể xóa phiếu lương không thuộc batch nào.");
+        }
+
+        String batchStatus = batch.getStatus().trim().toUpperCase();
+        if (!"DRAFT".equals(batchStatus) && !"REJECTED".equals(batchStatus)) {
+            throw new IllegalStateException("Chỉ được phép xóa phiếu lương khi bảng lương đang ở trạng thái DRAFT hoặc REJECTED.");
+        }
+
+        // Xóa inquiries phụ thuộc (nếu có) của payslip này
+        inquiryRepo.deleteByPayslipId(payslipId);
+        
+        // Xóa các items phụ thuộc
+        List<PayslipItem> items = itemRepo.findByPayslip_IdOrderByIdAsc(payslipId);
+        itemRepo.deleteAll(items);
+
+        Employee emp = p.getEmployee();
+        if (emp != null) {
+            emp.setIncludeInPayroll(false);
+            employeeRepo.save(emp);
+        }
+
+        payslipRepo.delete(p);
+
+        // Calculate and save new batch totals
+        payrollCalculationService.recalcBatchTotals(batch);
+    }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -255,6 +352,13 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
             String jobTitle = (String) r[17];
             Boolean sentToEmployee = (r[18] instanceof Boolean b) ? b : Boolean.FALSE;
             String slipStatus = (String) r[19];
+            String rejectReason = (String) r[20];
+            LocalDateTime rejectedAt = null;
+            if (r[21] instanceof java.sql.Timestamp ts) {
+                rejectedAt = ts.toLocalDateTime();
+            } else if (r[21] instanceof LocalDateTime ldt) {
+                rejectedAt = ldt;
+            }
 
             BigDecimal actualDays = savedActualDays;
             BigDecimal otHours = savedOtHours;
@@ -321,6 +425,8 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                     .sentToEmployee(Boolean.TRUE.equals(sentToEmployee))
                     .slipStatus(slipStatus == null ? "ACTIVE" : slipStatus)
                     .bankMissing(false)
+                    .rejectReason(rejectReason)
+                    .rejectedAt(rejectedAt)
                     .build();
         }).toList();
 
@@ -399,6 +505,8 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                 .totalGross(nz(batch.getTotalGross()))
                 .totalNet(nz(batch.getTotalNet()))
                 .payslips(slips)
+                .rejectReason(batch.getRejectReason())
+                .rejectedBy(batch.getRejectedBy())
                 .build();
     }
 
@@ -476,6 +584,24 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
             }
         }
 
+        PayrollPeriod period = p.getBatch() != null ? p.getBatch().getPeriod() : null;
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+        if (period != null) {
+            startDate = period.getStartDate() != null
+                    ? period.getStartDate()
+                    : LocalDate.of(period.getYear(), period.getMonth(), 1);
+            endDate = period.getEndDate() != null
+                    ? period.getEndDate()
+                    : startDate.withDayOfMonth(startDate.lengthOfMonth());
+        }
+
+        BigDecimal actualWorkDays = nz(p.getActualWorkDays());
+        if (emp != null && startDate != null) {
+            long actualDaysLong = attendanceRepo.countActualWorkDays(emp.getId(), startDate, endDate);
+            actualWorkDays = BigDecimal.valueOf(actualDaysLong);
+        }
+
         return PayslipDetailDTO.builder()
                 .payslipId(p.getId())
                 .batchId(p.getBatch().getId())
@@ -484,7 +610,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                 .period(periodLabel(p.getBatch() != null ? p.getBatch().getPeriod() : null))
                 .baseSalary(nz(p.getBaseSalary()))
                 .standardWorkDays(nz(p.getStandardWorkDays()))
-                .actualWorkDays(nz(p.getActualWorkDays()))
+                .actualWorkDays(actualWorkDays)
                 .otHours(nz(p.getOtHours()))
                 .totalIncome(nz(p.getTotalIncome()))
                 .totalDeduction(nz(p.getTotalDeduction()))
@@ -505,8 +631,29 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
             throw new IllegalStateException("Period is locked.");
         }
 
+        List<PayrollBatch> existingBatches = batchRepo.findByPeriodOrderByIdDesc(period);
+        for (PayrollBatch existing : existingBatches) {
+            String st = existing.getStatus() == null ? "" : existing.getStatus().trim().toUpperCase();
+            if ("APPROVED".equals(st) || "PENDING_APPROVAL".equals(st)) {
+                throw new IllegalStateException(
+                        "Period này đã có batch \"" + existing.getName() + "\" trạng thái " + st +
+                                ". Không thể tạo thêm. Nếu muốn làm lại, hãy xóa batch cũ trước.");
+            }
+        }
+
+        for (PayrollBatch existing : existingBatches) {
+            String st = existing.getStatus() == null ? "" : existing.getStatus().trim().toUpperCase();
+            if ("DRAFT".equals(st) || "REJECTED".equals(st)) {
+                inquiryRepo.deleteByBatchId(existing.getId());
+                itemRepo.deleteByBatchId(existing.getId());
+                payslipRepo.deleteByBatchId(existing.getId());
+                batchRepo.delete(existing);
+            }
+        }
+
         LocalDate start = Optional.ofNullable(period.getStartDate())
                 .orElse(LocalDate.of(period.getYear(), period.getMonth(), 1));
+
         LocalDate end = Optional.ofNullable(period.getEndDate())
                 .orElse(start.withDayOfMonth(start.lengthOfMonth()));
 
@@ -522,10 +669,8 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                 .build();
         batch = batchRepo.save(batch);
 
-        List<Employee> employees = employeeRepo.findAll()
-                .stream()
-                .filter(e -> e.getStatus() == null || !List.of("RESIGNED", "TERMINATED").contains(e.getStatus()))
-                .toList();
+// CHỈ auto add những nhân viên đã được đưa vào payroll
+        List<Employee> employees = employeeRepo.findPayrollEligibleEmployees(null);
 
         BigDecimal totalGross = BigDecimal.ZERO;
         BigDecimal totalNet = BigDecimal.ZERO;
@@ -536,6 +681,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                     .orElse(BigDecimal.ZERO);
 
             BigDecimal standardDays = BigDecimal.valueOf(22);
+
             long actualDaysLong = attendanceRepo.countActualWorkDays(emp.getId(), start, end);
             BigDecimal actualDays = BigDecimal.valueOf(actualDaysLong);
 
@@ -569,6 +715,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
                     .totalDeduction(c.totalDeduction())
                     .netSalary(c.netSalary())
                     .sentToEmployee(false)
+                    .slipStatus("ACTIVE")
                     .build();
 
             slip = payslipRepo.save(slip);
@@ -595,6 +742,18 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
 
         if (!"DRAFT".equals(batch.getStatus())) {
             throw new IllegalStateException("Only DRAFT can be submitted.");
+        }
+
+        List<Payslip> slips = payslipRepo.findByBatch_IdOrderByIdAsc(batchId);
+        boolean changed = false;
+        for (Payslip slip : slips) {
+            if ("APPROVED".equalsIgnoreCase(slip.getSlipStatus())) {
+                slip.setSlipStatus("ACTIVE");
+                changed = true;
+            }
+        }
+        if (changed) {
+            payslipRepo.saveAll(slips);
         }
 
         batch.setStatus("PENDING_APPROVAL");
@@ -632,25 +791,114 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     }
 
     @Override
-    public void rejectBatch(Integer batchId) {
+    public void unlockPeriod(Integer periodId) {
+        PayrollPeriod period = periodRepo.findById(periodId)
+                .orElseThrow(() -> new IllegalArgumentException("Period not found: " + periodId));
+        period.setLocked(false);
+        period.setStatus("OPEN");
+        periodRepo.save(period);
+    }
+
+    @Override
+    public Integer deleteDraftBatch(Integer batchId) {
+        PayrollBatch batch = batchRepo.findById(batchId)
+                .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
+        String st = batch.getStatus() == null ? "" : batch.getStatus().trim().toUpperCase();
+        if (!"DRAFT".equals(st) && !"REJECTED".equals(st)) {
+            throw new IllegalStateException("Chỉ có thể xóa batch DRAFT hoặc REJECTED. Batch này đang ở trạng thái: " + st);
+        }
+        Integer periodId = batch.getPeriod() != null ? batch.getPeriod().getId() : null;
+        inquiryRepo.deleteByBatchId(batchId);
+        itemRepo.deleteByBatchId(batchId);
+        payslipRepo.deleteByBatchId(batchId);
+        batchRepo.delete(batch);
+        return periodId;
+    }
+
+    @Override
+    public void deletePeriod(Integer periodId) {
+        PayrollPeriod period = periodRepo.findById(periodId)
+                .orElseThrow(() -> new IllegalArgumentException("Period not found: " + periodId));
+        if (Boolean.TRUE.equals(period.getLocked())) {
+            throw new IllegalStateException("Không thể xóa period đã bị khóa.");
+        }
+        if (!"OPEN".equalsIgnoreCase(period.getStatus())) {
+            throw new IllegalStateException("Chỉ xóa được period ở trạng thái OPEN. Period này đang: " + period.getStatus());
+        }
+        // Xóa cascade: batches → payslip items → payslips → inquiries → batches → period
+        List<PayrollBatch> batches = batchRepo.findByPeriodOrderByIdDesc(period);
+        for (PayrollBatch batch : batches) {
+            inquiryRepo.deleteByBatchId(batch.getId());
+            itemRepo.deleteByBatchId(batch.getId());
+            payslipRepo.deleteByBatchId(batch.getId());
+            batchRepo.delete(batch);
+        }
+        periodRepo.delete(period);
+    }
+
+    @Override
+    public void rejectBatch(Integer batchId, Integer rejectedByEmpId, String reason) {
         PayrollBatch batch = batchRepo.findById(batchId)
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
 
         String st = (batch.getStatus() == null ? "" : batch.getStatus().trim().toUpperCase());
 
-        if ("DRAFT".equals(st) || "PENDING_APPROVAL".equals(st)) {
-            inquiryRepo.deleteByBatchId(batchId);
-            itemRepo.deleteByBatchId(batchId);
-            payslipRepo.deleteByBatchId(batchId);
-            batchRepo.delete(batch);
-            return;
+        if (!"DRAFT".equals(st) && !"PENDING_APPROVAL".equals(st)) {
+            throw new IllegalStateException("Reject chỉ áp dụng cho batch DRAFT hoặc PENDING_APPROVAL.");
         }
 
-        throw new IllegalStateException("Reject chỉ áp dụng cho batch DRAFT hoặc PENDING_APPROVAL.");
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập lý do reject.");
+        }
+
+        // Reset các payslip đang ở trạng thái APPROVED về ACTIVE để có thể sửa lại
+        List<Payslip> slips = payslipRepo.findByBatch_IdOrderByIdAsc(batchId);
+        boolean changed = false;
+        for (Payslip slip : slips) {
+            if ("APPROVED".equalsIgnoreCase(slip.getSlipStatus())) {
+                slip.setSlipStatus("ACTIVE");
+                changed = true;
+            }
+        }
+        if (changed) {
+            payslipRepo.saveAll(slips);
+        }
+
+        // Đặt status REJECTED, GIỮ LẠI toàn bộ dữ liệu payslips/items
+        batch.setStatus("REJECTED");
+        batch.setRejectReason(reason.trim());
+        batch.setRejectedBy(rejectedByEmpId);
+        batchRepo.save(batch);
+
+        // Thông báo cho toàn bộ HR
+        notifyHrAboutRejectedBatch(batch, reason.trim());
+    }
+
+    private void notifyHrAboutRejectedBatch(PayrollBatch batch, String reason) {
+        String batchLabel = batch.getName() == null ? ("Batch #" + batch.getId()) : batch.getName();
+        List<Integer> hrEmpIds = userAccountRepo.findByRole_RoleNameIgnoreCaseAndActiveTrue("HR")
+                .stream()
+                .map(UserAccount::getId)
+                .map(userId -> employeeRepo.findByUserId(userId).map(Employee::getId).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(empId -> !Objects.equals(empId, batch.getRejectedBy()))
+                .distinct()
+                .toList();
+
+        for (Integer hrEmpId : hrEmpIds) {
+            notificationService.create(
+                    hrEmpId,
+                    "PAYROLL_BATCH_REJECTED",
+                    "Batch lương bị reject",
+                    batchLabel + " đã bị reject - Lý do: " + reason,
+                    "/manager/payroll/batches/" + batch.getId()
+            );
+        }
     }
 
     private void validatePayslipAccess(Payslip p, Integer managerEmpId, String message) {
-        if (managerEmpId == null) return;
+        if (managerEmpId == null)
+            return;
 
         Integer ownerEmpId = p.getEmployee() != null ? p.getEmployee().getId() : null;
         Integer direct = p.getEmployee() != null ? p.getEmployee().getDirectManagerId() : null;
@@ -692,9 +940,12 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     }
 
     private BigDecimal toBigDecimal(Object v) {
-        if (v == null) return BigDecimal.ZERO;
-        if (v instanceof BigDecimal bd) return bd;
-        if (v instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
+        if (v == null)
+            return BigDecimal.ZERO;
+        if (v instanceof BigDecimal bd)
+            return bd;
+        if (v instanceof Number n)
+            return BigDecimal.valueOf(n.doubleValue());
         try {
             return new BigDecimal(v.toString());
         } catch (Exception e) {
@@ -703,22 +954,30 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     }
 
     private int toInt(Object v) {
-        if (v == null) return 0;
-        if (v instanceof Number n) return n.intValue();
+        if (v == null)
+            return 0;
+        if (v instanceof Number n)
+            return n.intValue();
         return Integer.parseInt(v.toString());
     }
 
     private LocalDate toLocalDate(Object v) {
-        if (v == null) return null;
-        if (v instanceof LocalDate ld) return ld;
-        if (v instanceof java.sql.Date d) return d.toLocalDate();
-        if (v instanceof java.sql.Timestamp ts) return ts.toLocalDateTime().toLocalDate();
-        if (v instanceof java.util.Date ud) return new java.sql.Date(ud.getTime()).toLocalDate();
+        if (v == null)
+            return null;
+        if (v instanceof LocalDate ld)
+            return ld;
+        if (v instanceof java.sql.Date d)
+            return d.toLocalDate();
+        if (v instanceof java.sql.Timestamp ts)
+            return ts.toLocalDateTime().toLocalDate();
+        if (v instanceof java.util.Date ud)
+            return new java.sql.Date(ud.getTime()).toLocalDate();
         return LocalDate.parse(v.toString());
     }
 
     private String statusLabel(String batchStatus) {
-        if (batchStatus == null) return "";
+        if (batchStatus == null)
+            return "";
         return switch (batchStatus) {
             case "DRAFT" -> "Draft";
             case "PENDING_APPROVAL" -> "Pending";
@@ -729,14 +988,17 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     }
 
     private String empName(Employee e) {
-        if (e == null) return "";
+        if (e == null)
+            return "";
         String n = e.getFullName();
-        if (n != null && !n.trim().isEmpty()) return n.trim();
+        if (n != null && !n.trim().isEmpty())
+            return n.trim();
         return "NV" + e.getId();
     }
 
     private String periodLabel(PayrollPeriod per) {
-        if (per == null) return "";
+        if (per == null)
+            return "";
 
         Integer m = per.getMonth();
         Integer y = per.getYear();
@@ -755,7 +1017,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EmployeeSearchResultDTO> searchEmployeesForBatch(Integer batchId, String keyword) {
+    public List<EmployeeSearchResultDTO> searchEmployeesForBatch(Integer managerEmpId, Integer batchId, String keyword) {
         PayrollBatch batch = batchRepo.findById(batchId)
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
 
@@ -765,8 +1027,12 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
 
         String kw = keyword == null ? "" : keyword.trim();
 
-        return employeeRepo.searchAvailableForBatch(batchId, kw,
-                        org.springframework.data.domain.PageRequest.of  (0, 20))
+        return employeeRepo.searchAvailableForBatch(
+                        batchId,
+                        managerEmpId,
+                        kw,
+                        org.springframework.data.domain.PageRequest.of(0, 20)
+                )
                 .stream()
                 .map(e -> EmployeeSearchResultDTO.builder()
                         .empId(e.getId())
@@ -780,11 +1046,44 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     @Override
     @Transactional(readOnly = true)
     public List<PayrollBatchSummaryDTO> listDraftBatches() {
-        return batchRepo.findByStatusInOrderByIdDesc(List.of("DRAFT", "PENDING_APPROVAL"))
-                .stream()
+        // Lấy tất cả batch DRAFT, sắp xếp theo kỳ mới nhất (year DESC, month DESC)
+        List<PayrollBatch> allDrafts = batchRepo.findByStatusInOrderByIdDesc(List.of("DRAFT", "PENDING_APPROVAL"));
+
+        // Tìm kỳ có year+month cao nhất trong danh sách
+        OptionalInt maxYear = allDrafts.stream()
+                .filter(b -> b.getPeriod() != null && b.getPeriod().getYear() != null)
+                .mapToInt(b -> b.getPeriod().getYear())
+                .max();
+
+        if (maxYear.isEmpty()) {
+            return List.of();
+        }
+
+        int latestYear = maxYear.getAsInt();
+        OptionalInt maxMonth = allDrafts.stream()
+                .filter(b -> b.getPeriod() != null
+                        && b.getPeriod().getYear() != null
+                        && b.getPeriod().getYear() == latestYear
+                        && b.getPeriod().getMonth() != null)
+                .mapToInt(b -> b.getPeriod().getMonth())
+                .max();
+
+        if (maxMonth.isEmpty()) {
+            return List.of();
+        }
+
+        int latestMonth = maxMonth.getAsInt();
+
+        // Chỉ trả về batch của kỳ mới nhất
+        return allDrafts.stream()
+                .filter(b -> b.getPeriod() != null
+                        && b.getPeriod().getYear() != null
+                        && b.getPeriod().getMonth() != null
+                        && b.getPeriod().getYear() == latestYear
+                        && b.getPeriod().getMonth() == latestMonth)
                 .map(b -> PayrollBatchSummaryDTO.builder()
                         .id(b.getId())
-                        .periodId(b.getPeriod() != null ? b.getPeriod().getId() : null)
+                        .periodId(b.getPeriod().getId())
                         .name(b.getName())
                         .status(b.getStatus())
                         .totalGross(nz(b.getTotalGross()))
@@ -794,7 +1093,7 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
     }
 
     @Override
-    public Integer addEmployeeToPayroll(Integer batchId, Integer empId, BigDecimal baseSalary) {
+    public Integer addEmployeeToPayroll(Integer managerEmpId, Integer batchId, Integer empId, BigDecimal baseSalary) {
         if (baseSalary == null || baseSalary.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Base salary invalid");
         }
@@ -809,9 +1108,30 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
         Employee emp = employeeRepo.findById(empId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + empId));
 
+        String empStatus = emp.getStatus() == null ? "" : emp.getStatus().trim().toUpperCase();
+        if (!"PROBATION".equals(empStatus) && !"OFFICIAL".equals(empStatus)) {
+            throw new IllegalStateException("Chỉ nhân viên PROBATION hoặc OFFICIAL mới được thêm vào payroll.");
+        }
+
+        // Nếu employee chưa có manager thì tự gán cho manager đang add
+        if (managerEmpId != null) {
+            Integer directManagerId = emp.getDirectManagerId();
+
+            if (directManagerId != null && !Objects.equals(directManagerId, managerEmpId)) {
+                throw new AccessDeniedException("Nhân viên này không thuộc quyền quản lý của bạn.");
+            }
+
+            if (directManagerId == null) {
+                emp.setDirectManagerId(managerEmpId);
+            }
+        }
+
         if (payslipRepo.existsByBatch_IdAndEmployee_Id(batchId, empId)) {
             throw new IllegalStateException("Employee này đã có payslip trong batch.");
         }
+
+        emp.setIncludeInPayroll(true);
+        employeeRepo.save(emp);
 
         PayrollPeriod period = batch.getPeriod();
         if (period == null) {
@@ -869,4 +1189,5 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
 
         return slip.getId();
     }
+
 }

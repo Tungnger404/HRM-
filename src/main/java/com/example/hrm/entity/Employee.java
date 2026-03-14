@@ -58,6 +58,10 @@ public class Employee {
     @Column(name = "join_date")
     private LocalDate joinDate;
 
+    @Builder.Default
+    @Column(name = "include_in_payroll", nullable = false)
+    private Boolean includeInPayroll = false;
+
     // ✅ Compat: code cũ gọi getId()
     @Transient
     public Integer getId() {
