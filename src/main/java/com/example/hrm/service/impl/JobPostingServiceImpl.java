@@ -32,47 +32,30 @@ public class JobPostingServiceImpl implements JobPostingService {
 
     @Override
     public void create(JobPostingCreateDTO dto) {
-
         RecruitmentRequest req = reqRepo.findById(dto.getReqId())
                 .orElseThrow(() -> new RuntimeException("Request not found"));
-
-        // Kiểm tra điều kiện luồng: Request phải được duyệt mới cho đăng tuyển
-        if (req.getStatus() != RecruitmentRequestStatus.APPROVED && req.getStatus() != RecruitmentRequestStatus.CLOSED) {
-            throw new RuntimeException("Recruitment Request must be APPROVED or CLOSED");
-        }
 
         JobDescription jd = jdRepo.findById(dto.getJdId())
                 .orElseThrow(() -> new RuntimeException("Job Description not found"));
 
-        if (jd.getStatus() != JobDescriptionStatus.ACTIVE) {
-            throw new RuntimeException("Job Description must be ACTIVE to publish");
-        }
-
-        // Validate ngày tháng
-        if (dto.getExpiryDate() != null && dto.getPublishDate() != null) {
-            if (dto.getExpiryDate().isBefore(dto.getPublishDate())) {
-                throw new RuntimeException("Expiry date must be after publish date");
-            }
-        }
-
+        // Tạo Slug duy nhất dựa trên tiêu đề bài đăng
         String slug = generateUniqueSlug(dto.getTitle());
 
-        // Ưu tiên lấy dữ liệu từ JD nếu các trường trong DTO bị trống (Auto-fill logic)
+        // ✅ Logic: Nếu HR để trống ô nhập, hệ thống tự bốc dữ liệu từ JD sang
         String finalDescription = (dto.getDescription() == null || dto.getDescription().isBlank())
                 ? jd.getResponsibilities() : dto.getDescription();
-        String finalRequirements = (dto.getRequirements() == null || dto.getRequirements().isBlank())
-                ? jd.getRequirements() : dto.getRequirements();
-        String finalBenefits = (dto.getBenefits() == null || dto.getBenefits().isBlank())
-                ? jd.getBenefits() : dto.getBenefits();
+
+        String finalLocation = (dto.getLocation() == null || dto.getLocation().isBlank())
+                ? jd.getWorkingLocation() : dto.getLocation();
 
         JobPosting posting = JobPosting.builder()
                 .recruitmentRequest(req)
                 .jobDescription(jd)
                 .title(dto.getTitle())
                 .description(finalDescription)
-                .requirements(finalRequirements)
-                .benefits(finalBenefits)
-                .location(jd.getWorkingLocation()) // Lấy địa điểm từ JD
+                .requirements(dto.getRequirements() == null || dto.getRequirements().isBlank() ? jd.getRequirements() : dto.getRequirements())
+                .benefits(dto.getBenefits() == null || dto.getBenefits().isBlank() ? jd.getBenefits() : dto.getBenefits())
+                .location(finalLocation)
                 .publishDate(dto.getPublishDate())
                 .expiryDate(dto.getExpiryDate())
                 .status("OPEN")
@@ -83,7 +66,6 @@ public class JobPostingServiceImpl implements JobPostingService {
 
         repository.save(posting);
     }
-
     // Các hàm changeStatus, delete, autoExpire giữ nguyên logic của bạn...
 
     @Override

@@ -9,9 +9,11 @@ import com.example.hrm.repository.JobDescriptionRepository;
 import com.example.hrm.repository.RecruitmentRequestRepository;
 import com.example.hrm.service.JobPostingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -62,9 +64,26 @@ public class JobPostingController {
 
     // ================= CREATE =================
     @PostMapping("/create")
-    public String create(@ModelAttribute JobPostingCreateDTO dto) {
-        service.create(dto);
-        return "redirect:/hr/job-posting?success";
+    public String create(@ModelAttribute JobPostingCreateDTO dto, RedirectAttributes ra) {
+        // 1. Chặn logic ngày tháng ngay lập tức
+        if (dto.getPublishDate() != null && dto.getExpiryDate() != null) {
+            if (dto.getExpiryDate().isBefore(dto.getPublishDate())) {
+                ra.addFlashAttribute("err", "Ngày hết hạn không được trước ngày đăng tin!");
+                return "redirect:/hr/job-posting/create";
+            }
+        }
+
+        try {
+            service.create(dto);
+            return "redirect:/hr/job-posting?success";
+        } catch (DataIntegrityViolationException e) {
+            // Đây là nơi bắt lỗi 547 từ SQL Server
+            ra.addFlashAttribute("err", "Lỗi dữ liệu: Trạng thái không hợp lệ với thời gian đăng tin!");
+            return "redirect:/hr/job-posting/create";
+        } catch (Exception e) {
+            ra.addFlashAttribute("err", "Lỗi hệ thống không xác định.");
+            return "redirect:/hr/job-posting/create";
+        }
     }
 
     // ================= CHANGE STATUS =================
