@@ -4,10 +4,13 @@ import com.example.hrm.dto.*;
 import com.example.hrm.entity.*;
 import com.example.hrm.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -17,17 +20,13 @@ public class AutoFillController {
     private final RecruitmentRequestRepository requestRepo;
     private final JobDescriptionRepository jdRepo;
 
-    // =============================
-    // AUTO FILL FROM REQUEST
-    // =============================
+
     @GetMapping("/request/{id}")
     public RecruitmentRequestResponseDTO getRequest(@PathVariable Integer id) {
-
         RecruitmentRequest request = requestRepo.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
         RecruitmentRequestResponseDTO dto = new RecruitmentRequestResponseDTO();
-
         dto.setReqId(request.getReqId());
         dto.setJobTitle(request.getJobPosition().getTitle());
         dto.setQuantity(request.getQuantity());
@@ -36,31 +35,19 @@ public class AutoFillController {
         return dto;
     }
 
-    // =============================
-    // AUTO FILL FROM JD
-    // =============================
-    public void create(JobDescriptionCreateDTO dto, Principal principal) {
-        // 1. Tìm Request gốc
-        RecruitmentRequest request = requestRepo.findById(dto.getRequestId())
-                .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        // 2. Map dữ liệu từ DTO và một phần từ Request sang JD
-        JobDescription jd = JobDescription.builder()
-                .recruitmentRequest(request)
-                .job(request.getJobPosition()) // Lấy luôn Job từ Request
-                .responsibilities(dto.getResponsibilities())
-                .requirements(dto.getRequirements()) // HR đã chỉnh sửa từ technicalRequirements
-                .benefits(dto.getBenefits())
-                .salaryRange(dto.getSalaryRange())
-                .workingLocation(dto.getWorkingLocation())
-                .status(JobDescriptionStatus.DRAFT)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        jdRepo.save(jd);
-
-        // 3. Cập nhật trạng thái Request để không cho tạo JD lần thứ 2
-        request.setStatus(RecruitmentRequestStatus.CLOSED);
-        requestRepo.save(request);
+    @GetMapping("/jd/{id}")
+    public ResponseEntity<?> getJd(@PathVariable Integer id) {
+        return jdRepo.findById(id)
+                .map(jd -> {
+                    // Tạo một Map hoặc DTO đơn giản để trả về JSON phẳng
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("title", jd.getJob().getTitle());
+                    response.put("responsibilities", jd.getResponsibilities());
+                    response.put("requirements", jd.getRequirements());
+                    response.put("benefits", jd.getBenefits());
+                    return ResponseEntity.ok(response);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
