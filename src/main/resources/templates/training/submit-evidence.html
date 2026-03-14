@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 <head>
@@ -68,7 +69,7 @@
                             <div class="mb-3">
                                 <label for="certificateFile" class="form-label">Upload Certificate/Evidence <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="certificateFile" name="certificateFile"
-                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                       accept=".pdf,.jpg,.jpeg,.png" placeholder="Choose file" required>
                             </div>
 
                             <!-- Preview -->

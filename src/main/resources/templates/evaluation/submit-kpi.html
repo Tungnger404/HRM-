@@ -1,5 +1,6 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 <head>
@@ -24,8 +25,22 @@
     </div>
   </div>
 
+  <div class="alert alert-success" th:if="${msg != null and !msg.isEmpty()}" th:text="${msg}">
+    Success message
+  </div>
+  
+  <div class="alert alert-danger" th:if="${err != null and !err.isEmpty()}" th:text="${err}">
+    Error message
+  </div>
+
   <div class="row">
     <div class="col-lg-8">
+      
+      <div class="alert alert-warning" th:if="${assignment == null}">
+        <i class="fa fa-exclamation-triangle"></i>
+        <strong>No KPI Assignment Found</strong>
+        <p class="mb-0">HR has not assigned a KPI template for this evaluation cycle yet. Please contact HR or wait for the assignment.</p>
+      </div>
       
       <div class="card mb-3" th:if="${assignment != null}">
         <div class="card-header bg-info text-white">
@@ -42,7 +57,7 @@
         </div>
       </div>
 
-      <div class="card mb-3">
+      <div class="card mb-3" th:if="${assignment != null}">
         <div class="card-header">
           <strong>Upload Files</strong>
         </div>
@@ -50,13 +65,14 @@
           
           <form method="post" th:action="@{/evaluation/submit-kpi}" enctype="multipart/form-data">
             
-            <input type="hidden" name="cycleId" th:value="${cycleId}">
+            <input type="hidden" name="assignmentId" th:value="${assignment.assignmentId}">
 
             <div class="mb-3">
               <label class="form-label fw-bold">
                 1. Upload Completed KPI Excel <span class="text-danger">*</span>
               </label>
-              <input type="file" name="kpiExcelFile" class="form-control" accept=".xlsx,.xls" required>
+              <input type="file" name="kpiExcelFile" class="form-control" accept=".xlsx,.xls" 
+                     placeholder="Choose file" required>
             </div>
 
             <div class="mb-3">
@@ -64,7 +80,8 @@
                 2. Upload Evidence Files <span class="text-danger">*</span>
               </label>
               <input type="file" name="evidenceFiles" class="form-control" multiple required
-                     accept=".pdf,.xlsx,.xls,.docx,.doc,.jpg,.jpeg,.png,.gif,.webp">
+                     accept=".pdf,.xlsx,.xls,.docx,.doc,.jpg,.jpeg,.png,.gif,.webp"
+                     placeholder="Choose files">
               <div class="alert alert-info mt-2 mb-0">
                 <small>
                   <strong>Evidence types:</strong>
@@ -106,6 +123,17 @@
 
           </form>
 
+        </div>
+      </div>
+      
+      <div class="card mb-3" th:if="${assignment == null}">
+        <div class="card-body text-center py-5">
+          <i class="fa fa-clock fa-3x text-muted mb-3"></i>
+          <h5>Waiting for KPI Assignment</h5>
+          <p class="text-muted">You cannot submit KPI until HR assigns a template for this evaluation cycle.</p>
+          <a th:href="@{/evaluation/history}" class="btn btn-outline-secondary">
+            <i class="cil-arrow-left"></i> Back to History
+          </a>
         </div>
       </div>
 

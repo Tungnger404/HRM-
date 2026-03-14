@@ -3,30 +3,31 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 <head>
-    <title>Performance Ranking - HRM System</title>
+    <title>Performance Calibration - HRM System</title>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="container-fluid">
         <div class="row mb-4">
             <div class="col-12">
-                <h2>Performance Ranking</h2>
+                <h2>Performance Summary</h2>
             </div>
         </div>
 
         <!-- Filter Section -->
         <div class="row mb-3">
             <div class="col-md-6">
-                <form method="get" th:action="@{/manager/evaluation/ranking/1}" class="d-flex gap-2">
-                    <select class="form-select" name="cycleId">
-                        <option value="1" selected>Q4 2023</option>
-                        <option value="2">Q3 2023</option>
-                        <option value="3">Q2 2023</option>
+                <div class="d-flex gap-2">
+                    <select class="form-select"
+                            onchange="if(this.value){window.location.href='/manager/evaluation/ranking/' + this.value;}">
+                        <option th:each="cycle : ${cycles}"
+                                th:value="${cycle.cycleId}"
+                                th:selected="${cycle.cycleId == cycleId}"
+                                th:text="${cycle.cycleName}">
+                            Q4 2023
+                        </option>
                     </select>
-                    <button class="btn btn-primary" type="submit">
-                        <i class="fa fa-filter"></i> Filter
-                    </button>
-                </form>
+                </div>
             </div>
         </div>
 
@@ -35,8 +36,8 @@
             <div class="col-md-3">
                 <div class="card text-white bg-success">
                     <div class="card-body">
-                        <h5 class="card-title">A - Excellent</h5>
-                        <h2>12</h2>
+                        <h5 class="card-title">A - Outstanding</h5>
+                        <h2 th:text="${countA}">0</h2>
                         <p class="mb-0">Score >= 85</p>
                     </div>
                 </div>
@@ -44,8 +45,8 @@
             <div class="col-md-3">
                 <div class="card text-white bg-primary">
                     <div class="card-body">
-                        <h5 class="card-title">B - Good</h5>
-                        <h2>25</h2>
+                        <h5 class="card-title">B - Strong</h5>
+                        <h2 th:text="${countB}">0</h2>
                         <p class="mb-0">75 - 84</p>
                     </div>
                 </div>
@@ -53,8 +54,8 @@
             <div class="col-md-3">
                 <div class="card text-white bg-warning">
                     <div class="card-body">
-                        <h5 class="card-title">C - Average</h5>
-                        <h2>8</h2>
+                        <h5 class="card-title">C - Meets Expectations</h5>
+                        <h2 th:text="${countC}">0</h2>
                         <p class="mb-0">60 - 74</p>
                     </div>
                 </div>
@@ -62,8 +63,8 @@
             <div class="col-md-3">
                 <div class="card text-white bg-danger">
                     <div class="card-body">
-                        <h5 class="card-title">D - Poor</h5>
-                        <h2>3</h2>
+                        <h5 class="card-title">D - Needs Improvement</h5>
+                        <h2 th:text="${countD}">0</h2>
                         <p class="mb-0">Score < 60</p>
                     </div>
                 </div>
@@ -75,54 +76,71 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <strong th:text="'Performance Ranking - Cycle ' + ${cycleId}">Performance Ranking</strong>
+                        <strong th:text="'Performance Calibration - Cycle ' + ${cycleId}">Performance
+                            Calibration</strong>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-hover table-bordered align-middle">
                                 <thead>
-                                    <tr>
-                                        <th style="width:60px">Rank</th>
-                                        <th>Employee ID</th>
-                                        <th>Full Name</th>
-                                        <th>Department</th>
-                                        <th>Position</th>
-                                        <th class="text-end">Self Score</th>
-                                        <th class="text-end">Manager Score</th>
-                                        <th class="text-end">Total Score</th>
-                                        <th>Classification</th>
-                                        <th style="width:100px">Actions</th>
-                                    </tr>
+                                <tr>
+                                    <th style="width:60px">Rank</th>
+                                    <th>Employee ID</th>
+                                    <th>Full Name</th>
+                                    <th>Department</th>
+                                    <th>Position</th>
+                                    <th class="text-end">Final Score</th>
+                                    <th>Classification</th>
+                                    <th>Recommendation</th>
+                                    <th style="width:180px">Actions</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:each="a, stat : ${assignments}">
-                                        <td class="text-center"><strong th:text="${stat.count}">1</strong></td>
-                                        <td th:text="${'EMP' + a.empId}">EMP001</td>
-                                        <td><strong th:text="${empNames[a.empId] != null ? empNames[a.empId] : 'Employee #' + a.empId}">Employee</strong></td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td class="text-end" th:text="${a.selfScore != null ? a.selfScore : '-'}">-</td>
-                                        <td class="text-end" th:text="${a.managerScore != null ? a.managerScore : '-'}">-</td>
-                                        <td class="text-end"><strong th:text="${a.managerScore != null ? a.managerScore : (a.selfScore != null ? a.selfScore : '-')}">-</strong></td>
-                                        <td>
-                                            <span class="badge"
-                                                  th:classappend="${a.classification == 'OUTSTANDING' or a.classification == 'EXCELLENT' ? ' bg-success' :
-                                                                  (a.classification == 'GOOD' ? ' bg-primary' :
-                                                                  (a.classification == 'AVERAGE' ? ' bg-warning' :
-                                                                  (a.classification == 'POOR' ? ' bg-danger' : ' bg-secondary')))}"
-                                                  th:text="${a.classification != null ? a.classification : a.status}">
-                                                -
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a class="btn btn-sm btn-primary" th:href="@{/manager/evaluation/review/{id}(id=${a.assignmentId})}">
-                                                Review
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    <tr th:if="${#lists.isEmpty(assignments)}">
-                                        <td colspan="10" class="text-center text-muted">No ranking data found for this cycle.</td>
-                                    </tr>
+                                <tr th:each="a, stat : ${assignments}">
+                                    <td class="text-center"><strong th:text="${stat.count}">1</strong></td>
+                                    <td th:text="${'EMP' + a.empId}">EMP001</td>
+                                    <td><strong
+                                            th:text="${empNames[a.empId] != null ? empNames[a.empId] : 'Employee #' + a.empId}">Employee</strong>
+                                    </td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td class="text-end" th:text="${a.selfScore != null ? a.selfScore : '-'}">-</td>
+                                    <td class="text-end" th:text="${a.managerScore != null ? a.managerScore : '-'}">-
+                                    </td>
+                                    <td class="text-end">
+                                        <strong th:text="${a.managerScore != null ? a.managerScore : (a.selfScore != null ? a.selfScore : '-')}">-</strong>
+                                    </td>
+                                    <td>
+        <span class="badge"
+              th:classappend="${a.classification == 'A' ? ' bg-success' :
+                              (a.classification == 'B' ? ' bg-primary' :
+                              (a.classification == 'C' ? ' bg-warning' :
+                              (a.classification == 'D' ? ' bg-danger' : ' bg-secondary')))}"
+              th:text="${a.classification != null ? a.classification : a.status}">
+            -
+        </span>
+                                    </td>
+                                    <td>
+        <span class="badge bg-light text-dark"
+              th:text="${a.promotionRecommendation != null and a.promotionRecommendation ? 'Promotion Review' :
+                        ((a.classification == 'C' or a.classification == 'D'
+                        or (a.trainingRecommendation != null and !#strings.isEmpty(a.trainingRecommendation)))
+                        ? 'Training Required' : 'Maintain Performance')}">
+            Maintain Performance
+        </span>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-sm btn-primary"
+                                           th:href="@{/manager/evaluation/review/{id}(id=${a.assignmentId})}">
+                                            Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(assignments)}">
+                                    <td colspan="11" class="text-center text-muted">No ranking data found for this
+                                        cycle.
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>

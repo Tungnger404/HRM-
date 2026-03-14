@@ -4,7 +4,13 @@ import com.example.hrm.dto.*;
 import com.example.hrm.entity.*;
 import com.example.hrm.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -14,17 +20,13 @@ public class AutoFillController {
     private final RecruitmentRequestRepository requestRepo;
     private final JobDescriptionRepository jdRepo;
 
-    // =============================
-    // AUTO FILL FROM REQUEST
-    // =============================
+
     @GetMapping("/request/{id}")
     public RecruitmentRequestResponseDTO getRequest(@PathVariable Integer id) {
-
         RecruitmentRequest request = requestRepo.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
         RecruitmentRequestResponseDTO dto = new RecruitmentRequestResponseDTO();
-
         dto.setReqId(request.getReqId());
         dto.setJobTitle(request.getJobPosition().getTitle());
         dto.setQuantity(request.getQuantity());
@@ -33,27 +35,19 @@ public class AutoFillController {
         return dto;
     }
 
-    // =============================
-    // AUTO FILL FROM JD
-    // =============================
+
     @GetMapping("/jd/{id}")
-    public JobDescriptionResponseDTO getJD(@PathVariable Integer id) {
-
-        JobDescription jd = jdRepo.findByIdWithJob(id)
-                .orElseThrow(() -> new RuntimeException("JD not found"));
-
-        JobDescriptionResponseDTO dto = new JobDescriptionResponseDTO();
-
-        dto.setId(jd.getId());
-        dto.setJobTitle(jd.getJob().getTitle());
-        dto.setSalaryRange(jd.getSalaryRange());
-        dto.setWorkingLocation(jd.getWorkingLocation());
-        dto.setStatus(jd.getStatus());
-        dto.setCreatedAt(jd.getCreatedAt());
-        dto.setResponsibilities(jd.getResponsibilities());
-        dto.setRequirements(jd.getRequirements());
-        dto.setBenefits(jd.getBenefits());
-
-        return dto;
+    public ResponseEntity<?> getJd(@PathVariable Integer id) {
+        return jdRepo.findById(id)
+                .map(jd -> {
+                    // Tạo một Map hoặc DTO đơn giản để trả về JSON phẳng
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("title", jd.getJob().getTitle());
+                    response.put("responsibilities", jd.getResponsibilities());
+                    response.put("requirements", jd.getRequirements());
+                    response.put("benefits", jd.getBenefits());
+                    return ResponseEntity.ok(response);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

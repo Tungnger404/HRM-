@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Training Program Details - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2>Training Program Details</h2>
+                        <p class="text-muted mb-0">View detailed information about this training program</p>
+                    </div>
+                    <a th:href="@{/training/programs}" class="btn btn-outline-secondary">
+                        <i class="fa fa-arrow-left"></i> Back to Programs
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Program Information</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="fw-bold">Program Code:</label>
+                                <p th:text="${program != null ? program.programCode : 'N/A'}">TR-001</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold">Status:</label>
+                                <p>
+                                    <span class="badge bg-success" th:if="${program != null and program.status == 'ACTIVE'}">Active</span>
+                                    <span class="badge bg-secondary" th:if="${program != null and program.status == 'INACTIVE'}">Inactive</span>
+                                    <span class="badge bg-warning" th:if="${program != null and program.status == 'DRAFT'}">Draft</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold">Program Name:</label>
+                            <p th:text="${program != null ? program.programName : 'N/A'}">Java Programming Fundamentals</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold">Description:</label>
+                            <p th:text="${program != null ? program.description : 'No description available'}">
+                                This program covers the fundamentals of Java programming...
+                            </p>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="fw-bold">Category:</label>
+                                <p th:text="${program != null ? program.skillCategory : 'N/A'}">Technical</p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="fw-bold">Level:</label>
+                                <p th:text="${program != null ? program.level : 'N/A'}">BEGINNER</p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="fw-bold">Duration:</label>
+                                <p th:text="${program != null ? program.durationHours + ' hours' : 'N/A'}">40 hours</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" th:if="${program != null and program.objectives != null}">
+                            <label class="fw-bold">Learning Objectives:</label>
+                            <p style="white-space: pre-wrap;" th:text="${program.objectives}">
+                                - Understand Java syntax and structure
+                                - Write basic Java programs
+                                - Work with OOP concepts
+                            </p>
+                        </div>
+
+                        <div class="mb-3" th:if="${program != null and program.prerequisites != null}">
+                            <label class="fw-bold">Prerequisites:</label>
+                            <p style="white-space: pre-wrap;" th:text="${program.prerequisites}">
+                                Basic programming knowledge
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3" th:if="${program != null and program.contentUrl != null}">
+                    <div class="card-header">
+                        <strong>Course Materials</strong>
+                    </div>
+                    <div class="card-body">
+                        <a th:href="${program.contentUrl}" class="btn btn-primary" target="_blank">
+                            <i class="fa fa-external-link"></i> Access Course Materials
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <strong>Quick Actions</strong>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" th:action="@{/training/programs/{id}/register(id=${programId})}">
+                            <button type="submit" class="btn btn-success w-100 mb-2" 
+                                    th:disabled="${program != null and program.status != 'ACTIVE'}">
+                                <i class="fa fa-user-plus"></i> Register for This Program
+                            </button>
+                        </form>
+                        <p class="text-muted small mb-0">
+                            <i class="fa fa-info-circle"></i> You will be notified once your registration is approved.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card mb-3" th:if="${program != null}">
+                    <div class="card-header">
+                        <strong>Program Statistics</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <label class="fw-bold">Created:</label>
+                            <p th:text="${program.createdAt != null ? #temporals.format(program.createdAt, 'dd/MM/yyyy') : 'N/A'}">01/01/2024</p>
+                        </div>
+                        <div class="mb-2">
+                            <label class="fw-bold">Last Updated:</label>
+                            <p th:text="${program.updatedAt != null ? #temporals.format(program.updatedAt, 'dd/MM/yyyy') : 'N/A'}">15/01/2024</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,5 +1,9 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.entity.TrainingProgram;
+import com.example.hrm.repository.TrainingProgramRepository;
+import com.example.hrm.service.CurrentEmployeeService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
+import java.util.List;
+
 /**
  * Controller for Training web pages (Thymeleaf views)
  * Using mock data in templates - no service dependencies needed yet
@@ -17,6 +24,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/training")
 public class TrainingViewController {
+
+    @Autowired
+    private CurrentEmployeeService currentEmployeeService;
+
+    @Autowired
+    private TrainingProgramRepository trainingProgramRepository;
 
     /**
      * Show training program list
@@ -28,8 +41,22 @@ public class TrainingViewController {
             @RequestParam(required = false) String status,
             Model model
     ) {
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
+        List<TrainingProgram> programs;
+        
+        if (status != null && !status.isEmpty()) {
+            try {
+                TrainingProgram.TrainingStatus trainingStatus = TrainingProgram.TrainingStatus.valueOf(status);
+                programs = trainingProgramRepository.findByStatus(trainingStatus);
+            } catch (IllegalArgumentException e) {
+                programs = trainingProgramRepository.findAll();
+            }
+        } else if (category != null && !category.isEmpty()) {
+            programs = trainingProgramRepository.findBySkillCategoryContaining(category);
+        } else {
+            programs = trainingProgramRepository.findAll();
+        }
+        
+        model.addAttribute("programs", programs);
         model.addAttribute("search", search);
         model.addAttribute("category", category);
         model.addAttribute("status", status);
@@ -42,12 +69,12 @@ public class TrainingViewController {
      */
     @PostMapping("/programs/{programId}/register")
     public String registerForTraining(
+            Principal principal,
             @PathVariable Integer programId,
             RedirectAttributes redirectAttributes
     ) {
         try {
-            // TODO: Get current employee ID from security context
-            Integer employeeId = 1; // Placeholder
+            Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
 
             // TODO: Call service to register
             // trainingService.registerEmployee(programId, employeeId);
@@ -64,9 +91,15 @@ public class TrainingViewController {
      * Show training program details
      */
     @GetMapping("/programs/{programId}")
-    public String showProgramDetails(@PathVariable Integer programId, Model model) {
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
+    public String showProgramDetails(@PathVariable Integer programId, Model model, RedirectAttributes ra) {
+        TrainingProgram program = trainingProgramRepository.findById(programId).orElse(null);
+        
+        if (program == null) {
+            ra.addFlashAttribute("err", "Training program not found");
+            return "redirect:/training/programs";
+        }
+        
+        model.addAttribute("program", program);
         model.addAttribute("programId", programId);
         model.addAttribute("pageTitle", "Training Program Details");
         return "training/program-details";
@@ -76,9 +109,8 @@ public class TrainingViewController {
      * Show employee's training progress
      */
     @GetMapping("/my-progress")
-    public String showMyTrainingProgress(Model model) {
-        // TODO: Get current employee ID from security context
-        Integer employeeId = 1; // Placeholder
+    public String showMyTrainingProgress(Principal principal, Model model) {
+        Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
         
         // TODO: Fetch real data from service when database has data
         // For now, use mock data in template for testing
@@ -148,9 +180,8 @@ public class TrainingViewController {
      * Show training recommendations for manager/employee
      */
     @GetMapping("/recommendations")
-    public String showTrainingRecommendations(Model model) {
-        // TODO: Get current employee ID from security context
-        Integer employeeId = 1; // Placeholder
+    public String showTrainingRecommendations(Principal principal, Model model) {
+        Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
         
         // TODO: Fetch real data from service when database has data
         // For now, use mock data in template for testing

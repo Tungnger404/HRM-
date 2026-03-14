@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -47,22 +47,8 @@
     .hero-left{
       display:flex;
       align-items:center;
-      gap:16px;
-    }
-
-    .avatar{
-      width:64px;
-      height:64px;
-      border-radius:18px;
-      background:rgba(255,255,255,0.18);
-      border:1px solid rgba(255,255,255,0.25);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      font-weight:900;
-      color:#fff;
-      backdrop-filter:blur(6px);
+      gap:22px;
+      flex-wrap:wrap;
     }
 
     .hero-title{
@@ -135,6 +121,17 @@
       font-weight:700;
     }
 
+    .success{
+      margin-bottom:18px;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      color:#166534;
+      font-size:14px;
+      font-weight:700;
+    }
+
     .section{
       margin-top:22px;
     }
@@ -157,12 +154,6 @@
       font-size:18px;
       font-weight:900;
       color:#0f172a;
-    }
-
-    .section-desc{
-      font-size:13px;
-      color:#64748b;
-      font-weight:600;
     }
 
     .info-panel{
@@ -219,6 +210,76 @@
       font-weight:700;
     }
 
+    .avatar-card{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      min-width:170px;
+    }
+
+    .avatar-wrapper{
+      position:relative;
+      width:150px;
+      height:182px;
+    }
+
+    .avatar-image,
+    .avatar-fallback{
+      width:150px;
+      height:150px;
+      border-radius:30px;
+      border:3px solid rgba(255,255,255,0.55);
+      box-shadow:0 14px 30px rgba(0,0,0,0.18);
+    }
+
+    .avatar-image{
+      object-fit:cover;
+      background:#fff;
+      display:block;
+    }
+
+    .avatar-fallback{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:44px;
+      font-weight:900;
+      color:#fff;
+      background:rgba(255,255,255,0.18);
+      backdrop-filter:blur(8px);
+    }
+
+    .avatar-upload-form{
+      position:absolute;
+      left:50%;
+      bottom:0;
+      transform:translateX(-50%);
+    }
+
+    .avatar-hidden-input{
+      display:none;
+    }
+
+    .avatar-edit-badge{
+      display:inline-block;
+      font-size:12px;
+      font-weight:900;
+      color:#1e293b;
+      background:#ffffff;
+      border-radius:999px;
+      padding:7px 16px;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,0.16);
+      transition:all .2s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .avatar-edit-badge:hover{
+      transform:translateY(-1px);
+      background:#f8fafc;
+    }
+
     @media (max-width: 860px){
       .grid{
         grid-template-columns:1fr;
@@ -247,18 +308,28 @@
         align-items:flex-start;
       }
 
-      .avatar{
-        width:56px;
-        height:56px;
-        font-size:22px;
-      }
-
       .hero-title{
         font-size:22px;
       }
 
       .btn-back{
         width:100%;
+      }
+
+      .avatar-wrapper{
+        width:120px;
+        height:150px;
+      }
+
+      .avatar-image,
+      .avatar-fallback{
+        width:120px;
+        height:120px;
+        border-radius:24px;
+      }
+
+      .avatar-fallback{
+        font-size:34px;
       }
     }
   </style>
@@ -271,19 +342,60 @@
       <div class="hero-top">
         <div>
           <div class="hero-left">
-            <div class="avatar">HR</div>
+
+            <div class="avatar-card">
+              <div class="avatar-wrapper">
+
+                <img th:if="${u != null and u.avatarPath != null and !#strings.isEmpty(u.avatarPath)}"
+                     th:src="@{${u.avatarPath}}"
+                     alt="Avatar"
+                     class="avatar-image"/>
+
+                <div th:if="${(u == null or u.avatarPath == null or #strings.isEmpty(u.avatarPath)) and (e != null and e.fullName != null and !#strings.isEmpty(e.fullName))}"
+                     class="avatar-fallback"
+                     th:text="${#strings.substring(e.fullName,0,1)}">
+                </div>
+
+                <div th:if="${(u == null or u.avatarPath == null or #strings.isEmpty(u.avatarPath)) and (e == null or e.fullName == null or #strings.isEmpty(e.fullName)) and (u != null and u.username != null and !#strings.isEmpty(u.username))}"
+                     class="avatar-fallback"
+                     th:text="${#strings.substring(u.username,0,1)}">
+                </div>
+
+                <div th:if="${(u == null or u.avatarPath == null or #strings.isEmpty(u.avatarPath)) and (e == null or e.fullName == null or #strings.isEmpty(e.fullName)) and (u == null or u.username == null or #strings.isEmpty(u.username))}"
+                     class="avatar-fallback">
+                  H
+                </div>
+
+                <form class="avatar-upload-form"
+                      th:action="@{/profile/avatar}"
+                      method="post"
+                      enctype="multipart/form-data">
+                  <input id="avatarFileInput"
+                         class="avatar-hidden-input"
+                         type="file"
+                         name="avatarFile"
+                         accept=".jpg,.jpeg,.png,.webp"
+                         required
+                         onchange="this.form.submit()" />
+
+                  <label for="avatarFileInput" class="avatar-edit-badge">Edit</label>
+                </form>
+
+              </div>
+            </div>
+
             <div>
               <h1 class="hero-title">My Profile</h1>
               <div class="hero-subtitle">
                 View all information of your account
               </div>
-            </div>
-          </div>
 
-          <div class="hero-chips">
-            <div class="chip">HR Portal</div>
-            <div class="chip">Account Overview</div>
-            <div class="chip">Employee Profile</div>
+              <div class="hero-chips">
+                <div class="chip">HR Portal</div>
+                <div class="chip">Account Overview</div>
+                <div class="chip">Employee Profile</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -294,12 +406,11 @@
     <div class="content">
 
       <div class="alert" th:if="${err != null and err != ''}" th:text="${err}"></div>
+      <div class="success" th:if="${success != null and success != ''}" th:text="${success}"></div>
 
-      <!-- USER ACCOUNT INFO -->
       <div class="section">
         <div class="section-header">
           <h3 class="section-title">Account Information</h3>
-
         </div>
 
         <div class="info-panel">
@@ -320,11 +431,9 @@
             </div>
 
             <div class="field">
-              <div class="label">Role ID</div>
+              <div class="label">Role</div>
               <div class="value" th:text="${u != null ? u.roleId : '-'}"></div>
             </div>
-
-
 
             <div class="field">
               <div class="label">Created At</div>
@@ -334,11 +443,9 @@
         </div>
       </div>
 
-      <!-- EMPLOYEE PROFILE INFO -->
       <div class="section">
         <div class="section-header">
           <h3 class="section-title">Employee Information</h3>
-
         </div>
 
         <div class="empty-note" th:if="${u != null and e == null}">
@@ -348,7 +455,7 @@
         <div class="info-panel" th:if="${e != null}">
           <div class="grid">
             <div class="field">
-              <div class="label">Emp ID</div>
+              <div class="label">Employee ID</div>
               <div class="value" th:text="${e.empId}"></div>
             </div>
 
@@ -363,7 +470,7 @@
             </div>
 
             <div class="field">
-              <div class="label">Date of birth</div>
+              <div class="label">Date of Birth</div>
               <div class="value" th:text="${e.dob}"></div>
             </div>
 
@@ -388,25 +495,17 @@
             </div>
 
             <div class="field">
-              <div class="label">Department ID</div>
-              <div class="value" th:text="${e.deptId}"></div>
+              <div class="label">Department</div>
+              <div class="value"
+                   th:text="${e.department != null ? e.deptId + ' - ' + e.department.deptName : e.deptId}">
+              </div>
             </div>
 
             <div class="field">
-              <div class="label">Job ID</div>
-              <div class="value" th:text="${e.jobId}"></div>
-            </div>
-
-
-
-            <div class="field">
-              <div class="label">Department ID</div>
-              <div class="value" th:text="|${e.deptId} - ${e.department.deptName}|"></div>
-            </div>
-
-            <div class="field">
-              <div class="label">Job ID</div>
-              <div class="value" th:text="|${e.jobId} - ${e.jobPosition.title}|"></div>
+              <div class="label">Job Position</div>
+              <div class="value"
+                   th:text="${e.jobPosition != null ? e.jobId + ' - ' + e.jobPosition.title : e.jobId}">
+              </div>
             </div>
 
             <div class="field">

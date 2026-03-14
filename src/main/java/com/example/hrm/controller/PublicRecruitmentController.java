@@ -211,4 +211,5 @@ public class PublicRecruitmentController {
 
         return "redirect:/careers/" + job.getSlug() + "?applied=true";
     }
+
 }

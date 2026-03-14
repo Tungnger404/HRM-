@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<body>
+<div layout:fragment="content">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Monthly Shift Schedule Batches</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="alert alert-success" th:if="${msg}" th:text="${msg}"></div>
+            <div class="alert alert-danger" th:if="${err}" th:text="${err}"></div>
+
+            <form th:action="@{/hr/schedules/monthly/create}" th:object="${form}" method="post" class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Schedule Month</label>
+                    <input type="month" class="form-control" th:field="*{scheduleMonth}" required>
+                </div>
+
+                <div class="col-md-8">
+                    <label class="form-label">Note</label>
+                    <input type="text" class="form-control" th:field="*{note}" maxlength="500" placeholder="Optional note">
+                </div>
+
+                <div class="col-12">
+                    <button class="btn btn-primary" type="submit">Create Batch</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Batch ID</th>
+                        <th>Month</th>
+                        <th>Status</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                        <th>Note</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="b : ${batches}">
+                        <td th:text="${b.batchId}"></td>
+                        <td th:text="${#temporals.format(b.scheduleMonth, 'MM/yyyy')}"></td>
+                        <td><span class="badge bg-secondary" th:text="${b.status}"></span></td>
+                        <td th:text="${b.createdBy}"></td>
+                        <td th:text="${#temporals.format(b.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td th:text="${b.note}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(batches)}">
+                        <td colspan="6" class="text-center text-muted">No schedule batches found.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

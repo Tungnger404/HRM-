@@ -17,8 +17,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     // Search theo tên
     List<Employee> findByFullNameContainingIgnoreCase(String keyword);
 
+    List<Employee> findByDirectManagerId(Integer directManagerId);
+
     // Tìm theo userId
     Optional<Employee> findByUserId(Integer userId);
+
+    List<Employee> findByDeptId(Integer deptId);
 
     // Count theo status (Active/On Leave/Resigned...)
     long countByStatusIgnoreCase(String status);
@@ -37,13 +41,13 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     List<Employee> search(@Param("q") String q,
                           @Param("status") String status);
 
-    // (Nếu bạn đang dùng thì giữ, nếu không dùng có thể xoá)
+
     long countByStatus(String status);
 
-    // ✅ Lấy danh sách employees theo job_id
+
     List<Employee> findByJobId(Integer jobId);
 
-    // ✅ Đếm số nhân viên theo job_id (chỉ cho các job trong page hiện tại)
+
     @Query("""
                 select e.jobId as jobId, count(e) as cnt
                 from Employee e
@@ -52,7 +56,24 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
             """)
     List<JobEmployeeCountView> countByJobIds(@Param("jobIds") List<Integer> jobIds);
 
-    //search tên nhân viên + nhap ten tim
+    @Query("""
+        SELECT e FROM Employee e
+        JOIN UserAccount u ON e.userId = u.id
+        JOIN Role r ON u.role.id = r.id
+        WHERE r.roleName = 'HR'
+        ORDER BY e.empId ASC
+    """)
+    List<Employee> findHrStaff();
+
+    @Query("""
+        SELECT e FROM Employee e
+        JOIN UserAccount u ON e.userId = u.id
+        JOIN Role r ON u.role.id = r.id
+        WHERE r.roleName = 'EMPLOYEE'
+        ORDER BY e.empId ASC
+    """)
+    List<Employee> findAllEmployeesOnly();
+
     @Query("""
         select e from Employee e
         where upper(coalesce(e.status, '')) in ('PROBATION', 'OFFICIAL')

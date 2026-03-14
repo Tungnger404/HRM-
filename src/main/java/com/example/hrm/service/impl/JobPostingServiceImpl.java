@@ -24,50 +24,38 @@ public class JobPostingServiceImpl implements JobPostingService {
     private final RecruitmentRequestRepository reqRepo;
     private final JobDescriptionRepository jdRepo;
 
-    // ================================
-    // 1️⃣ HR GET ALL
-    // ================================
     @Override
     public List<JobPosting> getAll() {
-        autoExpire();
+        autoExpire(); // Tự động cập nhật các tin hết hạn trước khi lấy danh sách
         return repository.findAll();
     }
 
-    // ================================
-    // 2️⃣ CREATE
-    // ================================
     @Override
     public void create(JobPostingCreateDTO dto) {
+        RecruitmentRequest req = reqRepo.findById(dto.getReqId())
+                .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        RecruitmentRequest req =
-                reqRepo.findById(dto.getReqId())
-                        .orElseThrow(() -> new RuntimeException("Request not found"));
+        JobDescription jd = jdRepo.findById(dto.getJdId())
+                .orElseThrow(() -> new RuntimeException("Job Description not found"));
 
-        if (req.getStatus() != RecruitmentRequestStatus.APPROVED) {
-            throw new RuntimeException("Recruitment Request must be APPROVED");
-        }
-
-        JobDescription jd =
-                jdRepo.findById(dto.getJdId())
-                        .orElseThrow(() -> new RuntimeException("Job Description not found"));
-
-        if (jd.getStatus() != JobDescriptionStatus.ACTIVE) {
-            throw new RuntimeException("Job Description must be ACTIVE");
-        }
-
-        if (dto.getExpiryDate().isBefore(dto.getPublishDate())) {
-            throw new RuntimeException("Expiry date must be after publish date");
-        }
-
+        // Tạo Slug duy nhất dựa trên tiêu đề bài đăng
         String slug = generateUniqueSlug(dto.getTitle());
+
+        // ✅ Logic: Nếu HR để trống ô nhập, hệ thống tự bốc dữ liệu từ JD sang
+        String finalDescription = (dto.getDescription() == null || dto.getDescription().isBlank())
+                ? jd.getResponsibilities() : dto.getDescription();
+
+        String finalLocation = (dto.getLocation() == null || dto.getLocation().isBlank())
+                ? jd.getWorkingLocation() : dto.getLocation();
 
         JobPosting posting = JobPosting.builder()
                 .recruitmentRequest(req)
                 .jobDescription(jd)
                 .title(dto.getTitle())
-                .description(dto.getDescription())
-                .requirements(dto.getRequirements())
-                .benefits(dto.getBenefits())
+                .description(finalDescription)
+                .requirements(dto.getRequirements() == null || dto.getRequirements().isBlank() ? jd.getRequirements() : dto.getRequirements())
+                .benefits(dto.getBenefits() == null || dto.getBenefits().isBlank() ? jd.getBenefits() : dto.getBenefits())
+                .location(finalLocation)
                 .publishDate(dto.getPublishDate())
                 .expiryDate(dto.getExpiryDate())
                 .status("OPEN")
@@ -78,54 +66,36 @@ public class JobPostingServiceImpl implements JobPostingService {
 
         repository.save(posting);
     }
+    // Các hàm changeStatus, delete, autoExpire giữ nguyên logic của bạn...
 
-    // ================================
-    // 3️⃣ CHANGE STATUS
-    // ================================
     @Override
     public void changeStatus(Integer id, String status) {
-
         JobPosting posting = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Posting not found"));
-
         posting.setStatus(status);
         repository.save(posting);
     }
 
-    // ================================
-    // 4️⃣ DELETE
-    // ================================
     @Override
     public void delete(Integer id) {
         repository.deleteById(id);
     }
 
-    // ================================
-    // 5️⃣ AUTO EXPIRE
-    // ================================
     @Override
     public void autoExpire() {
-
         List<JobPosting> openList = repository.findByStatus("OPEN");
-
+        LocalDate today = LocalDate.now();
         for (JobPosting jp : openList) {
-            if (jp.getExpiryDate() != null &&
-                    jp.getExpiryDate().isBefore(LocalDate.now())) {
-
+            if (jp.getExpiryDate() != null && jp.getExpiryDate().isBefore(today)) {
                 jp.setStatus("EXPIRED");
             }
         }
     }
 
-    // ================================
-    // 6️⃣ PUBLIC CAREER PAGE
-    // ================================
+    // Luồng Public Career Page
     @Override
     public List<JobPosting> getPublicOpenJobs() {
-        return repository.findByIsPublicTrueAndStatusAndExpiryDateAfter(
-                "OPEN",
-                LocalDate.now()
-        );
+        return repository.findByIsPublicTrueAndStatusAndExpiryDateAfter("OPEN", LocalDate.now());
     }
 
     @Override
@@ -136,38 +106,32 @@ public class JobPostingServiceImpl implements JobPostingService {
 
     @Override
     public void increaseViewCount(String slug) {
-
-        JobPosting job = repository.findBySlugAndIsPublicTrue(slug)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-
-        job.setViewCount(job.getViewCount() + 1);
+        repository.findBySlugAndIsPublicTrue(slug).ifPresent(job -> {
+            job.setViewCount(job.getViewCount() + 1);
+            repository.save(job);
+        });
     }
 
-    // ================================
-    // 7️⃣ SLUG GENERATOR
-    // ================================
+    // Slug Generator
     private String generateUniqueSlug(String title) {
-
         String baseSlug = toSlug(title);
         String slug = baseSlug;
         int counter = 1;
-
         while (repository.existsBySlug(slug)) {
             slug = baseSlug + "-" + counter;
             counter++;
         }
-
         return slug;
     }
 
     private String toSlug(String input) {
-
+        if (input == null) return "";
         String normalized = Normalizer.normalize(input, Normalizer.Form.NFD)
                 .replaceAll("[^\\p{ASCII}]", "");
-
         return normalized.toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .replaceAll("\\s+", "-")
-                .replaceAll("-+", "-");
+                .replaceAll("-+", "-")
+                .replaceAll("^-|-$", "");
     }
 }

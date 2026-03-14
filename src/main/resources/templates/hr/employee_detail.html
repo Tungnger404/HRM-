@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi"
+<html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
@@ -14,13 +14,42 @@
     .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
     .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .title{font-size:20px;font-weight:800}
-    .btn{height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center}
+    .btn{
+      height:38px;
+      padding:0 12px;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      background:#fff;
+      cursor:pointer;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      text-decoration:none;
+      color:#111827;
+    }
     .btn-primary{background:#f5b400;border-color:#f5b400}
     .btn-danger{background:#fee2e2;border-color:#fecaca}
+    .btn-secondary{background:#f8fafc;border-color:#d1d5db}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
     .field label{display:block;font-size:13px;font-weight:800;color:#6b7280;margin-bottom:6px}
-    .field input,.field select{width:100%;height:40px;padding:0 12px;border:1px solid #e5e7eb;border-radius:10px;outline:none}
-    .field input:focus,.field select:focus{border-color:#f5b400;box-shadow:0 0 0 4px rgba(245,180,0,.2)}
+    .field input,.field select{
+      width:100%;
+      height:40px;
+      padding:0 12px;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      outline:none
+    }
+    .field input:focus,.field select:focus{
+      border-color:#f5b400;
+      box-shadow:0 0 0 4px rgba(245,180,0,.2)
+    }
+    .field input[readonly],
+    .field input[disabled]{
+      background:#f9fafb;
+      color:#374151;
+      cursor:not-allowed;
+    }
     .row-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
     .msg{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #bbf7d0;background:#ecfdf5;color:#065f46}
     .msg-err{border:1px solid #fecaca;background:#fef2f2;color:#991b1b}
@@ -41,7 +70,6 @@
       <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
       <div class="msg msg-err" th:if="${err != null and err != ''}" th:text="${err}"></div>
 
-      <!-- UPDATE -->
       <form method="post" th:action="@{/hr/employees/save}">
         <input type="hidden" name="empId" th:value="${e.empId}">
 
@@ -96,19 +124,20 @@
             <input name="taxCode" th:value="${e.taxCode}">
           </div>
 
+          <!-- Chỉ hiển thị, không submit -->
           <div class="field">
             <label>Dept ID</label>
-            <input name="deptId" th:value="${e.deptId}">
+            <input type="text"
+                   th:value="${e.department != null ? e.department.deptName + ' (ID: ' + e.deptId + ')' : ''}"
+                   readonly disabled>
           </div>
 
+          <!-- Chỉ hiển thị, không submit -->
           <div class="field">
             <label>Job ID</label>
-            <input name="jobId" th:value="${e.jobId}">
-          </div>
-
-          <div class="field">
-            <label>Direct Manager ID</label>
-            <input name="directManagerId" th:value="${e.directManagerId}">
+            <input type="text"
+                   th:value="${e.jobPosition != null ? e.jobPosition.title + ' (ID: ' + e.jobId + ')' : ''}"
+                   readonly disabled>
           </div>
 
           <div class="field">
@@ -116,9 +145,10 @@
             <input name="joinDate" type="date" th:value="${e.joinDate}">
           </div>
 
+          <!-- Chỉ hiển thị, không submit -->
           <div class="field">
             <label>User ID</label>
-            <input name="userId" th:value="${e.userId}">
+            <input type="text" th:value="${e.userId}" readonly disabled>
           </div>
         </div>
 
@@ -129,12 +159,15 @@
                   onclick="if(confirm('Delete this employee?')) document.getElementById('delForm').submit();">
             Delete
           </button>
+
+          <a class="btn btn-secondary"
+             th:href="@{'/hr/employees/' + ${e.empId} + '/assignment'}">
+            Change Dept / Job
+          </a>
         </div>
       </form>
 
-      <!-- DELETE -->
       <form id="delForm" method="post" th:action="@{'/hr/employees/' + ${e.empId} + '/delete'}"></form>
-
     </div>
   </div>
 
