@@ -56,34 +56,20 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
             throw new RuntimeException("Yêu cầu này đã có bản mô tả công việc (JD).");
         }
 
-        // --- TÍNH NĂNG VALIDATION DOANH NGHIỆP ---
-        // Ví dụ: Kiểm tra lương nhập vào JD không vượt quá ngân sách của Request (nếu cần)
-
         Employee creator = currentEmployeeService.requireEmployee(principal);
 
-        // --- TÍNH NĂNG AUDIT & ABC MAPPING ---
         JobDescription jd = new JobDescription();
         jd.setRecruitmentRequest(request);
-        jd.setJob(request.getJobPosition()); // Đảm bảo khớp 100% với vị trí Manager yêu cầu
-
-        // Nội dung chi tiết (Phần B)
+        jd.setJob(request.getJobPosition());
         jd.setResponsibilities(dto.getResponsibilities());
         jd.setRequirements(dto.getRequirements());
         jd.setBenefits(dto.getBenefits());
-
-        // Thông tin metadata (Phần A & C)
         jd.setSalaryRange(dto.getSalaryRange());
         jd.setWorkingLocation(dto.getWorkingLocation());
-
-        // Audit Trail
         jd.setCreatedBy(creator);
         jd.setCreatedAt(LocalDateTime.now());
         jd.setStatus(JobDescriptionStatus.ACTIVE);
-
         repository.save(jd);
-
-        // Đổi trạng thái request gốc để đánh dấu đã hoàn tất quy trình chuẩn bị
-        // request.setStatus(RecruitmentRequestStatus.JD_CREATED);
         requestRepo.save(request);
     }
 
@@ -106,8 +92,6 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
     public void update(Integer id, JobDescriptionUpdateDTO dto) {
         JobDescription jd = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("JD not found"));
-
-        // Cập nhật nội dung ABC
         jd.setResponsibilities(dto.getResponsibilities());
         jd.setRequirements(dto.getRequirements());
         jd.setBenefits(dto.getBenefits());
@@ -133,9 +117,7 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
         repository.deleteById(id);
     }
 
-    /**
-     * MAPPING TO DTO: Hiển thị thông tin Audit và liên kết
-     */
+
     private JobDescriptionResponseDTO mapToDTO(JobDescription jd) {
         JobDescriptionResponseDTO dto = new JobDescriptionResponseDTO();
         dto.setId(jd.getId());

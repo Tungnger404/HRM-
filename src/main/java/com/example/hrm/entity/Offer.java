@@ -14,6 +14,12 @@ import java.time.LocalDate;
 @Builder
 public class Offer {
 
+    @Column(name = "job_id") // ID của vị trí công việc
+    private Integer jobId;
+
+    @Column(name = "dept_id") // ID của phòng ban
+    private Integer deptId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "offer_id")

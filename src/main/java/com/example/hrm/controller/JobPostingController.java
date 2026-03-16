@@ -26,43 +26,30 @@ public class JobPostingController {
     private final RecruitmentRequestRepository reqRepo;
     private final JobDescriptionRepository jdRepo;
 
-    // ✅ NEW
+
     private final CandidateRepository candidateRepository;
 
-    // ================= LIST =================
     @GetMapping
     public String list(Model model) {
-
         List<JobPosting> list = service.getAll();
-
-        // 🔥 Map số lượng candidate cho từng job
         list.forEach(jp -> {
             long count = candidateRepository
                     .countByJobPosting_PostingId(jp.getPostingId());
             jp.setCandidateCount(count);
         });
-
         model.addAttribute("list", list);
-
         return "job-posting/list";
     }
-
-    // ================= CREATE FORM =================
     @GetMapping("/create")
     public String createForm(Model model) {
-
         model.addAttribute("dto", new JobPostingCreateDTO());
-
         model.addAttribute("requests",
                 reqRepo.findByStatus(RecruitmentRequestStatus.APPROVED));
-
         model.addAttribute("descriptions",
                 jdRepo.findByStatus(JobDescriptionStatus.ACTIVE));
-
         return "job-posting/create";
     }
 
-    // ================= CREATE =================
     @PostMapping("/create")
     public String create(@ModelAttribute JobPostingCreateDTO dto, RedirectAttributes ra) {
         // 1. Chặn logic ngày tháng ngay lập tức
@@ -85,8 +72,6 @@ public class JobPostingController {
             return "redirect:/hr/job-posting/create";
         }
     }
-
-    // ================= CHANGE STATUS =================
     @GetMapping("/status/{id}/{status}")
     public String changeStatus(@PathVariable Integer id,
                                @PathVariable String status) {
@@ -94,10 +79,55 @@ public class JobPostingController {
         return "redirect:/hr/job-posting";
     }
 
-    // ================= DELETE =================
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id) {
         service.delete(id);
         return "redirect:/hr/job-posting";
     }
+
+    @GetMapping("/edit/{id}")
+    public String editForm(@PathVariable Integer id, Model model) {
+        JobPosting posting = service.getById(id);
+        JobPostingCreateDTO dto = new JobPostingCreateDTO();
+        dto.setTitle(posting.getTitle());
+        dto.setReqId(posting.getRecruitmentRequest().getReqId());
+        dto.setJdId(posting.getJobDescription().getId());
+        dto.setDescription(posting.getDescription());
+        dto.setRequirements(posting.getRequirements());
+        dto.setBenefits(posting.getBenefits());
+        dto.setLocation(posting.getLocation());
+        dto.setPublishDate(posting.getPublishDate());
+        dto.setExpiryDate(posting.getExpiryDate());
+
+        model.addAttribute("dto", dto);
+        model.addAttribute("postingId", id);
+        model.addAttribute("requests",
+                reqRepo.findByStatus(RecruitmentRequestStatus.APPROVED));
+        model.addAttribute("descriptions",
+                jdRepo.findByStatus(JobDescriptionStatus.ACTIVE));
+
+        return "job-posting/edit";
+    }
+
+    @PostMapping("/edit/{id}")
+    public String update(@PathVariable Integer id,
+                         @ModelAttribute JobPostingCreateDTO dto,
+                         RedirectAttributes ra) {
+        // 1. Kiểm tra logic ngày tháng tương tự bên Create
+        if (dto.getPublishDate() != null && dto.getExpiryDate() != null) {
+            if (dto.getExpiryDate().isBefore(dto.getPublishDate())) {
+                ra.addFlashAttribute("err", "Ngày hết hạn không được trước ngày đăng tin!");
+                return "redirect:/hr/job-posting/edit/" + id;
+            }
+        }
+
+        try {
+            service.update(id, dto);
+            return "redirect:/hr/job-posting?updatesuccess";
+        } catch (Exception e) {
+            ra.addFlashAttribute("err", "Lỗi khi cập nhật: " + e.getMessage());
+            return "redirect:/hr/job-posting/edit/" + id;
+        }
+    }
+
 }
