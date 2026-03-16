@@ -17,5 +17,10 @@ public interface EmployeeService {
 
     EmployeeAdd toForm(Employee e);
 
-    void createEmployeeFromCandidate(Integer candidateId, LocalDate joinDate);
+    void createEmployeeFromCandidate(Integer candidateId,
+                                     LocalDate joinDate,
+                                     Integer jobId,
+                                     Integer deptId,
+                                     String identityCard,
+                                     String taxCode);
 }

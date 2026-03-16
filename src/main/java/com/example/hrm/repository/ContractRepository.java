@@ -22,8 +22,6 @@ public interface ContractRepository extends JpaRepository<Contract, Integer> {
                                                    @Param("periodStart") LocalDate periodStart,
                                                    @Param("periodEnd") LocalDate periodEnd);
 
-
-    // List hợp đồng theo nhân viên (phục vụ HR xem lịch sử contract)
     List<Contract> findByEmployee_EmpIdOrderByStartDateDesc(Integer empId);
 
     // List tất cả (mới nhất trước) để HR xem tổng quan

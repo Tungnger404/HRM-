@@ -7,6 +7,7 @@ import com.example.hrm.repository.CandidateRepository;
 import com.example.hrm.repository.DepartmentRepository;
 import com.example.hrm.repository.JobPostingRepository;
 
+import com.example.hrm.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.*;
@@ -29,11 +30,7 @@ public class PublicRecruitmentController {
     private final JobPostingRepository jobPostingRepository;
     private final CandidateRepository candidateRepository;
     private final DepartmentRepository departmentRepository;
-
-    // =====================================================
-    // ================= CAREER HOME =======================
-    // URL: /careers
-    // =====================================================
+    private final CloudinaryService cloudinaryService;
 
     @GetMapping
     public String careerHome(
@@ -66,22 +63,14 @@ public class PublicRecruitmentController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("location", location);
         model.addAttribute("department", department);
-
         model.addAttribute("locations",
                 jobPostingRepository.findDistinctPublicLocations(LocalDate.now()));
-
         model.addAttribute("departments",
                 departmentRepository.findAll());
-
         model.addAttribute("activePage", "careers");
 
         return "public/home";
     }
-
-    // =====================================================
-    // ================= AJAX SEARCH =======================
-    // URL: /careers/search
-    // =====================================================
 
     @GetMapping("/search")
     @ResponseBody
@@ -109,11 +98,6 @@ public class PublicRecruitmentController {
         return ResponseEntity.ok(jobPage);
     }
 
-    // =====================================================
-    // ================= JOB DETAIL ========================
-    // URL: /careers/{slug}
-    // =====================================================
-
     @GetMapping("/{slug}")
     public String jobDetail(
             @PathVariable String slug,
@@ -134,11 +118,6 @@ public class PublicRecruitmentController {
         return "public/job-detail";
     }
 
-    // =====================================================
-    // ================= APPLY FORM ========================
-    // URL: /careers/{slug}/apply
-    // =====================================================
-
     @GetMapping("/{slug}/apply")
     public String applyForm(
             @PathVariable String slug,
@@ -154,10 +133,6 @@ public class PublicRecruitmentController {
         return "public/apply";
     }
 
-    // =====================================================
-    // ================= APPLY SUBMIT ======================
-    // POST: /careers/apply
-    // =====================================================
 
     @PostMapping("/apply")
     public String applySubmit(
@@ -165,6 +140,9 @@ public class PublicRecruitmentController {
             @RequestParam String fullName,
             @RequestParam String email,
             @RequestParam(required = false) String phone,
+            @RequestParam String gender,   // THÊM MỚI
+            @RequestParam String dob,      // THÊM MỚI (Dạng String từ input date)
+            @RequestParam String address,  // THÊM MỚI
             @RequestParam MultipartFile cvFile,
             Model model
     ) throws IOException {
@@ -173,37 +151,23 @@ public class PublicRecruitmentController {
                 .findById(postingId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        // Prevent duplicate apply
-        boolean exists = candidateRepository
-                .existsByEmailAndJobPosting_PostingId(email, postingId);
-
-        if (exists) {
-
+        if (candidateRepository.existsByEmailAndJobPosting_PostingId(email, postingId)) {
             model.addAttribute("error", "You already applied this job");
             model.addAttribute("job", job);
-
             return "public/apply";
         }
 
-        // Upload CV
-        String uploadDir = "uploads/";
+        String secureUrl = cloudinaryService.uploadFile(cvFile);
 
-        Files.createDirectories(Paths.get(uploadDir));
-
-        String fileName = UUID.randomUUID() + "_"
-                + Objects.requireNonNull(cvFile.getOriginalFilename());
-
-        Path filePath = Paths.get(uploadDir + fileName);
-
-        Files.write(filePath, cvFile.getBytes());
-
-        // Save candidate
         Candidate candidate = Candidate.builder()
                 .jobPosting(job)
                 .fullName(fullName)
                 .email(email)
                 .phone(phone)
-                .cvUrl(fileName)
+                .gender(gender)
+                .dob(LocalDate.parse(dob))
+                .address(address)
+                .cvUrl(secureUrl)
                 .status(CandidateStatus.APPLIED)
                 .build();
 
@@ -211,5 +175,4 @@ public class PublicRecruitmentController {
 
         return "redirect:/careers/" + job.getSlug() + "?applied=true";
     }
-
 }

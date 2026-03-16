@@ -18,15 +18,32 @@
         .profile-card { border: none; border-radius: 15px; overflow: hidden; }
         .info-label { color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
         .info-value { color: #1e293b; font-weight: 600; font-size: 1rem; }
+
+        /* Cấu hình khung chứa CV hiển thị Full chiều dài */
         .cv-preview-box {
             background: #f1f5f9;
             border-radius: 12px;
-            height: 500px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed #cbd5e1;
+            min-height: 500px;
+            height: auto;
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            overflow: hidden;
+            display: block;
         }
+
+        /* CSS cho ảnh CV */
+        .cv-img-fluid {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            cursor: zoom-in;
+            transition: opacity 0.3s;
+        }
+        .cv-img-fluid:hover {
+            opacity: 0.9;
+        }
+
         .status-badge {
             padding: 8px 16px;
             border-radius: 100px;
@@ -43,6 +60,17 @@
             font-weight: 800;
             font-size: 1.2rem;
             border: 4px solid #e2e8f0;
+        }
+        .modal-eval-icon {
+            width: 70px;
+            height: 70px;
+            background-color: #f0f7ff;
+            color: #0d6efd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
         }
     </style>
 </head>
@@ -64,11 +92,16 @@
                 <a th:href="@{/hr/candidates(postingId=${postingId})}" class="btn btn-outline-secondary rounded-pill px-4">
                     <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
-                <a th:href="@{/hr/candidates/evaluate/{id}(id=${candidate.candidateId})}"
-                   class="btn btn-primary rounded-pill px-4 shadow-sm"
-                   th:if="${candidate.status.name() == 'APPLIED'}">
+
+                <button type="button"
+                        class="btn btn-primary rounded-pill px-4 shadow-sm"
+                        th:if="${candidate.status.name() == 'APPLIED'}"
+                        th:data-id="${candidate.candidateId}"
+                        th:data-name="${candidate.fullName}"
+                        th:data-posting="${postingId}"
+                        onclick="prepareModal(this)">
                     <i class="bi bi-check2-circle me-1"></i> Start Screening
-                </a>
+                </button>
             </div>
         </div>
 
@@ -95,19 +128,13 @@
                             <label class="info-label d-block mb-1">Screening Score</label>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="score-circle"
-                                     th:classappend="${candidate.screeningScore != null ? (candidate.screeningScore >= 7 ? 'text-success border-success' : 'text-warning border-warning') : 'text-muted'}"
+                                     th:classappend="${candidate.screeningScore != null ? (candidate.screeningScore >= 70 ? 'text-success border-success' : 'text-warning border-warning') : 'text-muted'}"
                                      th:text="${candidate.screeningScore != null ? candidate.screeningScore : 'N/A'}">
                                 </div>
                                 <small class="text-muted" th:if="${candidate.screeningScore == null}">Pending evaluation</small>
-                                <small class="text-muted" th:if="${candidate.screeningScore != null}">Overall potential</small>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="alert alert-light border shadow-sm mt-4 rounded-4">
-                    <h6><i class="bi bi-lightbulb text-warning me-2"></i>Review Tip</h6>
-                    <p class="small text-muted mb-0">Check if the candidate's skills match the Job Description requirements before scheduling an interview.</p>
                 </div>
             </div>
 
@@ -116,29 +143,99 @@
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i>Curriculum Vitae</h5>
                         <a th:href="${candidate.cvUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Open Original
                         </a>
                     </div>
-                    <div class="card-body">
-                        <div class="cv-preview-box">
-                            <div class="text-center" th:if="${candidate.cvUrl == null}">
-                                <i class="bi bi-file-earmark-x fs-1 text-muted"></i>
-                                <p class="text-muted mt-2">No CV file uploaded.</p>
-                            </div>
+                    <div class="card-body p-0"> <div class="cv-preview-box">
 
-                            <iframe th:if="${candidate.cvUrl != null}"
-                                    th:src="${candidate.cvUrl}"
-                                    width="100%" height="100%"
-                                    style="border: none; border-radius: 8px;">
-                            </iframe>
+                        <img th:if="${candidate.cvUrl != null and (candidate.cvUrl.contains('.jpg') or candidate.cvUrl.contains('.png') or candidate.cvUrl.contains('.jpeg') or candidate.cvUrl.contains('/image/'))}"
+                             th:src="${candidate.cvUrl}"
+                             class="cv-img-fluid"
+                             title="Click to view full size"
+                             onclick="window.open(this.src, '_blank')">
+
+                        <iframe th:if="${candidate.cvUrl != null and !candidate.cvUrl.contains('.jpg') and !candidate.cvUrl.contains('.png') and !candidate.cvUrl.contains('.jpeg') and !candidate.cvUrl.contains('/image/')}"
+                                th:src="${candidate.cvUrl}"
+                                width="100%" height="800px"
+                                style="border: none;">
+                        </iframe>
+
+                        <div th:if="${candidate.cvUrl == null}" class="p-5 text-center text-muted">
+                            <i class="bi bi-file-earmark-x fs-1"></i>
+                            <p class="mt-2">No CV file uploaded.</p>
                         </div>
+
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
 
     </div>
+
+    <div class="modal fade" id="screeningModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">Screening Evaluation</h5>
+                    <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="modal-eval-icon">
+                            <i class="bi bi-person-badge fs-2"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="modalCandidateName">Candidate Name</h4>
+                        <p class="text-muted small">Assessing for Job Posting #<span id="modalPostingId"></span></p>
+                    </div>
+
+                    <form th:action="@{/hr/candidates/evaluate}" method="post">
+                        <input type="hidden" name="id" id="modalInputId" />
+                        <input type="hidden" name="postingId" id="modalInputPostingId" />
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-2 text-uppercase">Screening Score (0-100)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-speedometer2"></i></span>
+                                <input type="number" name="score"
+                                       class="form-control bg-light border-start-0 fw-bold"
+                                       min="0" max="100" placeholder="75" required
+                                       style="height: 55px; font-size: 1.25rem;">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" name="action" value="reject" class="btn btn-outline-danger w-100 py-3 fw-bold" style="border-radius: 12px;">
+                                <i class="bi bi-x-lg me-1"></i> Reject
+                            </button>
+                            <button type="submit" name="action" value="pass" class="btn btn-success w-100 py-3 fw-bold" style="border-radius: 12px;">
+                                <i class="bi bi-check-lg me-1"></i> Pass
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        function prepareModal(button) {
+            var id = button.getAttribute('data-id');
+            var fullName = button.getAttribute('data-name');
+            var postingId = button.getAttribute('data-posting');
+
+            document.getElementById('modalCandidateName').innerText = fullName;
+            document.getElementById('modalPostingId').innerText = postingId;
+            document.getElementById('modalInputId').value = id;
+            document.getElementById('modalInputPostingId').value = postingId;
+
+            var screeningModal = new coreui.Modal(document.getElementById('screeningModal'));
+            screeningModal.show();
+        }
+    </script>
+</th:block>
 
 </body>
 </html>

@@ -3,6 +3,7 @@ package com.example.hrm.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -25,6 +26,14 @@ import java.time.LocalDateTime;
         }
 )
 public class Candidate {
+    @Column(length = 10)
+    private String gender;
+
+    @Column(name = "dob")
+    private LocalDate dob;
+
+    @Column(length = 255)
+    private String address;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
