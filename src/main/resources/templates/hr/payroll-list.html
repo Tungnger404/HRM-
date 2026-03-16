@@ -251,7 +251,7 @@
     <div class="card mb-3">
         <div class="card-body">
             <form method="get"
-                  th:action="@{/manager/payroll/payslips}"
+                  th:action="@{/hr/payroll/payslips}"
                   id="filterForm"
                   class="payroll-filter-bar">
 
@@ -298,7 +298,7 @@
         </div>
     </div>
 
-    <form id="bulkForm" method="post" th:action="@{/manager/payroll/payslips/bulk}">
+    <form id="bulkForm" method="post" th:action="@{/hr/payroll/payslips/bulk}">
         <div th:if="${_csrf != null}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id="csrfToken">
         </div>
@@ -349,7 +349,7 @@
                                        class="row-check form-check-input"
                                        name="payslipIds"
                                        th:value="${r.payslipId}"
-                                       th:disabled="${(r.batchStatus != 'DRAFT' and r.batchStatus != 'PENDING_APPROVAL') or r.slipStatus == 'REJECTED'}">
+                                       th:disabled="${r.batchStatus != 'PENDING_APPROVAL' or r.slipStatus != 'ACTIVE'}">
                             </div>
                         </td>
 
@@ -377,20 +377,17 @@
                             <span class="badge bg-danger"
                                   th:if="${r.slipStatus == 'REJECTED'}">Rejected</span>
 
-                            <span class="badge bg-primary"
-                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'PAID'}">Paid</span>
+                            <span class="badge bg-secondary"
+                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'DRAFT'}">Draft</span>
+
+                            <span class="badge bg-warning text-dark"
+                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'PENDING_APPROVAL'}">Pending</span>
 
                             <span class="badge bg-success"
                                   th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'APPROVED'}">Approved</span>
 
-                            <span class="badge bg-success"
-                                  th:if="${r.slipStatus == 'APPROVED'}">Approved</span>
-
-                            <span class="badge bg-warning text-dark"
-                                  th:if="${r.slipStatus != 'REJECTED' and r.slipStatus != 'APPROVED' and r.batchStatus == 'PENDING_APPROVAL'}">Pending</span>
-
-                            <span class="badge bg-secondary"
-                                  th:if="${r.slipStatus != 'REJECTED' and r.slipStatus != 'APPROVED' and r.batchStatus == 'DRAFT'}">Draft</span>
+                            <span class="badge bg-primary"
+                                  th:if="${r.slipStatus != 'REJECTED' and r.batchStatus == 'PAID'}">Paid</span>
                         </td>
 
                         <td class="payroll-col-center">
@@ -409,7 +406,7 @@
 
                                 <a class="btn btn-sm btn-outline-primary btn-view-payslip"
                                    title="Xem chi tiết"
-                                   th:href="@{/manager/payroll/payslips/{id}(id=${r.payslipId})}">
+                                   th:href="@{/hr/payroll/payslips/{id}(id=${r.payslipId})}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                          fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                         <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.12 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.133 13.133 0 0 1 1.172 8z"/>
@@ -459,7 +456,7 @@
                        autocomplete="off"/>
 
                 <div class="small text-muted mt-2">
-                    Nhập số, không cần dấu phẩy. Ví dụ: <b>12000000</b> → tự thành <b>12,000,000</b>
+                    Nhập số, không cần dấu phẩy. Ví dụ: <b>12000000</b> → <b>12,000,000</b>
                 </div>
             </div>
 
@@ -518,43 +515,6 @@
         </form>
     </dialog>
 
-    <!-- ===== APPROVE CONFIRM MODAL ===== -->
-    <dialog id="approveConfirmDialog" class="payroll-dialog" style="min-width:400px;max-width:520px">
-        <form method="dialog">
-            <div class="dialog-head">
-                <strong>Xác nhận Approve</strong>
-            </div>
-            <div class="dialog-body">
-                <p id="approveDialogInfo" class="mb-0 text-secondary"></p>
-            </div>
-            <div class="dialog-foot">
-                <button value="cancel" class="btn btn-outline-secondary" type="submit">Hủy</button>
-                <button id="btnConfirmApprove" class="btn btn-success text-white" type="button">✓ Approve</button>
-            </div>
-        </form>
-    </dialog>
-
-    <!-- ===== REJECT REASON MODAL ===== -->
-    <dialog id="rejectReasonDialog" class="payroll-dialog" style="min-width:480px;max-width:600px">
-        <form method="dialog">
-            <div class="dialog-head">
-                <strong>Nhập lý do từ chối (Reject)</strong>
-            </div>
-            <div class="dialog-body">
-                <div class="mb-2 text-muted small" id="rejectDialogInfo"></div>
-                <label for="rejectReasonInput" class="form-label fw-semibold">Lý do từ chối <span class="text-danger">*</span></label>
-                <textarea id="rejectReasonInput" class="form-control" rows="4"
-                          placeholder="Nhập lý do rõ ràng để HR có thể sửa lại..."
-                          style="resize:vertical"></textarea>
-                <div id="rejectReasonError" class="text-danger small mt-1" style="display:none">Vui lòng nhập lý do từ chối.</div>
-            </div>
-            <div class="dialog-foot">
-                <button value="cancel" class="btn btn-outline-secondary" type="submit">Hủy</button>
-                <button id="btnConfirmReject" class="btn btn-danger" type="button">Xác nhận Reject</button>
-            </div>
-        </form>
-    </dialog>
-
     <script th:inline="javascript">
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("bulkForm");
@@ -566,7 +526,7 @@
             const clientAlert = document.getElementById("clientAlert");
             const csrfToken = document.getElementById("csrfToken");
 
-            const bulkJsonUrl = /*[[@{/manager/payroll/payslips/bulk-json}]]*/ "/manager/payroll/payslips/bulk-json";
+            const bulkJsonUrl = /*[[@{/hr/payroll/payslips/bulk-json}]]*/ "/hr/payroll/payslips/bulk-json";
 
             let toastTimer = null;
 
@@ -673,23 +633,16 @@
                     return `<span class="badge bg-danger">Rejected</span>`;
                 }
 
-                if (batchStatus === "PAID") {
-                    return `<span class="badge bg-primary">Paid</span>`;
+                switch (batchStatus) {
+                    case "PENDING_APPROVAL":
+                        return `<span class="badge bg-warning text-dark">Pending</span>`;
+                    case "APPROVED":
+                        return `<span class="badge bg-success">Approved</span>`;
+                    case "PAID":
+                        return `<span class="badge bg-primary">Paid</span>`;
+                    default:
+                        return `<span class="badge bg-secondary">Draft</span>`;
                 }
-
-                if (slipStatus === "APPROVED") {
-                    return `<span class="badge bg-success">Approved</span>`;
-                }
-
-                if (batchStatus === "APPROVED") {
-                    return `<span class="badge bg-success">Approved</span>`;
-                }
-
-                if (batchStatus === "PENDING_APPROVAL") {
-                    return `<span class="badge bg-warning text-dark">Pending</span>`;
-                }
-
-                return `<span class="badge bg-secondary">Draft</span>`;
             }
 
             function syncRowVisualState(tr) {
@@ -705,7 +658,7 @@
                 const cb = tr.querySelector(".row-check");
                 if (cb) {
                     cb.checked = false;
-                    cb.disabled = (batchStatus !== "DRAFT" && batchStatus !== "PENDING_APPROVAL") || slipStatus === "REJECTED";
+                    cb.disabled = batchStatus !== "PENDING_APPROVAL" || slipStatus !== "ACTIVE";
                 }
 
                 if (batchStatus === "APPROVED" || batchStatus === "PAID") {
@@ -721,9 +674,7 @@
                     const id = tr.getAttribute("data-payslip-id");
                     if (!processed.has(String(id))) return;
 
-                    // CHỈ đổi slip-status của dòng được approve
-                    tr.setAttribute("data-slip-status", "APPROVED");
-                    tr.setAttribute("data-sent-to-employee", "false");
+                    tr.setAttribute("data-sent-to-employee", "true");
                     syncRowVisualState(tr);
                 });
                 setCheckAllState();
@@ -749,22 +700,16 @@
                     return;
                 }
 
-                if (actionName === "reject") {
-                    return showRejectModal(ids);
-                }
+                const msg = actionName === "approve"
+                    ? `Bạn có chắc muốn APPROVE ${ids.length} payslip đã chọn không?`
+                    : `Bạn có chắc muốn REJECT ${ids.length} payslip đã chọn không?`;
 
-                if (actionName === "approve") {
-                    return showApproveModal(ids);
-                }
+                if (!confirm(msg)) return;
 
                 bulkAction.value = actionName;
 
                 const fd = new FormData(form);
                 fd.set("action", actionName);
-
-                if (actionName === "reject") {
-                    fd.set("reason", rejectReason);
-                }
 
                 try {
                     const headers = {"X-Requested-With": "XMLHttpRequest"};
@@ -806,106 +751,34 @@
                 }
             }
 
-            function showApproveModal(ids) {
-                const dlg = document.getElementById("approveConfirmDialog");
-                const infoDiv = document.getElementById("approveDialogInfo");
-                const btnConfirm = document.getElementById("btnConfirmApprove");
-
-                if (!dlg) return;
-                infoDiv.textContent = `Bạn có chắc muốn APPROVE ${ids.length} payslip đã chọn không?`;
-
-                dlg.showModal();
-
-                // Remove previous listener to avoid duplicates
-                const newBtn = btnConfirm.cloneNode(true);
-                btnConfirm.parentNode.replaceChild(newBtn, btnConfirm);
-
-                newBtn.addEventListener("click", async function () {
-                    dlg.close();
-                    await submitAjaxWithReason("approve", ids, null);
-                });
-            }
-
-            function showRejectModal(ids) {
-                const dlg = document.getElementById("rejectReasonDialog");
-                const textarea = document.getElementById("rejectReasonInput");
-                const errDiv = document.getElementById("rejectReasonError");
-                const infoDiv = document.getElementById("rejectDialogInfo");
-                const btnConfirm = document.getElementById("btnConfirmReject");
-
-                if (!dlg) return;
-
-                textarea.value = "";
-                errDiv.style.display = "none";
-                infoDiv.textContent = `Đang reject ${ids.length} payslip đã chọn.`;
-
-                dlg.showModal();
-                textarea.focus();
-
-                // Remove previous listener to avoid duplicates
-                const newBtn = btnConfirm.cloneNode(true);
-                btnConfirm.parentNode.replaceChild(newBtn, btnConfirm);
-
-                newBtn.addEventListener("click", async function () {
-                    const reason = textarea.value.trim();
-                    if (!reason) {
-                        errDiv.style.display = "block";
-                        textarea.focus();
-                        return;
-                    }
-                    errDiv.style.display = "none";
-                    dlg.close();
-                    await submitAjaxWithReason("reject", ids, reason);
-                });
-            }
-
-            async function submitAjaxWithReason(actionName, ids, reason) {
-                const fd = new FormData(form);
-                fd.set("action", actionName);
-                ids.forEach(id => fd.append("payslipIds", id));
-                if (reason) fd.set("reason", reason);
-
-                // Remove auto-appended payslipIds from form (only keep what we set)
-                const existingIds = fd.getAll("payslipIds");
-                // Keep only our explicitly set ids
-                try {
-                    const resp = await fetch(bulkJsonUrl, {
-                        method: "POST",
-                        body: fd,
-                        headers: { "X-Requested-With": "XMLHttpRequest" }
-                    });
-
-                    if (!resp.ok) {
-                        showAlert("danger", "Lỗi server: " + resp.status);
-                        return;
-                    }
-
-                    const data = await resp.json();
-
-                    if (actionName === "approve") {
-                        const processedIds = data.processedIds || [];
-                        if (processedIds.length > 0) markApprovedByPayslipIds(processedIds);
-                    }
-
-                    if (actionName === "reject") {
-                        const processedIds = data.processedIds || [];
-                        if (processedIds.length > 0) markRejectedByPayslipIds(processedIds);
-                    }
-
-                    showAlert(data.msgType || "success", data.msg || "Done");
-
-                } catch (e) {
-                    console.error(e);
-                    showAlert("danger", "Có lỗi khi gọi bulk-json.");
-                } finally {
-                    ensureEmptyRow();
-                    setCheckAllState();
+            // Expose delete function to global scope
+            window.deletePayslip = async function(payslipId) {
+                if (!confirm('Bạn có chắc chắn muốn xóa phiếu lương này khỏi bảng lương?')) {
+                    return;
                 }
-            }
+                
+                try {
+                    const headers = {};
+                    if (csrfToken && csrfToken.value) headers["X-CSRF-TOKEN"] = csrfToken.value;
+                    
+                    const resp = await fetch(`/hr/payroll/payslips/${payslipId}/delete`, {
+                        method: "POST",
+                        headers: headers
+                    });
+                    
+                    if (resp.ok) {
+                        window.location.reload();
+                    } else {
+                        showAlert("danger", "Lỗi khi xóa bảng lương. Máy chủ trả về lỗi " + resp.status);
+                    }
+                } catch (err) {
+                    console.error("Delete action error:", err);
+                    showAlert("danger", "Lỗi kết nối khi xóa.");
+                }
+            };
 
             btnApprove?.addEventListener("click", () => submitAjax("approve"));
             btnReject?.addEventListener("click", () => submitAjax("reject"));
-
 
             function rawDigits(v) {
                 let s = (v ?? "").toString().trim();
@@ -978,7 +851,7 @@
                     return;
                 }
 
-                const url = `/manager/payroll/payslips/${editingPayslipId}/salary`;
+                const url = `/hr/payroll/payslips/${editingPayslipId}/salary`;
                 const fd = new FormData();
                 fd.set("baseSalary", raw);
 
@@ -1011,16 +884,8 @@
 
                         tr.dataset.baseSalary = baseRaw;
 
-                        // Quan trọng: update lại trạng thái slip trên UI
-                        if (data.slipStatus) {
-                            tr.setAttribute("data-slip-status", String(data.slipStatus).toUpperCase());
-                        }
-
                         const penBtn = tr.querySelector(".btn-edit-salary");
                         if (penBtn) penBtn.setAttribute("data-salary", baseRaw);
-
-                        // Render lại badge + checkbox
-                        syncRowVisualState(tr);
                     }
 
                     showAlert("success", "Đã cập nhật lương thành công.");
@@ -1389,26 +1254,6 @@
             ensureEmptyRow();
             setCheckAllState();
         });
-
-        function deletePayslip(payslipId) {
-            if (confirm("Bạn có chắc chắn muốn xóa phiếu lương này khỏi đợt lương không?")) {
-                const url = `/manager/payroll/payslips/${payslipId}/delete`;
-                const form = document.createElement("form");
-                form.method = "POST";
-                form.action = url;
-
-                if (window.csrfToken && window.csrfToken.value) {
-                    const csrfInput = document.createElement("input");
-                    csrfInput.type = "hidden";
-                    csrfInput.name = window.csrfToken.name;
-                    csrfInput.value = window.csrfToken.value;
-                    form.appendChild(csrfInput);
-                }
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
     </script>
 
 </div>

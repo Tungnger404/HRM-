@@ -2,198 +2,422 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
+
 <head>
     <title>Payslip Detail</title>
+
+    <style>
+        .payslip-page {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .action-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .payslip-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, .05);
+        }
+
+        .payslip-header {
+            padding: 18px 24px 14px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .header-meta {
+            text-align: right;
+        }
+
+        .header-meta-line {
+            margin: 0 0 6px 0;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .header-meta-highlight {
+            color: #f97316;
+            font-weight: 700;
+        }
+
+        .payslip-body {
+            padding: 24px;
+        }
+
+        .top-info-section {
+            padding-bottom: 18px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .employee-info-left {
+            min-width: 280px;
+        }
+
+        .employee-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .employee-role {
+            font-size: 15px;
+            color: #475569;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .employee-line {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .summary-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fff;
+            padding: 14px 16px;
+        }
+
+        .summary-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .period-between-tables {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 2px 0 14px 0;
+        }
+
+        .table-box {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            height: 100%;
+        }
+
+        .table-box-title {
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .slip-table {
+            width: 100%;
+            margin: 0;
+        }
+
+        .slip-table td,
+        .slip-table th {
+            padding: 12px 16px;
+            border-top: 1px solid #eef2f7;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .slip-table tr:first-child td,
+        .slip-table tr:first-child th {
+            border-top: 0;
+        }
+
+        .amount-col {
+            text-align: right;
+            white-space: nowrap;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .total-row td {
+            font-weight: 800;
+            background: #fafafa;
+        }
+
+        .net-salary-box {
+            margin-top: 22px;
+            padding: 14px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 16px;
+        }
+
+        .net-salary-box b {
+            font-size: 21px;
+        }
+
+        .empty-cell {
+            color: #94a3b8;
+            text-align: center;
+            font-style: italic;
+        }
+
+        @media (max-width: 991px) {
+            .header-meta {
+                text-align: left;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 576px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .payslip-header,
+            .payslip-body {
+                padding: 16px;
+            }
+
+            .period-between-tables {
+                font-size: 15px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 <div layout:fragment="content">
 
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <div>
-            <h2 class="mb-0">Payslip Detail</h2>
-            <div class="text-body-secondary small">Details of your salary for this period</div>
+    <div class="payslip-page">
+
+        <div class="action-bar mb-3">
+            <div class="action-left">
+                <h2 class="mb-0">Payslip Detail</h2>
+            </div>
+
+            <div class="action-right">
+                <a class="btn btn-outline-secondary btn-sm"
+                   th:href="@{/employee/payslips/{id}/download(id=${p.payslipId})}">
+                    Download PDF
+                </a>
+
+                <a class="btn btn-outline-primary btn-sm"
+                   th:href="@{/employee/inquiries}">
+                    Payroll Inquiries
+                </a>
+
+                <a class="btn btn-secondary btn-sm"
+                   th:href="@{/employee/payslips}">
+                    Back
+                </a>
+            </div>
         </div>
 
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary btn-sm"
-               th:href="@{/employee/payslips/{id}/download(id=${p.payslipId})}">
-                Download PDF
-            </a>
+        <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+        <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
 
-            <!-- Inquiry đã tách sang page riêng -->
-            <a class="btn btn-outline-primary btn-sm"
-               th:href="@{/employee/inquiries}">
-                Payroll Inquiries
-            </a>
+        <div class="payslip-card">
+            <div class="payslip-header">
+                <div class="header-meta">
+                    <p class="header-meta-line">
+                        Payslip No
+                        <span class="header-meta-highlight"
+                              th:text="${'PS' + p.payslipId}">PS001</span>
+                    </p>
+                    <p class="header-meta-line">
+                        Salary Period :
+                        <b th:text="${p.period}">03/2026</b>
+                    </p>
+                </div>
+            </div>
 
-            <a class="btn btn-secondary btn-sm" th:href="@{/employee/payslips}">Back</a>
-        </div>
-    </div>
+            <div class="payslip-body">
 
-    <!-- Flash messages -->
-    <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
-    <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+                <div class="top-info-section">
+                    <div class="employee-info-left">
+                        <div class="employee-name" th:text="${p.employeeName}">Employee Name</div>
 
-    <!-- Summary -->
-    <div class="card mb-3">
-        <div class="card-body">
-            <p class="mb-1"><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
+                        <div class="employee-role"
+                             th:if="${p.jobTitle != null and !#strings.isEmpty(p.jobTitle)}"
+                             th:text="${p.jobTitle}">
+                            Nhân viên
+                        </div>
 
-            <p class="mb-1">
-                <b>Employee Code:</b>
-                <span th:text="${'NV' + p.empId}"></span>
-            </p>
+                        <div class="employee-role"
+                             th:if="${p.jobTitle == null or #strings.isEmpty(p.jobTitle)}">
+                            Nhân viên
+                        </div>
 
-            <p class="mb-1"><b>Period:</b> <span th:text="${p.period}"></span></p>
+                        <div class="employee-line">
+                            Employee ID :
+                            <b th:text="${'NV' + p.empId}">NV01</b>
+                        </div>
 
-            <p class="mb-1"><b>Payslip ID:</b> <span th:text="${p.payslipId}"></span></p>
+                        <div class="employee-line"
+                             th:if="${p.email != null and !#strings.isEmpty(p.email)}">
+                            Email :
+                            <b th:text="${p.email}">employee@example.com</b>
+                        </div>
 
-            <hr class="my-2"/>
+                        <div class="employee-line"
+                             th:if="${p.phone != null and !#strings.isEmpty(p.phone)}">
+                            Phone :
+                            <b th:text="${p.phone}">0123456789</b>
+                        </div>
+                    </div>
+                </div>
 
-            <p class="mb-1"><b>Total Income:</b>
-                <span th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}"></span>
-            </p>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-label">Base Salary</div>
+                        <div class="summary-value"
+                             th:text="${p.baseSalary == null ? '0' : #numbers.formatDecimal(p.baseSalary, 1, 'COMMA', 0, 'POINT')}">
+                            0
+                        </div>
+                    </div>
 
-            <p class="mb-1"><b>Total Deduction:</b>
-                <span th:text="${p.totalDeduction == null ? '0' : #numbers.formatDecimal(p.totalDeduction, 1, 'COMMA', 0, 'POINT')}"></span>
-            </p>
+                    <div class="summary-item">
+                        <div class="summary-label">Actual Work Days</div>
+                        <div class="summary-value"
+                             th:text="${p.actualWorkDays == null ? '0' : #numbers.formatDecimal(p.actualWorkDays, 1, 'COMMA', 0, 'POINT')}">
+                            0
+                        </div>
+                    </div>
 
-            <p class="mb-0"><b>Net Salary:</b>
-                <span th:text="${p.netSalary == null ? '0' : #numbers.formatDecimal(p.netSalary, 1, 'COMMA', 0, 'POINT')}"></span>
-            </p>
-        </div>
-    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Total Income</div>
+                        <div class="summary-value"
+                             th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}">
+                            0
+                        </div>
+                    </div>
 
-    <!-- Work metrics -->
-    <div class="card mb-3">
-        <div class="card-header"><b>Work & Calculation Details</b></div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered align-middle mb-0">
-                <tbody>
-                <tr>
-                    <th style="width:240px;">Base Salary</th>
-                    <td class="text-end"
-                        th:text="${p.baseSalary == null ? '0' : #numbers.formatDecimal(p.baseSalary, 1, 'COMMA', 0, 'POINT')}"></td>
-                </tr>
-                <tr>
-                    <th>Standard Work Days</th>
-                    <td class="text-end" th:text="${p.standardWorkDays == null ? '0' : p.standardWorkDays}"></td>
-                </tr>
-                <tr>
-                    <th>Actual Work Days</th>
-                    <td class="text-end" th:text="${p.actualWorkDays == null ? '0' : p.actualWorkDays}"></td>
-                </tr>
-                <tr>
-                    <th>OT Hours</th>
-                    <td class="text-end" th:text="${p.otHours == null ? '0' : p.otHours}"></td>
-                </tr>
+                    <div class="summary-item">
+                        <div class="summary-label">Total Deduction</div>
+                        <div class="summary-value"
+                             th:text="${p.totalDeduction == null ? '0' : #numbers.formatDecimal(p.totalDeduction, 1, 'COMMA', 0, 'POINT')}">
+                            0
+                        </div>
+                    </div>
+                </div>
 
-                <tr th:with="daily=${(p.standardWorkDays != null and p.standardWorkDays > 0) ? (p.baseSalary / p.standardWorkDays) : 0}">
-                    <th>Daily Salary (Base / StandardDays)</th>
-                    <td class="text-end" th:text="${#numbers.formatDecimal(daily, 1, 'COMMA', 0, 'POINT')}"></td>
-                </tr>
+                <div class="period-between-tables"
+                     th:text="${'Payslip for period ' + p.period}">
+                    Payslip for period 03/2026
+                </div>
 
-                <tr th:with="daily=${(p.standardWorkDays != null and p.standardWorkDays > 0) ? (p.baseSalary / p.standardWorkDays) : 0},
-                             hourly=${daily / 8}">
-                    <th>Hourly Salary (Daily / 8)</th>
-                    <td class="text-end" th:text="${#numbers.formatDecimal(hourly, 1, 'COMMA', 0, 'POINT')}"></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="table-box">
+                            <div class="table-box-title">Earnings</div>
+                            <table class="slip-table">
+                                <tbody>
+                                <tr th:each="it : ${p.items}" th:if="${it.type == 'INCOME'}">
+                                    <td th:text="${
+                                                it.code == 'BASE_BY_DAYS' ? 'Salary by Worked Days' :
+                                                (it.code == 'OT_PAY' ? 'Overtime Pay' : it.name)
+                                            }">
+                                        Item name
+                                    </td>
+                                    <td class="amount-col"
+                                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}">
+                                        0
+                                    </td>
+                                </tr>
 
-    <!-- Income & Benefits -->
-    <div class="card mb-3">
-        <div class="card-header"><b>Income & Benefits</b></div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle mb-0">
-                <thead>
-                <tr>
-                    <th style="width:160px;">Code</th>
-                    <th>Name</th>
-                    <th class="text-end" style="width:200px;">Amount</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="it : ${p.items}" th:if="${it.type == 'INCOME'}">
-                    <td th:text="${it.code}"></td>
-                    <td th:text="${it.name}"></td>
-                    <td class="text-end"
-                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
-                </tr>
+                                <tr th:if="${p.items == null or #lists.isEmpty(p.items.?[type == 'INCOME'])}">
+                                    <td colspan="2" class="empty-cell">No income items</td>
+                                </tr>
 
-                <tr th:if="${p.items == null or #lists.isEmpty(p.items.?[type == 'INCOME'])}">
-                    <td colspan="3" class="text-center text-muted">No income items</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                                <tr class="total-row">
+                                    <td>Total Earnings</td>
+                                    <td class="amount-col"
+                                        th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}">
+                                        0
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-    <!-- Deductions -->
-    <div class="card mb-3">
-        <div class="card-header"><b>Deductions</b></div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle mb-0">
-                <thead>
-                <tr>
-                    <th style="width:160px;">Code</th>
-                    <th>Name</th>
-                    <th class="text-end" style="width:120px;">Rate</th>
-                    <th class="text-end" style="width:200px;">Amount</th>
-                </tr>
-                </thead>
-                <tbody>
+                    <div class="col-lg-6">
+                        <div class="table-box">
+                            <div class="table-box-title">Deductions</div>
+                            <table class="slip-table">
+                                <tbody>
+                                <tr th:each="it : ${p.items}" th:if="${it.type == 'DEDUCTION'}">
+                                    <td th:text="${it.name}">Deduction name</td>
+                                    <td class="amount-col"
+                                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}">
+                                        0
+                                    </td>
+                                </tr>
 
-                <tr th:each="it : ${p.items}"
-                    th:if="${it.type == 'DEDUCTION'}"
-                    th:with="rate=${it.code == 'BHYT' ? 3 : (it.code == 'BHXH' ? 3 : 0)}">
-                    <td th:text="${it.code}"></td>
-                    <td th:text="${it.name}"></td>
-                    <td class="text-end" th:text="${rate == 0 ? '' : rate + '%'}"></td>
-                    <td class="text-end"
-                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
-                </tr>
+                                <tr th:if="${p.items == null or #lists.isEmpty(p.items.?[type == 'DEDUCTION'])}">
+                                    <td colspan="2" class="empty-cell">No deduction items</td>
+                                </tr>
 
-                <tr th:if="${p.items == null or #lists.isEmpty(p.items.?[type == 'DEDUCTION'])}">
-                    <td colspan="4" class="text-center text-muted">No deduction items</td>
-                </tr>
+                                <tr class="total-row">
+                                    <td>Total Deductions</td>
+                                    <td class="amount-col"
+                                        th:text="${p.totalDeduction == null ? '0' : #numbers.formatDecimal(p.totalDeduction, 1, 'COMMA', 0, 'POINT')}">
+                                        0
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-                </tbody>
-            </table>
-        </div>
-    </div>
+                <div class="net-salary-box">
+                    Net Salary :
+                    <b th:text="${p.netSalary == null ? '0' : #numbers.formatDecimal(p.netSalary, 1, 'COMMA', 0, 'POINT')}">
+                        0
+                    </b>
+                </div>
 
-    <!-- All Items (optional - giữ để đối soát) -->
-    <div class="card">
-        <div class="card-header"><b>All Items</b></div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle mb-0">
-                <thead>
-                <tr>
-                    <th style="width:120px;">Type</th>
-                    <th style="width:160px;">Code</th>
-                    <th>Name</th>
-                    <th class="text-end" style="width:200px;">Amount</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                <tr th:each="it : ${p.items}">
-                    <td th:text="${it.type}"></td>
-                    <td th:text="${it.code}"></td>
-                    <td th:text="${it.name}"></td>
-                    <td class="text-end"
-                        th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
-                </tr>
-
-                <tr th:if="${p.items == null || #lists.isEmpty(p.items)}">
-                    <td colspan="4" class="text-center text-muted">No items</td>
-                </tr>
-                </tbody>
-            </table>
+            </div>
         </div>
     </div>
 

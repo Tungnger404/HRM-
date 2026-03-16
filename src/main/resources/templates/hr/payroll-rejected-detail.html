@@ -1,0 +1,138 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>HR Payroll Review Detail</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">Rejected Payslip Review</h2>
+            <div class="text-body-secondary small">HR fixes payroll issue before returning to manager</div>
+        </div>
+        <a class="btn btn-secondary btn-sm" th:href="@{/hr/payroll/rejected}">Back</a>
+    </div>
+
+    <div th:if="${msg != null}"
+         class="alert"
+         th:classappend="${msgType == 'danger'} ? ' alert-danger' : ' alert-success'"
+         th:text="${msg}"></div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 th:text="${r.employeeName}">Employee Name</h5>
+            <div><b>Position:</b> <span th:text="${r.jobTitle}"></span></div>
+            <div><b>Period:</b> <span th:text="${r.periodLabel}"></span></div>
+            <div><b>Reject Reason:</b> <span class="text-danger fw-bold" th:text="${r.rejectReason}"></span></div>
+            <div><b>Rejected At:</b> <span th:text="${r.rejectedAt != null ? #temporals.format(r.rejectedAt, 'dd/MM/yyyy HH:mm') : ''}"></span></div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">Diagnostics</div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge bg-danger" th:if="${r.bankMissing}">Missing bank account</span>
+                        <span class="badge bg-warning text-dark" th:if="${r.newHireInPeriod}">New hire in this period</span>
+                        <span class="badge bg-secondary" th:if="${r.missingAttendance}">Missing attendance</span>
+                        <span class="badge bg-info text-dark" th:if="${r.baseSalaryMismatch}">Base salary mismatch</span>
+                        <span class="badge bg-info text-dark" th:if="${r.otMismatch}">OT mismatch</span>
+                        <span class="badge bg-info text-dark" th:if="${r.deductionMismatch}">Deduction mismatch</span>
+                    </div>
+
+                    <div><b>Join Date:</b> <span th:text="${r.joinDate}"></span></div>
+                    <div><b>Work Days:</b> <span th:text="${r.actualWorkDays + ' / ' + r.standardWorkDays}"></span></div>
+                    <div><b>Missing Days:</b> <span th:text="${r.missingWorkDays}"></span></div>
+                    <div><b>Saved OT:</b> <span th:text="${r.savedOtHours}"></span></div>
+                    <div><b>Recalculated OT:</b> <span th:text="${r.recalculatedOtHours}"></span></div>
+                    <div><b>Saved Base Salary:</b> <span th:text="${#numbers.formatDecimal(r.savedBaseSalary, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                    <div><b>Contract Base Salary:</b> <span th:text="${#numbers.formatDecimal(r.contractBaseSalary, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                    <div><b>Suggested Prorated Base:</b> <span th:text="${#numbers.formatDecimal(r.suggestedProratedBase, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">Totals Compare</div>
+                <div class="card-body">
+                    <div><b>Saved Income:</b> <span th:text="${#numbers.formatDecimal(r.savedIncome, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                    <div><b>Recalculated Income:</b> <span th:text="${#numbers.formatDecimal(r.recalculatedIncome, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                    <hr>
+                    <div><b>Saved Deduction:</b> <span th:text="${#numbers.formatDecimal(r.savedDeduction, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                    <div><b>Recalculated Deduction:</b> <span th:text="${#numbers.formatDecimal(r.recalculatedDeduction, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                    <hr>
+                    <div><b>Saved Net:</b> <span th:text="${#numbers.formatDecimal(r.savedNet, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                    <div><b>Recalculated Net:</b> <span th:text="${#numbers.formatDecimal(r.recalculatedNet, 1, 'COMMA', 0, 'POINT')}"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header fw-bold">Fix Base Salary</div>
+                <div class="card-body">
+                    <form method="post" th:action="@{/hr/payroll/rejected/{id}/salary(id=${r.payslipId})}">
+                        <div th:if="${_csrf != null}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        </div>
+                        <label class="form-label">New Base Salary</label>
+                        <input type="number" step="0.01" min="0" class="form-control" name="baseSalary"
+                               th:value="${r.savedBaseSalary}" required>
+                        <button class="btn btn-primary mt-3" type="submit">Update Salary</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header fw-bold">Add Benefit / Deduction</div>
+                <div class="card-body">
+                    <form method="post" th:action="@{/hr/payroll/rejected/{id}/benefits/add(id=${r.payslipId})}">
+                        <div th:if="${_csrf != null}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        </div>
+
+                        <select class="form-select" name="benefitId" required>
+                            <option value="" selected disabled>Chọn khoản lương</option>
+                            <option th:each="b : ${activeBenefits}"
+                                    th:value="${b.id}"
+                                    th:text="${b.name + ' - ' + (b.type == 'INCOME' ? 'Thu nhập' : 'Khấu trừ')}">
+                            </option>
+                        </select>
+
+                        <button class="btn btn-outline-primary mt-3" type="submit">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header fw-bold">Send Back to Manager</div>
+                <div class="card-body">
+                    <form method="post" th:action="@{/hr/payroll/rejected/{id}/reopen(id=${r.payslipId})}">
+                        <div th:if="${_csrf != null}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        </div>
+                        <p class="small text-muted">
+                            Sau khi HR sửa xong, bấm nút dưới để đưa payslip về ACTIVE cho manager review lại.
+                        </p>
+                        <button class="btn btn-success" type="submit">Reopen Payslip</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

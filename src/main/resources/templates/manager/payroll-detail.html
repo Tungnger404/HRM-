@@ -4,6 +4,22 @@
       layout:decorate="~{layout/layout}">
 <head>
     <title>Payroll Batch Detail</title>
+    <style>
+        .reject-box {
+            background: #fff5f5;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        .badge-rejected {
+            background: #dc3545;
+            color: #fff;
+            font-size: 14px;
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+    </style>
 </head>
 
 <body>
@@ -11,12 +27,22 @@
 
     <h2 class="mb-3">Payroll Batch Detail</h2>
 
+    <!-- Flash messages -->
+    <div th:if="${msg != null}"
+         th:classappend="'alert alert-' + (${msgType} != null ? ${msgType} : 'success')"
+         class="alert alert-dismissible fade show" role="alert">
+        <span th:text="${msg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="card mb-3">
         <div class="card-body">
             <p class="mb-1"><b>Batch:</b> <span th:text="${b.batchName}"></span></p>
-            <p class="mb-1"><b>Status:</b> <span th:text="${b.status}"></span></p>
+            <p class="mb-1"><b>Status:</b>
+                <span class="badge-rejected" th:if="${b.status == 'REJECTED'}">REJECTED</span>
+                <span th:if="${b.status != 'REJECTED'}" th:text="${b.status}"></span>
+            </p>
 
-            <!-- ✅ Format money -->
             <p class="mb-1"><b>Total Gross:</b>
                 <span th:text="${b.totalGross == null ? '0' : #numbers.formatDecimal(b.totalGross, 1, 'COMMA', 0, 'POINT')}"></span>
             </p>
@@ -24,12 +50,19 @@
                 <span th:text="${b.totalNet == null ? '0' : #numbers.formatDecimal(b.totalNet, 1, 'COMMA', 0, 'POINT')}"></span>
             </p>
 
+            <!-- Hiển thị lý do reject nếu đã bị reject -->
+            <div class="reject-box" th:if="${b.status == 'REJECTED' and b.rejectReason != null}">
+                <div class="fw-bold text-danger mb-1">⚠ Lý do Reject:</div>
+                <div th:text="${b.rejectReason}" class="text-danger"></div>
+            </div>
+
             <a class="btn btn-sm btn-outline-primary mt-2"
                th:href="@{/manager/payroll/batches/{id}/export(id=${b.batchId})}">
                 Export Excel
             </a>
 
-            <div class="mt-2" th:if="${b.status == 'DRAFT'}">
+            <!-- Submit for Approval (chỉ khi DRAFT) -->
+            <div class="mt-2" th:if="${b.status == 'DRAFT' or b.status == 'REJECTED'}">
                 <form method="post" th:action="@{/manager/payroll/batches/{id}/submit(id=${b.batchId})}">
                     <div th:if="${_csrf != null}">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -38,7 +71,9 @@
                 </form>
             </div>
 
-            <div class="mt-2" th:if="${b.status == 'PENDING_APPROVAL'}">
+            <!-- Approve + Reject (chỉ khi PENDING_APPROVAL) -->
+            <div class="mt-2 d-flex gap-2 align-items-start flex-wrap" th:if="${b.status == 'PENDING_APPROVAL'}">
+
                 <form method="post" th:action="@{/manager/payroll/batches/{id}/approve(id=${b.batchId})}"
                       style="display:inline;">
                     <div th:if="${_csrf != null}">
@@ -47,13 +82,16 @@
                     <button class="btn btn-sm btn-success" type="submit">Approve</button>
                 </form>
 
+                <!-- Reject form với lý do -->
                 <form method="post" th:action="@{/manager/payroll/batches/{id}/reject(id=${b.batchId})}"
-                      style="display:inline;">
+                      id="rejectForm" style="display:inline;">
                     <div th:if="${_csrf != null}">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     </div>
-                    <button class="btn btn-sm btn-danger" type="submit">Reject</button>
+                    <input type="hidden" name="reason" id="rejectReasonInput">
+                    <button class="btn btn-sm btn-danger" type="button" id="btnOpenReject">Reject</button>
                 </form>
+
             </div>
         </div>
     </div>
@@ -80,7 +118,6 @@
 
                     <td th:text="${p.employeeName}"></td>
 
-                    <!-- ✅ Format money + null safe -->
                     <td class="text-end"
                         th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}"></td>
 
@@ -98,6 +135,66 @@
             </table>
         </div>
     </div>
+
+    <!-- Dialog nhập lý do reject -->
+    <dialog id="rejectDialog" style="border:0;border-radius:12px;padding:0;width:min(480px,92vw);box-shadow:0 10px 35px rgba(0,0,0,.25)">
+        <form method="dialog" style="margin:0">
+            <div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
+                <div style="font-weight:600;color:#dc3545">⚠ Reject Batch</div>
+                <button value="cancel" class="btn btn-sm btn-outline-secondary" type="submit">Đóng</button>
+            </div>
+            <div style="padding:16px">
+                <label class="form-label fw-semibold">Lý do reject <span class="text-danger">*</span></label>
+                <textarea id="rejectReasonText" class="form-control" rows="4"
+                          placeholder="Nhập lý do tại sao batch này bị reject. HR sẽ nhận được thông báo để sửa lại..."></textarea>
+                <div class="small text-muted mt-1">HR sẽ nhận notification và có thể xem lý do này.</div>
+            </div>
+            <div style="padding:14px 16px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end">
+                <button value="cancel" class="btn btn-outline-secondary" type="submit">Hủy</button>
+                <button id="btnConfirmReject" class="btn btn-danger" type="button">Xác nhận Reject</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const btnOpen = document.getElementById("btnOpenReject");
+            const dialog = document.getElementById("rejectDialog");
+            const btnConfirm = document.getElementById("btnConfirmReject");
+            const reasonText = document.getElementById("rejectReasonText");
+            const reasonInput = document.getElementById("rejectReasonInput");
+            const rejectForm = document.getElementById("rejectForm");
+
+            if (!btnOpen || !dialog) return;
+
+            btnOpen.addEventListener("click", function () {
+                if (reasonText) reasonText.value = "";
+                if (typeof dialog.showModal === "function") {
+                    dialog.showModal();
+                    setTimeout(() => reasonText?.focus(), 50);
+                } else {
+                    const r = prompt("Nhập lý do reject:");
+                    if (r === null) return;
+                    if (!r.trim()) { alert("Vui lòng nhập lý do."); return; }
+                    reasonInput.value = r.trim();
+                    rejectForm.submit();
+                }
+            });
+
+            btnConfirm?.addEventListener("click", function () {
+                const reason = (reasonText?.value || "").trim();
+                if (!reason) {
+                    reasonText.classList.add("is-invalid");
+                    reasonText.focus();
+                    return;
+                }
+                reasonText.classList.remove("is-invalid");
+                reasonInput.value = reason;
+                dialog.close();
+                rejectForm.submit();
+            });
+        });
+    </script>
 
 </div>
 </body>

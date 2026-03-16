@@ -15,7 +15,11 @@ public interface PayrollInquiryService {
 
     List<PayrollInquiryDTO> listInquiriesForManager(Integer managerEmpId, String status);
 
+    List<PayrollInquiryDTO> listInquiriesForHr(String status);
+
     PayrollInquiryDTO getInquiry(Integer inquiryId);
 
     void resolveInquiry(Integer managerEmpId, Integer inquiryId, String answer);
+
+    void resolveInquiryByHr(Integer inquiryId, String answer);
 }

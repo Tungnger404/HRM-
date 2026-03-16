@@ -79,6 +79,7 @@ public class AuthService {
         emp.setUserId(user.getUserId());
         emp.setFullName(req.getFullName());
         emp.setStatus("PROBATION");
+        emp.setIncludeInPayroll(false);
         empRepo.save(emp);
     }
 }

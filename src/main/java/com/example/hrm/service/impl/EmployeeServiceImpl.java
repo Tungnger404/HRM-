@@ -69,6 +69,10 @@ public class EmployeeServiceImpl implements EmployeeService {
             e.setJoinDate(LocalDate.now());
         }
 
+        if (e.getIncludeInPayroll() == null) {
+            e.setIncludeInPayroll(false);
+        }
+
         return repo.save(e);
     }
 
@@ -117,6 +121,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         return f;
     }
 
+    /**
+     * Dùng cho create employee mới
+     */
     private void applyCreateForm(Employee e, EmployeeAdd f) {
         e.setUserId(f.getUserId());
         e.setFullName(f.getFullName());
@@ -133,6 +140,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         e.setJoinDate(f.getJoinDate());
     }
 
+    /**
+     * Dùng cho màn hình HR employee detail
+     * Chỉ cập nhật thông tin chung, không đụng department/job
+     */
     private void applyGeneralInfoForUpdate(Employee e, EmployeeAdd f) {
         e.setFullName(f.getFullName());
         e.setGender(f.getGender());
@@ -144,6 +155,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         e.setStatus(f.getStatus());
         e.setJoinDate(f.getJoinDate());
 
+        // KHÔNG set:
+        // e.setDeptId(...)
+        // e.setJobId(...)
+        // e.setUserId(...)
+        // e.setDirectManagerId(...)
     }
 
     private void validate(EmployeeAdd f, boolean requireId) {
@@ -200,6 +216,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .taxCode(taxCode)
                 .status("PROBATION")
                 .joinDate(joinDate != null ? joinDate : LocalDate.now())
+                .includeInPayroll(false)
                 .jobId(jobId)
                 .deptId(deptId)
                 .directManagerId(managerId)

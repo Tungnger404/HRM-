@@ -41,4 +41,10 @@ public class PayrollBatch {
 
     @Column(name = "approved_by")
     private Integer approvedBy;
+
+    @Column(name = "reject_reason", length = 1000)
+    private String rejectReason;
+
+    @Column(name = "rejected_by")
+    private Integer rejectedBy;
 }
