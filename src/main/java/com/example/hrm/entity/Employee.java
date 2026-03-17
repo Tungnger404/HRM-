@@ -60,7 +60,7 @@ public class Employee {
     private LocalDate joinDate;
 
     @Builder.Default
-    @Column(name = "include_in_payroll", nullable = false)
+    @Column(name = "include_in_payroll", nullable = false, columnDefinition = "bit default 0")
     private Boolean includeInPayroll = false;
 
     // ✅ Compat: code cũ gọi getId()

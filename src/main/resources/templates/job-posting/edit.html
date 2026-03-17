@@ -7,7 +7,28 @@
 
 <head>
     <title>Edit Job Posting</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <script th:inline="javascript">
+        // Hàm xuất file PDF
+        function exportToPDF() {
+            // Chọn vùng nội dung cần xuất (Cột bên phải: Posting Content)
+            const element = document.getElementById('pdf-content');
+            const jobTitle = document.getElementById('titleInput').value || 'Job_Posting';
+
+            // Cấu hình xuất file
+            const opt = {
+                margin:       [15, 15],
+                filename:     'Job_Posting_' + jobTitle + '.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Thực hiện chuyển đổi và tải về
+            html2pdf().set(opt).from(element).save();
+        }
+
         // Hàm tự động bốc dữ liệu từ JD sang các ô nhập liệu
         function forceAutofill(selectElement) {
             const id = selectElement.value;
@@ -32,7 +53,7 @@
                         const el = document.getElementById(fieldId);
                         if (el) {
                             el.value = mapping[fieldId] || "";
-                            el.style.backgroundColor = "#fffbeb"; // Màu highlight nhẹ khi update
+                            el.style.backgroundColor = "#fffbeb";
                             el.style.border = "2px solid #f59e0b";
                             setTimeout(() => {
                                 el.style.backgroundColor = "";
@@ -47,7 +68,7 @@
                 });
         }
 
-        // Logic kiểm tra ngày tháng tránh lỗi 547 SQL
+        // Logic kiểm tra ngày tháng
         document.addEventListener('DOMContentLoaded', function() {
             const publishInput = document.querySelector('input[name="publishDate"]');
             const expiryInput = document.querySelector('input[name="expiryDate"]');
@@ -64,10 +85,33 @@
                 }
             }
 
-            publishInput.addEventListener('change', checkDateLogic);
-            expiryInput.addEventListener('change', checkDateLogic);
+            if(publishInput) publishInput.addEventListener('change', checkDateLogic);
+            if(expiryInput) expiryInput.addEventListener('change', checkDateLogic);
         });
+        function copyPostingLink() {
+            const baseUrl = window.location.origin;
+
+            // Giả sử bạn có biến jobSlug từ Backend trả về (ví dụ: 'developer')
+            // Nếu không có slug, bạn có thể lấy giá trị từ ô titleInput rồi biến đổi thành không dấu
+            const title = document.getElementById('titleInput').value
+                .toLowerCase()
+                .replace(/ /g, '-')
+                .replace(/[^\w-]+/g, '');
+
+            const publicLink = `${baseUrl}/careers/${title}`;
+
+            navigator.clipboard.writeText(publicLink).then(() => {
+                alert("Đã copy link: " + publicLink);
+            });
+        }
     </script>
+
+    <style>
+        /* Tối ưu khi xuất PDF: Ẩn các nút bấm trong file PDF */
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
 </head>
 
 <body>
@@ -78,9 +122,17 @@
                 <h2 class="fw-bold text-dark">Edit Job Posting</h2>
                 <p class="text-muted">Chỉnh sửa thông tin bài đăng tuyển dụng ID: <span th:text="${postingId}" class="fw-bold text-primary"></span></p>
             </div>
-            <a th:href="@{/hr/job-posting}" class="btn btn-outline-secondary rounded-pill">
-                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
-            </a>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary rounded-pill px-4 shadow-sm" onclick="copyPostingLink()">
+                    <i class="fas fa-link me-2"></i>Copy Link
+                </button>
+                <button type="button" class="btn btn-danger rounded-pill px-4 shadow-sm" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>Xuất PDF
+                </button>
+                <a th:href="@{/hr/job-posting}" class="btn btn-outline-secondary rounded-pill">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+                </a>
+            </div>
         </div>
 
         <div th:if="${err}" class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -115,7 +167,6 @@
                                         th:text="'JD #' + ${jd.id} + ' - ' + ${jd.job.title}">
                                 </option>
                             </select>
-                            <div class="form-text">Chọn template mới để ghi đè nội dung bên phải.</div>
                         </div>
 
                         <hr>
@@ -129,17 +180,12 @@
                             <label class="form-label fw-semibold">Ngày hết hạn</label>
                             <input type="date" class="form-control" th:field="*{expiryDate}" required>
                         </div>
-
-                        <div class="mt-4 p-3 bg-light rounded" style="font-size: 0.85rem;">
-                            <i class="fas fa-info-circle text-primary me-2"></i>
-                            Hệ thống sẽ tự động cập nhật trạng thái tin sang <strong>EXPIRED</strong> nếu ngày hết hạn nhỏ hơn hôm nay.
-                        </div>
                     </div>
                 </div>
 
                 <div class="col-lg-8">
-                    <div class="card p-4 shadow-sm border-0" style="border-radius: 15px;">
-                        <h5 class="fw-bold text-primary mb-4"><i class="fas fa-edit me-2"></i>Posting Content</h5>
+                    <div id="pdf-content" class="card p-4 shadow-sm border-0" style="border-radius: 15px;">
+                        <h5 class="fw-bold text-primary mb-4 no-print"><i class="fas fa-edit me-2"></i>Posting Content</h5>
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Tiêu đề bài đăng</label>
@@ -170,7 +216,7 @@
                             <input type="text" class="form-control" th:field="*{location}" placeholder="Ví dụ: Hà Nội, Remote...">
                         </div>
 
-                        <div class="d-flex justify-content-end gap-3 mt-2">
+                        <div class="d-flex justify-content-end gap-3 mt-2 no-print" data-html2canvas-ignore="true">
                             <button type="reset" class="btn btn-light px-4 rounded-pill">
                                 <i class="fas fa-undo me-2"></i>Hoàn tác
                             </button>
