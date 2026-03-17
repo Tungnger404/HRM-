@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Manager - Employee Documents</title>
+  <style>
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+    .title{font-size:20px;font-weight:800}
+    .sub{margin-top:6px;color:#6b7280;font-size:14px}
+
+    input,select{
+      height:38px;
+      padding:0 12px;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      outline:none;
+    }
+
+    input:focus,select:focus{
+      border-color:#f5b400;
+      box-shadow:0 0 0 4px rgba(245,180,0,.15);
+    }
+
+    .btn{
+      height:38px;
+      padding:0 12px;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      background:#fff;
+      text-decoration:none;
+      color:#111;
+      display:inline-flex;
+      align-items:center;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .btn:hover{
+      background:#f9fafb;
+    }
+
+    .btn-primary{
+      background:#f5b400;
+      border-color:#f5b400;
+      color:#111;
+    }
+
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:12px;
+    }
+
+    .table th,.table td{
+      padding:10px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      vertical-align:top;
+    }
+
+    .panel-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+
+    .panel{
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      padding:12px;
+      background:#fafafa;
+    }
+
+    .panel h3{
+      margin:0 0 10px 0;
+      font-size:14px;
+      color:#6b7280;
+      font-weight:900;
+      text-transform:uppercase;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .full{
+      flex:1 1 220px;
+      min-width:220px;
+    }
+
+    .msg{
+      margin:12px 0;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #bbf7d0;
+      background:#ecfdf5;
+      color:#065f46;
+    }
+
+    .msg-err{
+      border:1px solid #fecaca;
+      background:#fef2f2;
+      color:#991b1b;
+    }
+
+    .small{
+      font-size:12px;
+      color:#6b7280;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:92px;
+      padding:4px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid transparent;
+      line-height:1.2;
+    }
+
+    .badge-active{
+      background:#dcfce7;
+      color:#166534;
+      border-color:#bbf7d0;
+    }
+
+    .badge-draft{
+      background:#fef3c7;
+      color:#92400e;
+      border-color:#fcd34d;
+    }
+
+    .badge-expired{
+      background:#fee2e2;
+      color:#b91c1c;
+      border-color:#fecaca;
+    }
+
+    .badge-archived{
+      background:#e5e7eb;
+      color:#374151;
+      border-color:#d1d5db;
+    }
+
+    .badge-contract{
+      background:#dbeafe;
+      color:#1d4ed8;
+      border-color:#93c5fd;
+    }
+
+    .badge-document{
+      background:#ede9fe;
+      color:#6d28d9;
+      border-color:#c4b5fd;
+    }
+
+    .badge-default{
+      background:#f3f4f6;
+      color:#374151;
+      border-color:#e5e7eb;
+    }
+
+    @media (max-width: 900px){
+      .panel-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div layout:fragment="content">
+  <div class="wrap">
+    <div class="card">
+      <a class="btn" th:href="@{/manager/org/documents}" style="margin-bottom:12px;">← Back to employee list</a>
+
+      <div class="title">Employee Contract &amp; Document Management</div>
+
+      <div class="sub">
+        Employee:
+        <strong th:text="${employee.fullName}"></strong>
+        -
+        Emp ID: <strong th:text="${employee.empId}"></strong>
+        -
+        Status: <strong th:text="${employee.status}"></strong>
+      </div>
+
+      <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
+      <div class="msg msg-err" th:if="${err != null and err != ''}" th:text="${err}"></div>
+
+      <div class="panel-grid">
+        <div class="panel">
+          <h3>Filter documents</h3>
+          <form method="get" th:action="@{'/manager/org/documents/' + ${empId}}" class="row">
+            <input class="full" type="text" name="q" placeholder="Search title/file..." th:value="${q}">
+            <select name="docType">
+              <option value="" th:selected="${docType == null or docType == ''}">All type</option>
+              <option value="CONTRACT" th:selected="${docType == 'CONTRACT'}">CONTRACT</option>
+              <option value="DOCUMENT" th:selected="${docType == 'DOCUMENT'}">DOCUMENT</option>
+            </select>
+            <select name="status">
+              <option value="" th:selected="${status == null or status == ''}">All status</option>
+              <option value="DRAFT" th:selected="${status == 'DRAFT'}">DRAFT</option>
+              <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">ACTIVE</option>
+              <option value="EXPIRED" th:selected="${status == 'EXPIRED'}">EXPIRED</option>
+              <option value="ARCHIVED" th:selected="${status == 'ARCHIVED'}">ARCHIVED</option>
+            </select>
+            <button class="btn" type="submit">Filter</button>
+            <a class="btn" th:href="@{'/manager/org/documents/' + ${empId}}">Reset</a>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h3>Upload document</h3>
+          <form method="post"
+                th:action="@{'/manager/org/documents/' + ${empId} + '/upload'}"
+                enctype="multipart/form-data"
+                class="row">
+            <input class="full" type="text" name="title" placeholder="Title (optional)">
+            <select name="docType">
+              <option value="DOCUMENT" selected>DOCUMENT</option>
+              <option value="CONTRACT">CONTRACT</option>
+            </select>
+            <select name="status">
+              <option value="DRAFT" selected>DRAFT</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="ARCHIVED">ARCHIVED</option>
+            </select>
+            <input class="full" type="file" name="file" required
+                   style="height:38px;padding:6px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;">
+            <button class="btn btn-primary" type="submit">Upload</button>
+          </form>
+          <div class="small" style="margin-top:8px">Manager chỉ upload cho nhân viên thuộc phòng mình quản lý.</div>
+        </div>
+      </div>
+
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Doc ID</th>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>File</th>
+          <th style="width:320px">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${docs == null or #lists.isEmpty(docs)}">
+          <td colspan="6" class="small">No documents found for this employee.</td>
+        </tr>
+
+        <tr th:each="d : ${docs}">
+          <td th:text="${d.id}"></td>
+          <td>
+            <form method="post" th:action="@{'/manager/org/documents/' + ${d.id} + '/update'}"
+                  class="row" style="gap:6px">
+              <input type="text" name="title" th:value="${d.title}" style="min-width:220px">
+              <select name="docType">
+                <option value="DOCUMENT" th:selected="${d.docType == 'DOCUMENT'}">DOCUMENT</option>
+                <option value="CONTRACT" th:selected="${d.docType == 'CONTRACT'}">CONTRACT</option>
+              </select>
+              <select name="status">
+                <option value="DRAFT" th:selected="${d.status == 'DRAFT'}">DRAFT</option>
+                <option value="ACTIVE" th:selected="${d.status == 'ACTIVE'}">ACTIVE</option>
+                <option value="EXPIRED" th:selected="${d.status == 'EXPIRED'}">EXPIRED</option>
+                <option value="ARCHIVED" th:selected="${d.status == 'ARCHIVED'}">ARCHIVED</option>
+              </select>
+              <button class="btn" type="submit">Save</button>
+            </form>
+          </td>
+          <td>
+            <span class="badge"
+                  th:text="${d.docType}"
+                  th:classappend="${
+                    #strings.equalsIgnoreCase(d.docType, 'CONTRACT') ? ' badge-contract' :
+                    (#strings.equalsIgnoreCase(d.docType, 'DOCUMENT') ? ' badge-document' :
+                    ' badge-default')
+                  }">
+            </span>
+          </td>
+          <td>
+            <span class="badge"
+                  th:text="${d.status}"
+                  th:classappend="${
+                    #strings.equalsIgnoreCase(d.status, 'ACTIVE') ? ' badge-active' :
+                    (#strings.equalsIgnoreCase(d.status, 'DRAFT') ? ' badge-draft' :
+                    (#strings.equalsIgnoreCase(d.status, 'EXPIRED') ? ' badge-expired' :
+                    (#strings.equalsIgnoreCase(d.status, 'ARCHIVED') ? ' badge-archived' :
+                    ' badge-default')))
+                  }">
+            </span>
+          </td>
+          <td>
+            <div th:text="${d.fileName}"></div>
+            <div class="small" th:text="${d.contentType}"></div>
+          </td>
+          <td>
+            <a class="btn" th:href="@{'/manager/org/documents/' + ${d.id} + '/download'}">Download</a>
+            <form method="post" th:action="@{'/manager/org/documents/' + ${d.id} + '/delete'}" style="display:inline">
+              <button class="btn" type="submit" onclick="return confirm('Delete this document?')">Delete</button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

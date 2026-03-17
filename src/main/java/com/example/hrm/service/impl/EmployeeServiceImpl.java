@@ -226,4 +226,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         candidate.setStatus(CandidateStatus.HIRED);
         candidateRepository.save(candidate);
     }
+
+    @Override
+    public List<Employee> listManagedByDepartment(Integer managerDeptId, String q, String status) {
+        List<Employee> employees = repo.findByDeptIdOrderByFullNameAsc(managerDeptId);
+
+        String keyword = q == null ? "" : q.trim().toLowerCase();
+        String st = status == null ? "" : status.trim().toUpperCase();
+
+        return employees.stream()
+                .filter(e -> keyword.isBlank()
+                        || (e.getFullName() != null && e.getFullName().toLowerCase().contains(keyword)))
+                .filter(e -> st.isBlank()
+                        || (e.getStatus() != null && e.getStatus().equalsIgnoreCase(st)))
+                .toList();
+    }
 }

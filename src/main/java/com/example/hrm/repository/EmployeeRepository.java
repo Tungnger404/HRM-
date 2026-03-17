@@ -1,6 +1,7 @@
 package com.example.hrm.repository;
 
 import com.example.hrm.entity.Employee;
+import com.example.hrm.repository.view.EmployeeStatusCountView;
 import com.example.hrm.repository.view.JobEmployeeCountView;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,24 +15,18 @@ import java.util.Optional;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
-    // Search theo tên
     List<Employee> findByFullNameContainingIgnoreCase(String keyword);
 
     List<Employee> findByDirectManagerId(Integer directManagerId);
 
-    // Tìm theo userId
     Optional<Employee> findByUserId(Integer userId);
 
     List<Employee> findByDeptId(Integer deptId);
 
-    // Count theo status (Active/On Leave/Resigned...)
     long countByStatusIgnoreCase(String status);
 
-    // Count theo ngày join sau mốc
     long countByJoinDateAfter(LocalDate date);
 
-
-    // HR search: name + status
     @Query("""
                 SELECT e FROM Employee e
                 WHERE (:q IS NULL OR :q = '' OR LOWER(e.fullName) LIKE LOWER(CONCAT('%', :q, '%')))
@@ -41,12 +36,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     List<Employee> search(@Param("q") String q,
                           @Param("status") String status);
 
-
     long countByStatus(String status);
 
-
     List<Employee> findByJobId(Integer jobId);
-
 
     @Query("""
                 select e.jobId as jobId, count(e) as cnt
@@ -134,4 +126,56 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
             order by e.empId
             """)
     List<Employee> computefindEmployeesNotInPayroll(@Param("managerId") Integer managerId);
+
+    @Query("""
+        SELECT e FROM Employee e
+        WHERE e.deptId IN (
+            SELECT d.deptId FROM Department d WHERE d.managerId = :managerEmpId
+        )
+          AND (:q IS NULL OR :q = '' OR LOWER(e.fullName) LIKE LOWER(CONCAT('%', :q, '%')))
+          AND (:status IS NULL OR :status = '' OR e.status = :status)
+        ORDER BY e.empId DESC
+    """)
+    List<Employee> searchEmployeesManagedByDepartment(@Param("managerEmpId") Integer managerEmpId,
+                                                      @Param("q") String q,
+                                                      @Param("status") String status);
+
+    @Query("""
+        SELECT COUNT(e) > 0 FROM Employee e
+        WHERE e.empId = :empId
+          AND e.deptId IN (
+              SELECT d.deptId FROM Department d WHERE d.managerId = :managerEmpId
+          )
+    """)
+    boolean existsManagedEmployee(@Param("managerEmpId") Integer managerEmpId,
+                                  @Param("empId") Integer empId);
+
+    @Query("""
+    SELECT e FROM Employee e
+    WHERE e.deptId = :managerDeptId
+      AND (:q IS NULL OR :q = '' OR LOWER(e.fullName) LIKE LOWER(CONCAT('%', :q, '%')))
+      AND (:status IS NULL OR :status = '' OR e.status = :status)
+    ORDER BY e.empId DESC
+""")
+    List<Employee> searchEmployeesBySameDepartment(@Param("managerDeptId") Integer managerDeptId,
+                                                   @Param("q") String q,
+                                                   @Param("status") String status);
+
+    @Query("""
+    SELECT COUNT(e) > 0 FROM Employee e
+    WHERE e.empId = :empId
+      AND e.deptId = :managerDeptId
+""")
+    boolean existsEmployeeInSameDepartment(@Param("managerDeptId") Integer managerDeptId,
+                                           @Param("empId") Integer empId);
+
+    List<Employee> findByDeptIdOrderByFullNameAsc(Integer deptId);
+
+    @Query("""
+        select upper(coalesce(e.status, 'UNKNOWN')) as status, count(e) as total
+        from Employee e
+        group by upper(coalesce(e.status, 'UNKNOWN'))
+        order by upper(coalesce(e.status, 'UNKNOWN'))
+    """)
+    List<EmployeeStatusCountView> countEmployeesGroupByStatus();
 }
