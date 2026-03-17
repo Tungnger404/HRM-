@@ -1,33 +1,26 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.entity.Contract;
 import com.example.hrm.repository.ContractRepository;
-import com.example.hrm.repository.DepartmentRepository;
 import com.example.hrm.repository.EmployeeRepository;
-import com.example.hrm.repository.view.EmployeeStatusCountView;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Controller
 public class DashbroadController {
 
     private final EmployeeRepository employeeRepository;
     private final ContractRepository contractRepository;
-    private final DepartmentRepository departmentRepository;
 
     public DashbroadController(EmployeeRepository employeeRepository,
-                               ContractRepository contractRepository,
-                               DepartmentRepository departmentRepository) {
+                               ContractRepository contractRepository) {
         this.employeeRepository = employeeRepository;
         this.contractRepository = contractRepository;
-        this.departmentRepository = departmentRepository;
     }
 
     @GetMapping("/dashboard")
@@ -59,50 +52,27 @@ public class DashbroadController {
 
     @GetMapping("/dashboard/hr")
     public String hrDash(Model model) {
+
         long totalEmployees = employeeRepository.count();
-        long totalDepartments = departmentRepository.count();
 
         LocalDate today = LocalDate.now();
         LocalDate next30Days = today.plusDays(30);
-        long expiringContracts = contractRepository.countByEndDateBetween(today, next30Days);
 
-        List<EmployeeStatusCountView> rawStatusList = employeeRepository.countEmployeesGroupByStatus();
+        long expiringContracts = contractRepository.countExpiringActiveContracts(today, next30Days);
 
-        Map<String, Long> rawStatusMap = rawStatusList.stream()
-                .collect(Collectors.toMap(
-                        EmployeeStatusCountView::getStatus,
-                        EmployeeStatusCountView::getTotal
-                ));
+        long active = employeeRepository.countByStatus("ACTIVE");
+        long inactive = employeeRepository.countByStatus("INACTIVE");
+        long resigned = employeeRepository.countByStatus("RESIGNED");
 
-        List<String> preferredOrder = List.of(
-                "PROBATION",
-                "ACTIVE",
-                "OFFICIAL",
-                "INACTIVE",
-                "RESIGNED",
-                "TERMINATED",
-                "UNKNOWN"
-        );
-
-        Map<String, Long> orderedStatusMap = new LinkedHashMap<>();
-
-        for (String status : preferredOrder) {
-            if (rawStatusMap.containsKey(status)) {
-                orderedStatusMap.put(status, rawStatusMap.get(status));
-            }
-        }
-
-        for (Map.Entry<String, Long> entry : rawStatusMap.entrySet()) {
-            if (!orderedStatusMap.containsKey(entry.getKey())) {
-                orderedStatusMap.put(entry.getKey(), entry.getValue());
-            }
-        }
+        List<Contract> expiringContractList = contractRepository.findExpiringActiveContracts(today, next30Days);
 
         model.addAttribute("sidebar", "sidebar-hr.html");
         model.addAttribute("totalEmployees", totalEmployees);
-        model.addAttribute("totalDepartments", totalDepartments);
         model.addAttribute("expiringContracts", expiringContracts);
-        model.addAttribute("statusStats", orderedStatusMap);
+        model.addAttribute("active", active);
+        model.addAttribute("inactive", inactive);
+        model.addAttribute("resigned", resigned);
+        model.addAttribute("expiringContractList", expiringContractList);
 
         return "auth/HrDashbroad";
     }
