@@ -240,12 +240,7 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h2 class="mb-1">Payroll Payslips</h2>
-            <div class="text-body-secondary small">Manage payroll payslips</div>
         </div>
-
-        <button type="button" class="btn btn-warning text-white" id="btnAddSalary">
-            + Add Employee
-        </button>
     </div>
 
     <div class="card mb-3">
@@ -308,20 +303,14 @@
         <input type="hidden" name="periodId" th:value="${periodId}">
         <input type="hidden" name="action" id="bulkAction"/>
 
-        <div class="d-flex gap-2 mb-2">
-            <button class="btn btn-success" type="button" id="btnApprove">Approve</button>
-            <button class="btn btn-danger" type="button" id="btnReject">Reject</button>
-        </div>
+        <!-- Nút Approve/Reject đã được loại bỏ theo yêu cầu -->
 
         <div class="card">
             <div class="card-body table-responsive">
                 <table class="table table-bordered table-hover align-middle" id="payrollTable">
                     <thead>
                     <tr>
-                        <th style="width:90px" class="text-center">
-                            <input class="form-check-input" type="checkbox" id="checkAll">
-                            <label for="checkAll" class="ms-1">All</label>
-                        </th>
+                        <!-- Cột Checkbox All đã được loại bỏ -->
                         <th>Name</th>
                         <th class="payroll-col-center">Công thực tế</th>
                         <th class="payroll-col-center">Vị trí</th>
@@ -343,15 +332,7 @@
                                  data-base-salary=${r.baseSalary}"
                         th:classappend="${(r.batchStatus == 'APPROVED' or r.batchStatus == 'PAID') ? 'text-muted' : ''}">
 
-                        <td class="text-center">
-                            <div class="form-check d-flex justify-content-center m-0">
-                                <input type="checkbox"
-                                       class="row-check form-check-input"
-                                       name="payslipIds"
-                                       th:value="${r.payslipId}"
-                                       th:disabled="${r.batchStatus != 'PENDING_APPROVAL' or r.slipStatus != 'ACTIVE'}">
-                            </div>
-                        </td>
+                        <!-- Checkbox từng dòng đã được loại bỏ -->
 
                         <td th:text="${r.fullName}"></td>
 
@@ -392,18 +373,7 @@
 
                         <td class="payroll-col-center">
                             <div class="payroll-action-wrap">
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-secondary btn-edit-salary"
-                                        title="Sửa lương cơ bản"
-                                        th:attr="data-payslip-id=${r.payslipId}, data-salary=${r.baseSalary}"
-                                        th:disabled="${r.batchStatus == 'PAID'}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                         fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                        <path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-9.5 9.5L3 14l.646-2.646 9.5-9.5z"/>
-                                        <path fill-rule="evenodd" d="M1 13.5V16h2.5l9.854-9.854-2.5-2.5L1 13.5z"/>
-                                    </svg>
-                                </button>
-
+                                <!-- Chỉ giữ lại nút Xem Chi Tiết -->
                                 <a class="btn btn-sm btn-outline-primary btn-view-payslip"
                                    title="Xem chi tiết"
                                    th:href="@{/hr/payroll/payslips/{id}(id=${r.payslipId})}">
@@ -413,23 +383,12 @@
                                         <path d="M8 5.5A2.5 2.5 0 1 0 8 10.5A2.5 2.5 0 0 0 8 5.5zm0 1A1.5 1.5 0 1 1 8 9.5A1.5 1.5 0 0 1 8 6.5z"/>
                                     </svg>
                                 </a>
-
-                                <button th:if="${(r.batchStatus == 'DRAFT' or r.batchStatus == 'REJECTED')}"
-                                        type="button"
-                                        class="btn btn-sm btn-outline-danger btn-view-payslip"
-                                        title="Xóa khỏi bảng lương"
-                                        th:onclick="'deletePayslip(' + ${r.payslipId} + ')'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                    </svg>
-                                </button>
                             </div>
                         </td>
                     </tr>
 
                     <tr th:if="${#lists.isEmpty(rows)}" id="emptyRow">
-                        <td colspan="8" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
+                        <td colspan="7" class="text-center text-body-secondary">Chưa có dữ liệu payslips</td>
                     </tr>
                     </tbody>
                 </table>

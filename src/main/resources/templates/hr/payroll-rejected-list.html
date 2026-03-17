@@ -76,7 +76,7 @@
             <option value="" th:selected="${periodId == null}">-- Tất cả kỳ lương --</option>
             <option th:each="p : ${periods}"
                     th:value="${p.id}"
-                    th:text="${p.month + '/' + p.year + ' (' + p.status + ')'}"
+                    th:text="${p.month + '/' + p.year}"
                     th:selected="${p.id == periodId}">
             </option>
         </select>

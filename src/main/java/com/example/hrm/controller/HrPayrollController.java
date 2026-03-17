@@ -185,6 +185,7 @@ public class HrPayrollController {
                                  RedirectAttributes ra) {
         try {
             model.addAttribute("r", hrPayrollService.getRejectedPayslipForHr(payslipId));
+            model.addAttribute("p", hrPayrollService.getPayslipDetailForHr(payslipId));
             model.addAttribute("activeBenefits", benefitService.listActive());
             return "hr/payroll-rejected-detail";
         } catch (Exception e) {
