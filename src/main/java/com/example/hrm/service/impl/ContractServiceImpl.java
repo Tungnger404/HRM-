@@ -25,13 +25,27 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     public List<Contract> list(Integer empId) {
-        if (empId != null) return contractRepo.findByEmployee_EmpIdOrderByStartDateDesc(empId);
+        if (empId != null) {
+            return contractRepo.findByEmployee_EmpIdOrderByStartDateDesc(empId);
+        }
         return contractRepo.findAllNewest();
     }
 
     @Override
+    public List<Contract> listExpiringWithin30Days() {
+        LocalDate today = LocalDate.now();
+        LocalDate next30 = today.plusDays(30);
+        return contractRepo.findExpiringActiveContracts(today, next30);
+    }
+
+    @Override
     @Transactional
-    public Contract create(Integer empId, LocalDate startDate, LocalDate endDate, BigDecimal baseSalary, String status) {
+    public Contract create(Integer empId,
+                           LocalDate startDate,
+                           LocalDate endDate,
+                           BigDecimal baseSalary,
+                           String status) {
+
         if (empId == null) throw new IllegalArgumentException("empId is required");
         if (startDate == null) throw new IllegalArgumentException("startDate is required");
         if (baseSalary == null) throw new IllegalArgumentException("baseSalary is required");
@@ -45,17 +59,75 @@ public class ContractServiceImpl implements ContractService {
         c.setEndDate(endDate);
         c.setBaseSalary(baseSalary);
         c.setStatus((status == null || status.isBlank()) ? "ACTIVE" : status.trim());
+
+        if (endDate == null) {
+            c.setContractType("OFFICIAL_INDEFINITE");
+        } else {
+            c.setContractType("OFFICIAL_1_YEAR");
+        }
+
         return contractRepo.save(c);
     }
 
     @Override
     @Transactional
-    public Contract update(Integer contractId, LocalDate startDate, LocalDate endDate, BigDecimal baseSalary, String status) {
+    public Contract update(Integer contractId,
+                           LocalDate startDate,
+                           LocalDate endDate,
+                           BigDecimal baseSalary,
+                           String status) {
+
         Contract c = get(contractId);
+
         if (startDate != null) c.setStartDate(startDate);
         c.setEndDate(endDate);
         if (baseSalary != null) c.setBaseSalary(baseSalary);
         if (status != null && !status.isBlank()) c.setStatus(status.trim());
+
+        if (c.getEndDate() == null && !"PROBATION".equalsIgnoreCase(c.getContractType())) {
+            c.setContractType("OFFICIAL_INDEFINITE");
+        } else if (c.getEndDate() != null && !"PROBATION".equalsIgnoreCase(c.getContractType())) {
+            c.setContractType("OFFICIAL_1_YEAR");
+        }
+
+        return contractRepo.save(c);
+    }
+
+    @Override
+    @Transactional
+    public Contract updateDetail(Integer contractId,
+                                 LocalDate startDate,
+                                 LocalDate endDate,
+                                 BigDecimal baseSalary,
+                                 String status,
+                                 String contractType) {
+
+        Contract c = get(contractId);
+
+        if (startDate == null) {
+            throw new IllegalArgumentException("startDate is required");
+        }
+        if (baseSalary == null) {
+            throw new IllegalArgumentException("baseSalary is required");
+        }
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("status is required");
+        }
+        if (contractType == null || contractType.isBlank()) {
+            throw new IllegalArgumentException("contractType is required");
+        }
+
+        c.setStartDate(startDate);
+        c.setBaseSalary(baseSalary);
+        c.setStatus(status.trim());
+        c.setContractType(contractType.trim());
+
+        if ("OFFICIAL_INDEFINITE".equalsIgnoreCase(contractType)) {
+            c.setEndDate(null);
+        } else {
+            c.setEndDate(endDate);
+        }
+
         return contractRepo.save(c);
     }
 
@@ -63,8 +135,48 @@ public class ContractServiceImpl implements ContractService {
     @Transactional
     public void terminate(Integer contractId) {
         Contract c = get(contractId);
+
         c.setStatus("TERMINATED");
+        if (c.getEndDate() == null) {
+            c.setEndDate(LocalDate.now());
+        }
         contractRepo.save(c);
+
+        Employee e = c.getEmployee();
+        e.setStatus("PROBATION");
+        employeeRepo.save(e);
+    }
+
+    @Override
+    @Transactional
+    public void approveOfficial(Integer contractId) {
+        Contract c = get(contractId);
+
+        Employee e = c.getEmployee();
+        e.setStatus("ACTIVE");
+        employeeRepo.save(e);
+
+        c.setStatus("ACTIVE");
+        c.setEndDate(null);
+        c.setContractType("OFFICIAL_INDEFINITE");
+
+        contractRepo.save(c);
+    }
+
+    @Override
+    @Transactional
+    public void rejectEmployee(Integer contractId) {
+        Contract c = get(contractId);
+
+        c.setStatus("TERMINATED");
+        if (c.getEndDate() == null) {
+            c.setEndDate(LocalDate.now());
+        }
+        contractRepo.save(c);
+
+        Employee e = c.getEmployee();
+        e.setStatus("PROBATION");
+        employeeRepo.save(e);
     }
 
     @Override
