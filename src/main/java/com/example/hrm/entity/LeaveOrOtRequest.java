@@ -3,6 +3,7 @@ package com.example.hrm.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -49,6 +50,24 @@ public class LeaveOrOtRequest {
 
     @Column(name = "attachment_path")
     private String attachmentPath;
+
+    @Column(name = "target_work_date")
+    private LocalDate targetWorkDate;
+
+    @Column(name = "manager_decided_at")
+    private LocalDateTime managerDecidedAt;
+
+    @Column(name = "processed_by_hr")
+    private Integer processedByHr;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
+
+    @Column(name = "related_assignment_id")
+    private Long relatedAssignmentId;
+
+    @Column(name = "requested_shift_id")
+    private Integer requestedShiftId;
 
     @PrePersist
     public void prePersist() {

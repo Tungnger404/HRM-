@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<body>
+<div layout:fragment="content">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">View Request - Approved Waiting HR Process</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success" th:if="${message}" th:text="${message}"></div>
+            <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Emp ID</th>
+                        <th>Type</th>
+                        <th>Target Date</th>
+                        <th>Reason</th>
+                        <th>Manager Note</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${approvedNotProcessed}">
+                        <td th:text="${r.requestId}"></td>
+                        <td th:text="${r.empId}"></td>
+                        <td th:text="${r.requestType}"></td>
+                        <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></td>
+                        <td th:text="${r.reason}"></td>
+                        <td th:text="${r.approverNote}"></td>
+                        <td>
+                            <form th:action="@{/hr/attendance-requests/{id}/process(id=${r.requestId})}" method="post">
+                                <button class="btn btn-sm btn-primary" type="submit">Process</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(approvedNotProcessed)}">
+                        <td colspan="7" class="text-center text-muted">No approved requests waiting for HR.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">View Request - Manager Decided (Approved/Rejected)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Emp ID</th>
+                        <th>Type</th>
+                        <th>Target Date</th>
+                        <th>Manager Decided At</th>
+                        <th>Status</th>
+                        <th>Manager Note</th>
+                        <th>Processed By HR</th>
+                        <th>Processed At</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${managerDecided}">
+                        <td th:text="${r.requestId}"></td>
+                        <td th:text="${r.empId}"></td>
+                        <td th:text="${r.requestType}"></td>
+                        <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></td>
+                        <td th:text="${r.managerDecidedAt != null ? #temporals.format(r.managerDecidedAt,'dd/MM/yyyy HH:mm') : '-'}"></td>
+                        <td th:text="${r.status}"></td>
+                        <td th:text="${r.approverNote != null ? r.approverNote : '-'}"></td>
+                        <td th:text="${r.processedByHr}"></td>
+                        <td th:text="${r.processedAt != null ? #temporals.format(r.processedAt,'dd/MM/yyyy HH:mm') : '-'}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(managerDecided)}">
+                        <td colspan="9" class="text-center text-muted">No manager-decided requests yet.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

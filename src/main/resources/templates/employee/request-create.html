@@ -8,27 +8,24 @@
 
     <div class="card">
         <div class="card-header">
-            <h5>Create Leave / Overtime Request</h5>
+            <h5>Create Attendance Request</h5>
         </div>
 
         <div class="card-body">
 
-            <!-- Thông báo thành công -->
-            <div th:if="${param.success}"
-                 class="alert alert-success">
+            <div th:if="${param.success}" class="alert alert-success">
                 Request submitted successfully!
             </div>
             <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
             <form th:action="@{/employee/requests/create}"
                   th:object="${request}"
                   method="post"
                   enctype="multipart/form-data">
 
-                <!-- Request Type -->
                 <div class="mb-3">
                     <label class="form-label">Request Type</label>
-                    <select class="form-select"
-                            th:field="*{requestType}" required>
+                    <select class="form-select" th:field="*{requestType}" id="requestType" required>
                         <option value="">-- Select Type --</option>
                         <option value="LEAVE">Leave</option>
                         <option value="OVERTIME">Overtime</option>
@@ -36,68 +33,31 @@
                     </select>
                 </div>
 
-                <!-- Start Time -->
                 <div class="mb-3">
-                    <label class="form-label">Start Time</label>
-                    <input type="datetime-local"
-                           class="form-control"
-                           th:field="*{startTime}"
-                           required>
+                    <label class="form-label">Target Work Date</label>
+                    <input type="date" class="form-control" th:field="*{targetWorkDate}" required>
                 </div>
 
-                <!-- End Time -->
-                <div class="mb-3">
-                    <label class="form-label">End Time</label>
-                    <input type="datetime-local"
-                           class="form-control"
-                           th:field="*{endTime}"
-                           required>
-                </div>
-                <!-- LEAVE OPTIONS -->
-                <div id="leaveFields" style="display:none;">
-
+                <div id="leaveFields">
                     <div class="mb-3">
-                        <label class="form-label">Leave Type</label>
-                        <select class="form-select" name="leaveType">
-                            <option value="">-- Select Leave Type --</option>
-                            <option value="SICK">Sick Leave</option>
-                            <option value="ANNUAL">Annual Leave</option>
-                        </select>
+                        <label class="form-label">Start Time (for Leave/Overtime)</label>
+                        <input type="datetime-local" class="form-control" th:field="*{startTime}">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Upload Medical / Leave Document</label>
+                        <label class="form-label">End Time (for Leave/Overtime)</label>
+                        <input type="datetime-local" class="form-control" th:field="*{endTime}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Upload Attachment (optional)</label>
                         <input type="file"
                                class="form-control"
                                name="attachment"
-                               accept=".pdf,.jpg,.png,.doc,.docx"
-                               placeholder="Choose file">
+                               accept=".pdf,.jpg,.png,.doc,.docx">
                     </div>
-
                 </div>
 
-
-                <!-- OVERTIME OPTIONS -->
-                <div id="overtimeFields" style="display:none;">
-
-                    <div class="mb-3">
-                        <label class="form-label">Overtime Hours</label>
-                        <input type="number"
-                               class="form-control"
-                               name="overtimeHours"
-                               min="1"
-                               placeholder="Enter overtime hours">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Project / Task</label>
-                        <input type="text"
-                               class="form-control"
-                               name="projectTask"
-                               placeholder="Enter project or task name">
-                    </div>
-
-                </div>
                 <div class="mb-3">
                     <label class="form-label">Reason</label>
                     <textarea class="form-control"
@@ -105,49 +65,28 @@
                               rows="3"
                               placeholder="Enter reason"></textarea>
                 </div>
+
                 <button type="submit" class="btn btn-primary">
                     Submit Request
                 </button>
-
-                <a th:href="@{/employee/dashboard}"
-                   class="btn btn-secondary">
-                    Cancel
-                </a>
-
             </form>
 
         </div>
     </div>
+
     <script>
-
         document.addEventListener("DOMContentLoaded", function () {
-
             const requestType = document.getElementById("requestType");
             const leaveFields = document.getElementById("leaveFields");
-            const overtimeFields = document.getElementById("overtimeFields");
 
             function updateForm() {
-
-                let type = requestType.value;
-
-                // reset
-                leaveFields.style.display = "none";
-                overtimeFields.style.display = "none";
-
-                if (type === "LEAVE") {
-                    leaveFields.style.display = "block";
-                }
-
-                if (type === "OVERTIME") {
-                    overtimeFields.style.display = "block";
-                }
+                const type = requestType.value;
+                leaveFields.style.display = (type === "LEAVE" || type === "OVERTIME") ? "block" : "none";
             }
 
             requestType.addEventListener("change", updateForm);
-
             updateForm();
         });
-
     </script>
 </div>
 
