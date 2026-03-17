@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Evaluation History - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="mb-1">Completed Evaluations</h3>
+            <p class="text-muted mb-0">Review of all evaluations you have completed for your team</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="/manager/evaluation/pending">
+            <i class="fa fa-arrow-left"></i> Back to Pending
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <strong>Evaluation History</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Cycle</th>
+                            <th>Period</th>
+                            <th>Self Score</th>
+                            <th>Manager Score</th>
+                            <th>Total Score</th>
+                            <th>Classification</th>
+                            <th>Reviewed At</th>
+                            <th>Recommendations</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(evaluations)}">
+                            <td colspan="10" class="text-center text-muted">
+                                <p class="py-3 mb-0">No completed evaluations yet</p>
+                            </td>
+                        </tr>
+                        <tr th:each="eval : ${evaluations}">
+                            <td>
+                                <strong th:text="${empNames.get(eval.empId)}">Employee Name</strong>
+                            </td>
+                            <td th:text="${eval.cycleId != null ? 'Cycle ' + eval.cycleId : 'N/A'}">Cycle 1</td>
+                            <td th:text="${eval.assignedAt != null ? #temporals.format(eval.assignedAt, 'dd/MM/yyyy') + ' - ' + #temporals.format(eval.managerReviewedAt, 'dd/MM/yyyy') : 'N/A'}">
+                                01/01/2024 - 31/03/2024
+                            </td>
+                            <td>
+                                <span class="badge bg-info" th:text="${eval.selfScore != null ? eval.selfScore : 'N/A'}">78</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success" th:text="${eval.managerScore != null ? eval.managerScore : 'N/A'}">89</span>
+                            </td>
+                            <td>
+                                <strong th:if="${eval.selfScore != null and eval.managerScore != null}"
+                                        th:text="${#numbers.formatDecimal((eval.selfScore + eval.managerScore) / 2.0, 0, 2, 'COMMA')}">
+                                    83.5
+                                </strong>
+                                <span th:unless="${eval.selfScore != null and eval.managerScore != null}">N/A</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${eval.classification == 'A' ? 'bg-success' : (eval.classification == 'B' ? 'bg-primary' : (eval.classification == 'C' ? 'bg-warning' : 'bg-danger'))}"
+                                      th:text="${eval.classification != null ? eval.classification : 'N/A'}">
+                                    B
+                                </span>
+                            </td>
+                            <td>
+                                <small th:text="${eval.managerReviewedAt != null ? #temporals.format(eval.managerReviewedAt, 'dd/MM/yyyy HH:mm') : 'Not reviewed'}">
+                                    17/03/2026 20:21
+                                </small>
+                            </td>
+                            <td>
+                                <div>
+                                    <span th:if="${eval.promotionRecommendation == true}" class="badge bg-info me-1">
+                                        <i class="fa fa-arrow-up"></i> Promotion
+                                    </span>
+                                    <span th:if="${eval.trainingRecommendation != null and !eval.trainingRecommendation.isEmpty()}" class="badge bg-warning">
+                                        <i class="fa fa-graduation-cap"></i> Training
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                        th:data-bs-target="'#detailModal' + ${eval.assignmentId}"
+                                        onclick="loadEvaluationDetail(this)">
+                                    <i class="fa fa-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Evaluation Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailContent">
+                <p class="text-center text-muted">Loading...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadEvaluationDetail(btn) {
+    const tr = btn.closest('tr');
+    const empName = tr.querySelector('td:first-child strong').textContent;
+    const score = tr.querySelector('td:nth-child(6) strong')?.textContent || 'N/A';
+    const classification = tr.querySelector('td:nth-child(7) .badge').textContent;
+    const comment = "Manager review completed successfully";
+
+    const html = `
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Employee:</strong> ${empName}</p>
+                <p><strong>Classification:</strong> <span class="badge bg-primary">${classification}</span></p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Total Score:</strong> <strong>${score}</strong></p>
+                <p><strong>Status:</strong> <span class="badge bg-success">COMPLETED</span></p>
+            </div>
+        </div>
+        <hr>
+        <p><strong>Manager Comment:</strong></p>
+        <div class="alert alert-info">${comment}</div>
+    `;
+
+    document.getElementById('detailContent').innerHTML = html;
+}
+</script>
+
+</body>
+</html>
+
