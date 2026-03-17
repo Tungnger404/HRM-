@@ -20,20 +20,18 @@ public class RecruitmentRequestHRController {
     public String viewRecruitmentRequests(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) RecruitmentRequestStatus status,
-            @RequestParam(required = false) String priority, // Thêm dòng này
+            @RequestParam(required = false) String priority,
             Model model) {
 
-        // Cập nhật Service để lọc thêm theo priority
         List<RecruitmentRequest> requests = recruitmentRequestService.searchRequests(keyword, status, priority);
 
         model.addAttribute("requests", requests);
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
-        model.addAttribute("priority", priority); // Gửi ngược lại để giữ trạng thái dropdown
+        model.addAttribute("priority", priority);
         return "recruitment-request/hr-list";
     }
 
-    // Khớp với th:href="@{/hr/recruitment-request/detail/{id}(id=${req.reqId})}"
     @GetMapping("/detail/{id}")
     public String viewDetail(@PathVariable Integer id, Model model) {
         RecruitmentRequest request = recruitmentRequestService.getById(id);
@@ -41,14 +39,12 @@ public class RecruitmentRequestHRController {
         return "recruitment-request/detail";
     }
 
-    // Xử lý Approve từ form trong detail.html
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Integer id) {
         recruitmentRequestService.approveRequest(id);
         return "redirect:/hr/recruitment-request/list?approved=true";
     }
 
-    // Xử lý Reject từ form trong detail.html
     @PostMapping("/{id}/reject")
     public String reject(@PathVariable Integer id, @RequestParam("reason") String reason) {
         recruitmentRequestService.rejectRequest(id, reason);

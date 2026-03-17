@@ -11,5 +11,6 @@ public class CandidateEvaluateDTO {
     private Integer id;
     private Integer postingId;
     private Integer score;
-    private String action; // pass / reject
+    private String fullName;
+    private String action;
 }

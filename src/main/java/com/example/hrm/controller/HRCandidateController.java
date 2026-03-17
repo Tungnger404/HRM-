@@ -60,34 +60,24 @@ public class HRCandidateController {
     }
 
 
-    @GetMapping("/evaluate/{id}")
-    public String evaluatePage(@PathVariable("id") Integer id,
-                               Model model) {
-
-        CandidateEvaluateDTO dto = service.getEvaluateDTO(id);
-
-        if (dto == null) {
-            return "redirect:/hr/candidates";
-        }
-
-        model.addAttribute("candidate", dto);
-
-        return "candidate/evaluate";
-    }
-
-
     @PostMapping("/evaluate")
     public String evaluate(@Valid @ModelAttribute("candidate") CandidateEvaluateDTO dto,
                            BindingResult result,
                            Model model) {
 
+        // Nếu có lỗi validation (ví dụ điểm trống), quay lại trang Detail
+        // thay vì trang evaluate cũ (vì trang đó giờ bỏ rồi)
         if (result.hasErrors()) {
-            return "candidate/evaluate";
+            Candidate candidate = service.findById(dto.getId());
+            model.addAttribute("candidate", candidate);
+            model.addAttribute("postingId", dto.getPostingId());
+            return "candidate/detail";
         }
 
         service.evaluate(dto);
 
-        return "redirect:/hr/candidates?postingId=" + dto.getPostingId();
+        // Sau khi lưu, quay lại chính trang Detail của ứng viên đó
+        return "redirect:/hr/candidates/detail/" + dto.getId() + "?postingId=" + dto.getPostingId();
     }
 
     @GetMapping("/detail/{id}")

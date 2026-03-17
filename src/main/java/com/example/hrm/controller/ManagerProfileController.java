@@ -34,7 +34,9 @@ public class ManagerProfileController {
         }
 
         Optional<User> uOpt = userRepo.findByUsername(principal);
-        if (uOpt.isEmpty()) uOpt = userRepo.findByEmail(principal);
+        if (uOpt.isEmpty()) {
+            uOpt = userRepo.findByEmail(principal);
+        }
 
         if (uOpt.isEmpty()) {
             model.addAttribute("err", "User not found for: " + principal);
@@ -47,6 +49,6 @@ public class ManagerProfileController {
         Employee e = employeeRepo.findByUserId(u.getUserId()).orElse(null);
         model.addAttribute("e", e);
 
-        return "manager/profile"; // templates/manager/profile.html
+        return "manager/profile";
     }
 }

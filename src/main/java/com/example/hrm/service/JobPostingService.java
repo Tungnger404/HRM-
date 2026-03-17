@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface JobPostingService {
 
-    // ===== HR MANAGEMENT =====
+
     List<JobPosting> getAll();
 
     void create(JobPostingCreateDTO dto);
@@ -18,8 +18,11 @@ public interface JobPostingService {
 
     void autoExpire();
 
+    JobPosting getById(Integer id);
 
-    // ===== PUBLIC CAREER PAGE =====
+    void update(Integer id, JobPostingCreateDTO dto);
+
+
     List<JobPosting> getPublicOpenJobs();
 
     JobPosting getBySlug(String slug);

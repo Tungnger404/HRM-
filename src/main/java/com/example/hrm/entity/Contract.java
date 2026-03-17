@@ -23,6 +23,12 @@ public class Contract {
     @JoinColumn(name = "emp_id", nullable = false)
     private Employee employee;
 
+    @Column(name = "contract_number")
+    private String contractNumber;
+
+    @Column(name = "contract_type")
+    private String contractType; // INTERN / OFFICIAL_INDEFINITE / OFFICIAL_1_YEAR / PROBATION
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
@@ -33,5 +39,5 @@ public class Contract {
     private BigDecimal baseSalary;
 
     @Column(name = "status")
-    private String status; // ACTIVE/EXPIRED/TERMINATED
+    private String status; // ACTIVE / EXPIRED / TERMINATED
 }

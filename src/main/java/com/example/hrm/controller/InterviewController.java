@@ -23,9 +23,6 @@ public class InterviewController {
     private final InterviewRepository interviewRepository;
     private final InterviewService interviewService;
 
-    // ==========================
-    // 1️⃣ INTERVIEW LIST PAGE
-    // ==========================
     @GetMapping("")
     public String interviewList(Model model) {
 
@@ -34,10 +31,6 @@ public class InterviewController {
 
         return "interview/list";
     }
-
-    // ==========================
-    // 2️⃣ EVALUATION PAGE
-    // ==========================
     @GetMapping("/evaluation/{id}")
     public String viewEvaluation(@PathVariable Integer id,
                                  Model model) {
@@ -54,9 +47,7 @@ public class InterviewController {
         return "interview/evaluation";
     }
 
-    // ==========================
-    // 3️⃣ HR SUBMIT ROUND 1
-    // ==========================
+
     @PreAuthorize("hasRole('HR')")
     @PostMapping("/submit-hr")
     public String submitHr(@RequestParam Integer candidateId,
@@ -75,9 +66,7 @@ public class InterviewController {
         return "redirect:/interview/evaluation/" + candidateId;
     }
 
-    // ==========================
-    // 4️⃣ MANAGER SUBMIT ROUND 2
-    // ==========================
+
     @PreAuthorize("hasRole('MANAGER')")
     @PostMapping("/submit-manager")
     public String submitManager(@RequestParam Integer candidateId,

@@ -34,6 +34,17 @@
 
     <li class="nav-item">
       <a class="nav-link"
+         th:href="@{/hr/contracts}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/contracts')} ? 'active' : ''">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-file"></use>
+        </svg>
+        Contract Management
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link"
          th:href="@{/hr/job-positions}"
          th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">
         <svg class="nav-icon">
@@ -105,13 +116,13 @@
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/view-request}">
-      <!--   th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">-->
         <svg class="nav-icon">
           <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-briefcase"></use>
         </svg>
         View request
       </a>
     </li>
+
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/schedules/monthly}"
@@ -122,6 +133,7 @@
         Monthly Shift Schedule
       </a>
     </li>
+
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/shifts}"
@@ -148,6 +160,7 @@
         Shift Assignments
       </a>
     </li>
+
     <li class="nav-title">Evaluation & KPI</li>
 
     <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/hr/kpi')} ? 'show' : ''">

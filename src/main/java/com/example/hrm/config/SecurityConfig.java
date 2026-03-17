@@ -26,6 +26,9 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
+                )
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -40,7 +43,7 @@ public class SecurityConfig {
                                 "/vendors/**", "/assets/**",
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**","/uploads/**"
                         ).permitAll()
 
                         .requestMatchers("/dashboard/admin").hasRole("ADMIN")

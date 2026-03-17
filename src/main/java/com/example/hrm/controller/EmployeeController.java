@@ -27,7 +27,7 @@ public class EmployeeController {
         model.addAttribute("status", status);
         model.addAttribute("employees", service.list(q, status));
 
-        return "hr/employee_list"; // hoặc "employee/employee_list" tùy folder templates bạn đang dùng
+        return "hr/employee_list";
     }
 
 

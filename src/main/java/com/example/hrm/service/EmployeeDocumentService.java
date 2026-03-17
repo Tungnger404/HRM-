@@ -1,5 +1,5 @@
 package com.example.hrm.service;
-
+import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.EmployeeDocument;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,4 +18,4 @@ public interface EmployeeDocumentService {
     void delete(Integer docId);
 
     EmployeeDocument get(Integer docId);
-}
+    List<Employee> findEmployeesForManagerDepartment(Integer managerDeptId, String q, String status);}

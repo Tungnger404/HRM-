@@ -33,6 +33,7 @@ public class Employee {
     @Column(name = "phone", length = 20)
     private String phone;
 
+
     @Column(name = "address", length = 255)
     private String address;
 
@@ -59,7 +60,7 @@ public class Employee {
     private LocalDate joinDate;
 
     @Builder.Default
-    @Column(name = "include_in_payroll", nullable = false)
+    @Column(name = "include_in_payroll", nullable = false, columnDefinition = "bit default 0")
     private Boolean includeInPayroll = false;
 
     // ✅ Compat: code cũ gọi getId()

@@ -22,7 +22,6 @@ public class OfferServiceImpl implements OfferService {
     private final EmployeeService employeeService;
     private final EmailService emailService;
 
-    // ================= CREATE OFFER =================
     @Override
     public void createOffer(Integer candidateId,
                             Double salary,
@@ -32,10 +31,11 @@ public class OfferServiceImpl implements OfferService {
         Candidate candidate = candidateRepository.findById(candidateId)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-        // Không cho tạo offer nếu đã có offer
         if (offerRepository.existsByCandidate(candidate)) {
             throw new RuntimeException("Candidate already has an offer");
         }
+
+        RecruitmentRequest request = candidate.getJobPosting().getRecruitmentRequest();
 
         Offer offer = Offer.builder()
                 .candidate(candidate)
@@ -43,6 +43,9 @@ public class OfferServiceImpl implements OfferService {
                 .startDate(startDate)
                 .probationPeriod(probation)
                 .status(OfferStatus.DRAFT)
+                // GÁN GIÁ TRỊ VÀO ĐÂY ĐỂ HẾT NULL
+                .jobId(request.getJobPosition().getJobId())
+                .deptId(request.getDepartment().getDeptId())
                 .build();
 
         offerRepository.save(offer);
@@ -67,7 +70,7 @@ public class OfferServiceImpl implements OfferService {
         emailService.sendOfferMail(
                 offer.getCandidate().getEmail(),
                 offer.getCandidate().getFullName(),
-                offer.getCandidate().getJobPosting().getTitle(), // FIX CHUẨN Ở ĐÂY
+                offer.getCandidate().getJobPosting().getTitle(),
                 offer.getSalaryOffered(),
                 offer.getStartDate(),
                 offer.getProbationPeriod(),
@@ -79,36 +82,30 @@ public class OfferServiceImpl implements OfferService {
         offerRepository.save(offer);
     }
 
-    // ================= ACCEPT OFFER =================
+
     @Override
     @Transactional
     public void acceptOffer(Integer offerId) {
-
         Offer offer = offerRepository.findById(offerId)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
-
-        if (offer.getStatus() == OfferStatus.ACCEPTED
-                || offer.getStatus() == OfferStatus.REJECTED) {
-            throw new RuntimeException("Offer already finalized.");
+        if (offer.getStatus() == OfferStatus.ACCEPTED) {
+            return;
+        }
+        if (offer.getStatus() == OfferStatus.REJECTED) {
+            throw new RuntimeException("Offer was already rejected.");
         }
 
         if (offer.getStatus() != OfferStatus.SENT) {
-            throw new RuntimeException(
-                    "Offer must be SENT before ACCEPT. Current status = "
-                            + offer.getStatus()
-            );
+            throw new RuntimeException("Offer must be SENT before ACCEPT. Current status = " + offer.getStatus());
         }
 
         offer.setStatus(OfferStatus.ACCEPTED);
-
-        Candidate candidate = offer.getCandidate();
-        candidate.setStatus(CandidateStatus.ONBOARDING);
-
         offerRepository.save(offer);
+        Candidate candidate = offer.getCandidate();
+        candidate.setStatus(CandidateStatus.OFFER_ACCEPTED);
         candidateRepository.save(candidate);
     }
 
-    // ================= REJECT OFFER =================
     @Override
     @Transactional
     public void rejectOffer(Integer offerId) {
@@ -134,14 +131,12 @@ public class OfferServiceImpl implements OfferService {
         candidateRepository.save(candidate);
     }
 
-    // ================= FIND BY ID =================
     @Override
     public Offer findById(Integer id) {
         return offerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
     }
 
-    // ================= SAVE =================
     @Override
     public void save(Offer offer) {
         offerRepository.save(offer);
