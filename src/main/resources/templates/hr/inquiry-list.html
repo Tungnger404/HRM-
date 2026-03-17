@@ -1,0 +1,91 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Payroll Inquiries</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">Payroll Inquiries</h2>
+            <div class="text-body-secondary small">HR theo dõi và xử lý toàn bộ thắc mắc về payroll</div>
+        </div>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="Filter">
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == null or status == ''} ? ' active' : ''"
+               th:href="@{/hr/inquiries}">
+                All
+            </a>
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == 'OPEN'} ? ' active' : ''"
+               th:href="@{/hr/inquiries(status='OPEN')}">
+                OPEN
+            </a>
+            <a class="btn btn-outline-primary"
+               th:classappend="${status == 'RESOLVED'} ? ' active' : ''"
+               th:href="@{/hr/inquiries(status='RESOLVED')}">
+                RESOLVED
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${msg != null}"
+         class="alert"
+         th:classappend="${msgType == 'danger'} ? ' alert-danger' : ' alert-success'"
+         th:text="${msg}"></div>
+
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th style="width:70px;">STT</th>
+                    <th style="width:110px;">Payslip</th>
+                    <th style="width:120px;">Mã NV</th>
+                    <th>Tên nhân viên</th>
+                    <th style="width:140px;">Status</th>
+                    <th style="width:180px;">Created</th>
+                    <th style="width:110px;">Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="i,st : ${inquiries}">
+                    <td th:text="${st.index + 1}"></td>
+                    <td>
+                        <a th:href="@{/hr/payroll/payslips/{id}(id=${i.payslipId})}"
+                           th:text="${i.payslipId}"></a>
+                    </td>
+                    <td th:text="${'NV' + i.empId}"></td>
+                    <td th:text="${i.employeeName}"></td>
+                    <td>
+                        <span class="badge bg-warning" th:if="${i.status == 'OPEN'}">OPEN</span>
+                        <span class="badge bg-success" th:if="${i.status == 'RESOLVED'}">RESOLVED</span>
+                        <span class="badge bg-secondary" th:if="${i.status != 'OPEN' and i.status != 'RESOLVED'}"
+                              th:text="${i.status}"></span>
+                    </td>
+                    <td th:text="${i.createdAt != null ? #temporals.format(i.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></td>
+                    <td>
+                        <a class="btn btn-sm btn-primary"
+                           th:href="@{/hr/inquiries/{id}(id=${i.id})}">
+                            View
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(inquiries)}">
+                    <td colspan="7" class="text-center text-body-secondary">No data</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

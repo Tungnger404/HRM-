@@ -19,4 +19,7 @@ public class PayrollBatchDetailDTO {
     private BigDecimal totalNet;
 
     private List<PayslipSummaryDTO> payslips;
+
+    private String rejectReason;
+    private Integer rejectedBy;
 }

@@ -13,11 +13,28 @@
         </li>
 
         <li class="nav-item">
-            <a class="nav-link" th:href="@{/manager/team}">
+            <a class="nav-link" th:href="@{/manager/org/employees}">
                 <svg class="nav-icon">
-                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-group"></use>
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-people"></use>
                 </svg>
-                My Team
+                Managed Employees
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/manager/org/documents}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-folder-open"></use>
+                </svg>
+                Employee Documents
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/manager/view-request}">
+                <svg class="nav-icon">
+                    <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-task"></use>
+                </svg>
+                View Request
             </a>
         </li>
         <!-- ================= Payroll ================= -->

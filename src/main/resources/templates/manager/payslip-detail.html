@@ -340,9 +340,9 @@
                                 <tbody>
                                 <tr th:each="it : ${p.items}" th:if="${it.type == 'INCOME'}">
                                     <td th:text="${
-                                            it.code == 'BASE_BY_DAYS' ? 'Basic Salary' :
-                                            (it.code == 'OT_PAY' ? 'Overtime Pay' : it.name)
-                                        }">
+                                                it.code == 'BASE_BY_DAYS' ? 'Salary by Worked Days' :
+                                                (it.code == 'OT_PAY' ? 'Overtime Pay' : it.name)
+                                            }">
                                         Item name
                                     </td>
                                     <td class="amount-col"

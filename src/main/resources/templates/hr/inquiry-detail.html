@@ -1,0 +1,85 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Inquiry Detail</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">Inquiry Detail</h2>
+            <div class="text-body-secondary small">HR xử lý câu hỏi payroll của nhân viên</div>
+        </div>
+        <a class="btn btn-secondary btn-sm" th:href="@{/hr/inquiries}">Back</a>
+    </div>
+
+    <div th:if="${msg != null}"
+         class="alert"
+         th:classappend="${msgType == 'danger'} ? ' alert-danger' : ' alert-success'"
+         th:text="${msg}"></div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="mb-1">
+                <b>Payslip:</b>
+                <a th:href="@{/hr/payroll/payslips/{id}(id=${inq.payslipId})}"
+                   th:text="${inq.payslipId}"></a>
+            </p>
+            <p class="mb-1">
+                <b>Mã nhân viên:</b>
+                <span th:text="${'NV' + inq.empId}"></span>
+            </p>
+            <p class="mb-1">
+                <b>Tên nhân viên:</b>
+                <span th:text="${inq.employeeName}"></span>
+            </p>
+            <p class="mb-1">
+                <b>Status:</b>
+                <span class="badge bg-warning" th:if="${inq.status == 'OPEN'}">OPEN</span>
+                <span class="badge bg-success" th:if="${inq.status == 'RESOLVED'}">RESOLVED</span>
+                <span class="badge bg-secondary"
+                      th:if="${inq.status != 'OPEN' and inq.status != 'RESOLVED'}"
+                      th:text="${inq.status}"></span>
+            </p>
+            <p class="mb-0">
+                <b>Created:</b>
+                <span th:text="${inq.createdAt != null ? #temporals.format(iq.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><b>Question</b></div>
+        <div class="card-body">
+            <p class="mb-0" th:text="${inq.question}"></p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><b>Answer</b></div>
+
+        <div class="card-body" th:if="${inq.status == 'RESOLVED'}">
+            <p class="mb-0" th:text="${inq.answer}"></p>
+        </div>
+
+        <div class="card-body" th:if="${inq.status != 'RESOLVED'}">
+            <form method="post" th:action="@{/hr/inquiries/{id}/resolve(id=${inq.id})}">
+                <textarea class="form-control" name="answer" rows="4" placeholder="Nhập câu trả lời cho nhân viên..."></textarea>
+
+                <div th:if="${_csrf != null}" class="mt-2">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                </div>
+
+                <button class="btn btn-primary mt-2" type="submit">Resolve</button>
+                <a class="btn btn-secondary mt-2" th:href="@{/hr/inquiries}">Back</a>
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,8 +1,9 @@
 package com.example.hrm.service;
+
 import com.example.hrm.entity.AttendanceLog;
-import com.example.hrm.entity.Employee;
+import com.example.hrm.entity.ShiftAssignment;
 import com.example.hrm.repository.AttendanceLogRepository;
-import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.repository.ShiftAssignmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,12 +16,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AttendanceAutoService {
 
-    private final EmployeeRepository employeeRepository;
+    private final ShiftAssignmentRepository shiftAssignmentRepository;
     private final AttendanceLogRepository attendanceLogRepository;
 
     @Scheduled(cron = "0 0 23 * * MON-FRI")
     public void markAbsentForToday() {
-
         LocalDate today = LocalDate.now();
 
         DayOfWeek day = today.getDayOfWeek();
@@ -28,21 +28,30 @@ public class AttendanceAutoService {
             return;
         }
 
-        List<Employee> employees = employeeRepository.findAll();
+        List<ShiftAssignment> workAssignments =
+                shiftAssignmentRepository.findByWorkDateAndAssignmentType(today, "WORK");
 
-        for (Employee employee : employees) {
+        for (ShiftAssignment assignment : workAssignments) {
+            Integer empId = assignment.getEmployee().getEmpId();
+
             boolean exists = attendanceLogRepository
-                    .findByEmployee_EmpIdAndWorkDate(employee.getEmpId(), today)
+                    .findByEmployee_EmpIdAndWorkDate(empId, today)
                     .isPresent();
 
             if (!exists) {
                 AttendanceLog log = AttendanceLog.builder()
-                        .employee(employee)
+                        .employee(assignment.getEmployee())
                         .workDate(today)
                         .checkIn(null)
                         .checkOut(null)
                         .status("ABSENT")
-                        .workType("NORMAL")
+                        .workType("WORK")
+                        .assignmentId(assignment.getAssignmentId())
+                        .shiftId(assignment.getShiftTemplate() != null ? assignment.getShiftTemplate().getShiftId() : null)
+                        .isLate(false)
+                        .lateMinutes(0)
+                        .isEarlyLeave(false)
+                        .earlyLeaveMinutes(0)
                         .build();
 
                 attendanceLogRepository.save(log);

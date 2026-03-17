@@ -19,15 +19,13 @@ public class JobDescriptionController {
     private final JobDescriptionService service;
     private final JobPositionRepository jobRepository;
 
-    // ================= LIST =================
+
     @GetMapping
     public String list(Model model) {
         model.addAttribute("list", service.getAll());
         return "job-description/list";
     }
 
-    // ================= CREATE FORM =================
-// ================= CREATE FORM (Giao diện) =================
     @GetMapping("/create")
     public String createForm(@RequestParam(value = "requestId", required = false) Integer requestId, Model model) {
         if (requestId != null) {
@@ -39,7 +37,6 @@ public class JobDescriptionController {
         return "job-description/create";
     }
 
-    // ================= CREATE (Xử lý lưu) =================
     @PostMapping("/create")
     public String create(@ModelAttribute("dto") JobDescriptionCreateDTO dto,
                          Principal principal) {
@@ -47,14 +44,12 @@ public class JobDescriptionController {
         return "redirect:/hr/job-description?success";
     }
 
-    // ================= DETAIL =================
     @GetMapping("/{id}")
     public String detail(@PathVariable Integer id, Model model) {
         model.addAttribute("jd", service.getById(id));
         return "job-description/detail";
     }
 
-    // ================= EDIT FORM =================
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Integer id, Model model) {
 

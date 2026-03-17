@@ -1,0 +1,636 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+  <title>Benefits Config</title>
+  <style>
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .modal .form-select, .modal .form-control {
+      height: 44px;
+    }
+
+    .modal .form-switch .form-check-input {
+      width: 46px;
+      height: 24px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle
+    }
+
+    .chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block
+    }
+
+    .chip-income {
+      background: #e8f7ee;
+      color: #1f7a3e
+    }
+
+    .chip-deduct {
+      background: #fdecec;
+      color: #b42318
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div>
+      <h2 class="mb-1">Phúc lợi</h2>
+      <div class="text-body-secondary small">Quản lý các khoản thu nhập/khấu trừ dùng trong tính lương</div>
+    </div>
+
+    <button class="btn btn-primary"
+            type="button"
+            data-coreui-toggle="modal"
+            data-coreui-target="#benefitCreateModal"
+            style="border-radius:10px; padding:10px 16px;">
+      + Thêm khoản mới
+    </button>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body d-flex align-items-center gap-2 flex-wrap">
+
+      <input class="form-control"
+             style="max-width:320px"
+             name="q"
+             th:value="${q}"
+             form="benefitSearchForm"
+             placeholder="Search code/name">
+
+      <select class="form-select"
+              style="max-width:200px"
+              name="type"
+              form="benefitSearchForm">
+        <option th:each="op: ${typeOptions}"
+                th:value="${op}"
+                th:selected="${op==type}"
+                th:text="${op=='' ? 'Tất cả' : (op=='INCOME' ? 'Thu nhập' : 'Khấu trừ')}">
+        </option>
+      </select>
+
+      <button class="btn btn-primary" type="submit" form="benefitSearchForm">
+        Search
+      </button>
+
+      <form id="benefitSearchForm" method="get" th:action="@{/hr/payroll/benefits}"></form>
+    </div>
+  </div>
+
+  <div class="modal fade" id="benefitCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:560px;">
+      <div class="modal-content" style="border-radius:14px;">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title fw-semibold">Thêm khoản lương mới</h5>
+            <div class="text-muted small">
+              Điền các thông tin chi tiết bên dưới để thiết lập thành phần lương.
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form method="post" th:action="@{/hr/payroll/benefits}" id="benefitCreateForm" autocomplete="off">
+          <input type="hidden" th:if="${_csrf!=null}" th:name="${_csrf.parameterName}"
+                 th:value="${_csrf.token}"/>
+
+          <input type="hidden" name="code" id="benefitCode">
+          <input type="hidden" name="effectiveFrom" id="benefitEffectiveFrom">
+          <input type="hidden" name="effectiveTo" id="benefitEffectiveTo" value="">
+
+          <div class="modal-body">
+            <label class="form-label fw-semibold">Tên khoản lương</label>
+            <input class="form-control" name="name" id="benefitName" placeholder="e.g., Lunch Allowance"
+                   required autocomplete="off">
+
+            <div class="mt-3">
+              <label class="form-label fw-semibold">Loại khoản lương</label>
+              <select class="form-select" name="type" required>
+                <option value="INCOME">Thu nhập (Earnings)</option>
+                <option value="DEDUCTION">Khấu trừ (Deductions)</option>
+              </select>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label fw-semibold">Số tiền mặc định (VNĐ)</label>
+              <input class="form-control"
+                     name="value"
+                     id="benefitValue"
+                     placeholder="0"
+                     inputmode="numeric"
+                     value="0"
+                     required
+                     autocomplete="off"
+                     spellcheck="false">
+              <div class="small text-muted mt-1" id="valueHint">FIXED: nhập số tiền, ví dụ 50,000</div>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label fw-semibold">Hình thức tính</label>
+              <select class="form-select" name="calcMethod" id="benefitCalcMethod" required>
+                <option value="FIXED">Số tiền cố định</option>
+                <option value="PERCENT_BASE">Biến đổi theo công / Công thức</option>
+              </select>
+            </div>
+
+            <div class="mt-3 d-flex align-items-center justify-content-between">
+              <div>
+                <div class="fw-semibold">Trạng thái hoạt động</div>
+                <div class="text-muted small">Bật thì HR mới thêm vào payslip được</div>
+              </div>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" name="active" value="true" checked>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-coreui-dismiss="modal">Hủy bỏ</button>
+            <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+        <tr>
+          <th>TÊN KHOẢN LƯƠNG</th>
+          <th>LOẠI</th>
+          <th class="text-end">SỐ TIỀN</th>
+          <th>TÍNH CHẤT</th>
+          <th>TRẠNG THÁI</th>
+          <th class="text-center" style="width:160px">THAO TÁC</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:if="${#lists.isEmpty(benefits)}">
+          <td colspan="6" class="text-center text-muted">Chưa có benefits</td>
+        </tr>
+
+        <tr th:each="b : ${benefits}">
+          <td class="fw-semibold" th:text="${b.name}">test</td>
+
+          <td>
+            <span th:if="${b.type=='INCOME'}" class="chip chip-income">Thu nhập</span>
+            <span th:if="${b.type=='DEDUCTION'}" class="chip chip-deduct">Khấu trừ</span>
+          </td>
+
+          <td class="text-end">
+                        <span th:if="${b.calcMethod=='FIXED'}"
+                              th:text="${#numbers.formatDecimal(b.value,1,'COMMA',0,'POINT')} + ' đ'">0 đ</span>
+            <span th:if="${b.calcMethod=='PERCENT_BASE'}"
+                  th:text="${#numbers.formatDecimal(b.value*100,1,'COMMA',0,'POINT')} + ' %'">0%</span>
+          </td>
+
+          <td th:text="${b.calcMethod=='PERCENT_BASE' ? 'Biến đổi' : 'Cố định'}">Cố định</td>
+
+          <td>
+            <span th:if="${b.active}" class="status-dot" style="background:#16a34a"></span>
+            <span th:if="${b.active}" class="fw-semibold" style="color:#16a34a">Đang hoạt động</span>
+
+            <span th:if="${!b.active}" class="status-dot" style="background:#9ca3af"></span>
+            <span th:if="${!b.active}" class="text-muted fw-semibold">Ngừng hoạt động</span>
+          </td>
+
+          <td class="text-center">
+            <button type="button" class="btn btn-outline-secondary btn-sm icon-btn"
+                    data-coreui-toggle="modal" data-coreui-target="#benefitViewModal"
+                    th:attr="data-name=${b.name},data-type=${b.type},data-calc=${b.calcMethod},data-value=${b.value},data-active=${b.active}">
+              <svg class="icon">
+                <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-search"></use>
+              </svg>
+            </button>
+
+            <button type="button" class="btn btn-outline-primary btn-sm icon-btn"
+                    data-coreui-toggle="modal" data-coreui-target="#benefitEditModal"
+                    th:attr="data-id=${b.id},
+                                         data-code=${b.code},
+                                         data-name=${b.name},
+                                         data-type=${b.type},
+                                         data-calc=${b.calcMethod},
+                                         data-value=${b.value},
+                                         data-from=${b.effectiveFrom},
+                                         data-to=${b.effectiveTo},
+                                         data-active=${b.active}">
+              <svg class="icon">
+                <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-pencil"></use>
+              </svg>
+            </button>
+
+            <form class="d-inline" method="post"
+                  th:action="@{/hr/payroll/benefits/{id}/delete(id=${b.id})}"
+                  onsubmit="return confirm('Xóa benefit này?')">
+              <input type="hidden" th:if="${_csrf!=null}" th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}"/>
+              <button class="btn btn-outline-danger btn-sm icon-btn" type="submit">
+                <svg class="icon">
+                  <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-trash"></use>
+                </svg>
+              </button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal fade" id="benefitViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:560px;">
+      <div class="modal-content" style="border-radius:14px;">
+        <div class="modal-header">
+          <h5 class="modal-title fw-semibold">Xem khoản lương</h5>
+          <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2"><b>Tên:</b> <span id="v_name"></span></div>
+          <div class="mb-2"><b>Loại:</b> <span id="v_type"></span></div>
+          <div class="mb-2"><b>Tính chất:</b> <span id="v_calc"></span></div>
+          <div class="mb-2"><b>Giá trị:</b> <span id="v_value"></span></div>
+          <div class="mb-2"><b>Trạng thái:</b> <span id="v_active"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="benefitEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:560px;">
+      <div class="modal-content" style="border-radius:14px;">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title fw-semibold">Sửa khoản lương</h5>
+            <div class="text-muted small">
+              Điền các thông tin chi tiết bên dưới để cập nhật thành phần lương.
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form method="post" id="benefitEditForm" autocomplete="off">
+          <input type="hidden" th:if="${_csrf!=null}" th:name="${_csrf.parameterName}"
+                 th:value="${_csrf.token}"/>
+
+          <input type="hidden" name="code" id="e_code">
+
+          <div class="modal-body">
+            <label class="form-label fw-semibold">Tên khoản lương</label>
+            <input class="form-control" name="name" id="e_name" placeholder="e.g., Lunch Allowance" required
+                   autocomplete="off">
+
+            <div class="mt-3">
+              <label class="form-label fw-semibold">Loại khoản lương</label>
+              <select class="form-select" name="type" id="e_type" required>
+                <option value="INCOME">Thu nhập (Earnings)</option>
+                <option value="DEDUCTION">Khấu trừ (Deductions)</option>
+              </select>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label fw-semibold">Số tiền mặc định (VNĐ)</label>
+              <input class="form-control"
+                     name="value"
+                     id="e_value"
+                     placeholder="0"
+                     inputmode="numeric"
+                     required
+                     autocomplete="off"
+                     spellcheck="false">
+              <div class="small text-muted mt-1" id="e_valueHint">FIXED: nhập số tiền, ví dụ 50,000</div>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label fw-semibold">Hình thức tính</label>
+              <select class="form-select" name="calcMethod" id="e_calc" required>
+                <option value="FIXED">Số tiền cố định</option>
+                <option value="PERCENT_BASE">Biến đổi theo công / Công thức</option>
+              </select>
+            </div>
+
+            <div class="mt-3 d-flex align-items-center justify-content-between">
+              <div>
+                <div class="fw-semibold">Trạng thái hoạt động</div>
+                <div class="text-muted small">Bật thì HR mới thêm vào payslip được</div>
+              </div>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" name="active" value="true"
+                       id="e_active">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-coreui-dismiss="modal">Hủy bỏ</button>
+            <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const nameEl = document.getElementById("benefitName");
+      const codeEl = document.getElementById("benefitCode");
+      const effFromEl = document.getElementById("benefitEffectiveFrom");
+      const calcEl = document.getElementById("benefitCalcMethod");
+      const hintEl = document.getElementById("valueHint");
+      const createValueEl = document.getElementById("benefitValue");
+
+      function slugToCode(s) {
+        if (!s) return "";
+        s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        s = s.replace(/đ/g, "d").replace(/Đ/g, "D");
+        s = s.trim().toUpperCase();
+        s = s.replace(/[^A-Z0-9]+/g, "_");
+        s = s.replace(/^_+|_+$/g, "");
+        return s.substring(0, 50);
+      }
+
+      function digitsOnly(s) {
+        return (s || "").toString().replace(/[^\d]/g, "");
+      }
+
+      function formatMoneyCommaFromDigits(digits) {
+        const raw = digitsOnly(digits);
+        if (!raw) return "";
+        return raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      function sanitizePercent(s) {
+        s = (s || "").toString().replace(/,/g, "").replace(/[^\d.]/g, "");
+        const parts = s.split(".");
+        if (parts.length <= 1) return s;
+        return parts[0] + "." + parts.slice(1).join("");
+      }
+
+      function normalizeFixedServerValue(raw) {
+        let s = (raw || "").toString().trim().replace(/,/g, "");
+        if (!s) return "0";
+        if (/^\d+\.0+$/.test(s)) return s.split(".")[0];
+        if (/^\d+\.\d+$/.test(s)) return s.split(".")[0];
+        return digitsOnly(s) || "0";
+      }
+
+      function clearAutoSelect(el) {
+        requestAnimationFrame(() => {
+          try {
+            if (el.selectionStart === 0 && el.selectionEnd === el.value.length) {
+              const len = el.value.length;
+              el.setSelectionRange(len, len);
+            }
+          } catch (e) {
+          }
+        });
+      }
+
+      function formatDisplayValue(raw, calcMethod) {
+        if (calcMethod === "PERCENT_BASE") {
+          const val = parseFloat((raw || "0").toString().replace(/,/g, ""));
+          if (isNaN(val)) return "0 %";
+          return (val * 100).toLocaleString("en-US", {maximumFractionDigits: 2}) + " %";
+        }
+        const fixedRaw = normalizeFixedServerValue(raw);
+        return (fixedRaw ? formatMoneyCommaFromDigits(fixedRaw) : "0") + " đ";
+      }
+
+      function setTodayToHiddenEffectiveFrom() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        if (effFromEl) effFromEl.value = `${yyyy}-${mm}-${dd}`;
+      }
+
+      function updateHintCreate() {
+        if (!calcEl || !hintEl) return;
+        hintEl.textContent =
+                (calcEl.value === "PERCENT_BASE")
+                        ? "PERCENT_BASE: nhập 0.03 = 3% lương cơ bản"
+                        : "FIXED: nhập số tiền, ví dụ 50,000";
+      }
+
+      function updateHintEdit() {
+        const eCalc = document.getElementById("e_calc");
+        const hint = document.getElementById("e_valueHint");
+        if (!eCalc || !hint) return;
+        hint.textContent =
+                (eCalc.value === "PERCENT_BASE")
+                        ? "PERCENT_BASE: nhập 0.03 = 3% lương cơ bản"
+                        : "FIXED: nhập số tiền, ví dụ 50,000";
+      }
+
+      function formatEditValueIfNeeded() {
+        const eCalc = document.getElementById("e_calc");
+        const eVal = document.getElementById("e_value");
+        if (!eCalc || !eVal) return;
+
+        if (eCalc.value === "FIXED") {
+          const raw = normalizeFixedServerValue(eVal.value);
+          eVal.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
+        } else {
+          eVal.value = sanitizePercent(eVal.value);
+        }
+      }
+
+      setTodayToHiddenEffectiveFrom();
+
+      nameEl?.addEventListener("input", function () {
+        const code = slugToCode(nameEl.value);
+        if (codeEl) codeEl.value = code || "BENEFIT";
+      });
+
+      if (createValueEl && calcEl) {
+        createValueEl.addEventListener("focus", function () {
+          if (calcEl.value === "FIXED") {
+            const raw = normalizeFixedServerValue(createValueEl.value);
+            createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
+          } else {
+            createValueEl.value = sanitizePercent(createValueEl.value);
+          }
+          clearAutoSelect(createValueEl);
+        });
+
+        createValueEl.addEventListener("input", function () {
+          if (calcEl.value === "FIXED") {
+            const raw = digitsOnly(createValueEl.value);
+            createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "";
+          } else {
+            createValueEl.value = sanitizePercent(createValueEl.value);
+          }
+        });
+
+        createValueEl.addEventListener("blur", function () {
+          if (calcEl.value === "FIXED") {
+            const raw = normalizeFixedServerValue(createValueEl.value);
+            createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
+          } else {
+            createValueEl.value = sanitizePercent(createValueEl.value);
+          }
+        });
+
+        document.getElementById("benefitCreateForm")?.addEventListener("submit", function () {
+          if (calcEl.value === "FIXED") {
+            createValueEl.value = normalizeFixedServerValue(createValueEl.value);
+          } else {
+            createValueEl.value = sanitizePercent(createValueEl.value);
+          }
+        });
+      }
+
+      calcEl?.addEventListener("change", function () {
+        updateHintCreate();
+        if (!createValueEl) return;
+
+        if (calcEl.value === "FIXED") {
+          const raw = normalizeFixedServerValue(createValueEl.value);
+          createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
+        } else {
+          createValueEl.value = sanitizePercent(createValueEl.value);
+        }
+      });
+
+      updateHintCreate();
+
+      document.addEventListener("click", function (e) {
+        const vBtn = e.target.closest('[data-coreui-target="#benefitViewModal"]');
+        if (vBtn) {
+          document.getElementById("v_name").textContent = vBtn.dataset.name || "";
+          document.getElementById("v_type").textContent =
+                  (vBtn.dataset.type === "DEDUCTION") ? "Khấu trừ" : "Thu nhập";
+          document.getElementById("v_calc").textContent =
+                  (vBtn.dataset.calc === "PERCENT_BASE") ? "Biến đổi" : "Cố định";
+          document.getElementById("v_value").textContent =
+                  formatDisplayValue(vBtn.dataset.value || "0", vBtn.dataset.calc || "FIXED");
+          document.getElementById("v_active").textContent =
+                  (vBtn.dataset.active === "true") ? "Đang hoạt động" : "Ngừng hoạt động";
+        }
+
+        const eBtn = e.target.closest('[data-coreui-target="#benefitEditModal"]');
+        if (eBtn) {
+          const id = eBtn.dataset.id;
+          document.getElementById("benefitEditForm").action = `/hr/payroll/benefits/${id}`;
+
+          document.getElementById("e_code").value = eBtn.dataset.code || "";
+          document.getElementById("e_name").value = eBtn.dataset.name || "";
+          document.getElementById("e_type").value = eBtn.dataset.type || "INCOME";
+          document.getElementById("e_calc").value = eBtn.dataset.calc || "FIXED";
+          document.getElementById("e_active").checked = (eBtn.dataset.active === "true");
+
+          const rawValue = (eBtn.dataset.value || "0").toString();
+          const eVal = document.getElementById("e_value");
+
+          if (document.getElementById("e_calc").value === "FIXED") {
+            eVal.value = formatMoneyCommaFromDigits(normalizeFixedServerValue(rawValue));
+          } else {
+            eVal.value = sanitizePercent(rawValue);
+          }
+
+          updateHintEdit();
+        }
+      });
+
+      const eValueEl = document.getElementById("e_value");
+      if (eValueEl) {
+        eValueEl.addEventListener("focus", function () {
+          const eCalc = document.getElementById("e_calc");
+          if (!eCalc) return;
+
+          if (eCalc.value === "FIXED") {
+            const raw = normalizeFixedServerValue(eValueEl.value);
+            eValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
+          } else {
+            eValueEl.value = sanitizePercent(eValueEl.value);
+          }
+          clearAutoSelect(eValueEl);
+        });
+      }
+
+      document.addEventListener("change", function (e) {
+        if (e.target && e.target.id === "e_calc") {
+          updateHintEdit();
+          formatEditValueIfNeeded();
+        }
+      });
+
+      document.addEventListener("input", function (e) {
+        if (e.target && e.target.id === "e_value") {
+          const eCalc = document.getElementById("e_calc");
+          if (!eCalc) return;
+
+          if (eCalc.value === "FIXED") {
+            const raw = digitsOnly(e.target.value);
+            e.target.value = raw ? formatMoneyCommaFromDigits(raw) : "";
+          } else {
+            e.target.value = sanitizePercent(e.target.value);
+          }
+        }
+      });
+
+      document.addEventListener("blur", function (e) {
+        if (e.target && e.target.id === "e_value") {
+          const eCalc = document.getElementById("e_calc");
+          if (!eCalc) return;
+
+          if (eCalc.value === "FIXED") {
+            const raw = normalizeFixedServerValue(e.target.value);
+            e.target.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
+          } else {
+            e.target.value = sanitizePercent(e.target.value);
+          }
+        }
+      }, true);
+
+      document.getElementById("benefitEditForm")?.addEventListener("submit", function () {
+        const eCalc = document.getElementById("e_calc");
+        const eVal = document.getElementById("e_value");
+        if (!eCalc || !eVal) return;
+
+        if (eCalc.value === "FIXED") {
+          eVal.value = normalizeFixedServerValue(eVal.value);
+        } else {
+          eVal.value = sanitizePercent(eVal.value);
+        }
+      });
+    });
+  </script>
+
+</div>
+</body>
+</html>

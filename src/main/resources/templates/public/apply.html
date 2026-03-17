@@ -67,7 +67,6 @@
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
-        /* Custom File Upload */
         .cv-upload-box {
             border: 2px dashed #cbd5e1;
             padding: 30px;
@@ -90,6 +89,7 @@
             border-radius: 12px;
             font-weight: 700;
             width: 100%;
+            color: white;
             transition: 0.3s;
         }
 
@@ -110,6 +110,13 @@
         }
 
         .cancel-link:hover { color: #1e293b; }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
     </style>
 </head>
 
@@ -135,7 +142,7 @@
                     <div th:text="${error}"></div>
                 </div>
 
-                <form th:action="@{/careers/apply}" method="post" enctype="multipart/form-data">
+                <form th:action="@{/careers/apply}" method="post" enctype="multipart/form-data" id="applyForm">
                     <input type="hidden" name="postingId" th:value="${job.postingId}"/>
 
                     <div class="row g-4">
@@ -150,6 +157,25 @@
                             <input type="email" name="email" class="form-control"
                                    placeholder="email@example.com" required>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Giới tính <span class="text-danger">*</span></label>
+                            <select name="gender" class="form-control" required>
+                                <option value="MALE">Nam</option>
+                                <option value="FEMALE">Nữ</option>
+                                <option value="OTHER">Khác</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
+                            <input type="date" id="dobInput" name="dob" class="form-control" required>
+                            <div id="ageError" class="error-message">Bạn phải đủ 18 tuổi để ứng tuyển.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Địa chỉ hiện tại <span class="text-danger">*</span></label>
+                            <input type="text" name="address" class="form-control" placeholder="Số nhà, tên đường, Quận/Huyện, Tỉnh/TP" required>
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
@@ -158,19 +184,19 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">Tải lên CV (PDF) <span class="text-danger">*</span></label>
+                            <label class="form-label">Tải lên ảnh CV (JPG) <span class="text-danger">*</span></label>
                             <div class="cv-upload-box" onclick="document.getElementById('cvInput').click()">
-                                <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
-                                <p class="mb-1 mt-2 fw-bold">Nhấn để tải lên hoặc kéo thả</p>
-                                <p class="text-muted small mb-0">Hỗ trợ định dạng .pdf, .doc, .docx (Max 5MB)</p>
+                                <i class="bi bi-image fs-1 text-primary"></i>
+                                <p class="mb-1 mt-2 fw-bold">Nhấn để tải lên ảnh hồ sơ</p>
+                                <p class="text-muted small mb-0">Hỗ trợ định dạng .jpg (Tối đa 10MB)</p>
                                 <input type="file" id="cvInput" name="cvFile" class="d-none"
-                                       onchange="updateFileName(this)" required>
+                                       accept=".jpg, .jpeg" onchange="updateFileName(this)" required>
                                 <div id="fileNameDisplay" class="mt-2 fw-bold text-success small"></div>
                             </div>
                         </div>
 
                         <div class="col-12 mt-5">
-                            <button type="submit" class="btn btn-primary submit-btn">
+                            <button type="submit" class="btn submit-btn">
                                 GỬI HỒ SƠ ỨNG TUYỂN
                             </button>
                             <a th:href="@{'/careers/' + ${job.slug}}" class="cancel-link">Hủy bỏ</a>
@@ -187,7 +213,12 @@
 </div>
 
 <script>
-    // Hàm hiển thị tên file sau khi chọn
+    // Giới hạn lịch không chọn được ngày trong tương lai
+    const dobInput = document.getElementById('dobInput');
+    const today = new Date().toISOString().split('T')[0];
+    dobInput.setAttribute('max', today);
+
+    // Hiển thị tên file khi chọn
     function updateFileName(input) {
         const display = document.getElementById('fileNameDisplay');
         if (input.files && input.files[0]) {
@@ -196,6 +227,34 @@
             display.innerHTML = "";
         }
     }
+
+    // Kiểm tra tuổi khi Submit form
+    document.getElementById('applyForm').addEventListener('submit', function(event) {
+        const dobValue = dobInput.value;
+        const errorDiv = document.getElementById('ageError');
+
+        if (!dobValue) return;
+
+        const birthDate = new Date(dobValue);
+        const now = new Date();
+
+        let age = now.getFullYear() - birthDate.getFullYear();
+        const m = now.getMonth() - birthDate.getMonth();
+
+        if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        if (age < 18) {
+            event.preventDefault();
+            errorDiv.style.display = 'block';
+            dobInput.classList.add('is-invalid');
+            alert("Rất tiếc, bạn phải từ 18 tuổi trở lên để tham gia ứng tuyển.");
+        } else {
+            errorDiv.style.display = 'none';
+            dobInput.classList.remove('is-invalid');
+        }
+    });
 </script>
 
 </body>
