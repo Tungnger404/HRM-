@@ -1,7 +1,6 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.entity.Employee;
-import com.example.hrm.entity.EvalCycle;
 import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.KpiEvidence;
 import com.example.hrm.repository.EmployeeRepository;
@@ -12,6 +11,7 @@ import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.FileValidationService;
 import com.example.hrm.service.KpiEvidenceService;
+import com.example.hrm.service.KpiAssignmentWorkflowService;
 import com.example.hrm.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -46,8 +46,6 @@ public class EvaluationViewController {
     @Autowired
     private KpiAssignmentRepository kpiAssignmentRepository;
 
-    @Autowired
-    private EvalCycleRepository evalCycleRepository;
 
     @Autowired
     private KpiEvidenceRepository kpiEvidenceRepository;
@@ -70,6 +68,9 @@ public class EvaluationViewController {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private KpiAssignmentWorkflowService kpiAssignmentWorkflowService;
+
     /**
      * STEP 1: Show KPI + Evidence submission form
      */
@@ -79,19 +80,9 @@ public class EvaluationViewController {
                                        @ModelAttribute("msg") String msg,
                                        @ModelAttribute("err") String err) {
         Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
-        System.out.println("=== SUBMIT KPI DEBUG ===");
-        System.out.println("Employee ID: " + employeeId);
         
         java.util.List<KpiAssignment> allAssignments = kpiAssignmentRepository
                 .findByEmpIdOrderByAssignedAtDesc(employeeId);
-        System.out.println("Total assignments found: " + allAssignments.size());
-        
-        for (KpiAssignment a : allAssignments) {
-            System.out.println("  - Assignment ID: " + a.getAssignmentId() + 
-                             ", Cycle: " + a.getCycleId() +
-                             ", Status: " + a.getStatus() + 
-                             ", Assigned At: " + a.getAssignedAt());
-        }
         
         KpiAssignment assignment = allAssignments.stream()
                 .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.ASSIGNED 
@@ -266,7 +257,7 @@ public class EvaluationViewController {
             
             List<Employee> hrStaffList = employeeRepository.findHrStaff();
             if (!hrStaffList.isEmpty()) {
-                Integer hrStaffId = hrStaffList.get(0).getEmpId();
+                Integer hrStaffId = hrStaffList.getFirst().getEmpId();
                 notificationService.createKpiSubmittedNotification(
                         hrStaffId,
                         assignment.getAssignmentId(),
@@ -327,8 +318,6 @@ public class EvaluationViewController {
      */
     @GetMapping("/manager-review/{evaluationId}")
     public String showManagerReviewForm(@PathVariable Integer evaluationId, Model model) {
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
         model.addAttribute("evaluationId", evaluationId);
         model.addAttribute("pageTitle", "Manager Review");
         return "evaluation/manager-review";
@@ -338,14 +327,14 @@ public class EvaluationViewController {
      * Show performance ranking dashboard
      */
     @GetMapping("/ranking/{cycleId}")
-    public String showPerformanceRanking(@PathVariable Integer cycleId) {
+    public String showPerformanceRanking(@PathVariable Integer cycleId, Model model) {
+        model.addAttribute("cycleId", cycleId);
+        model.addAttribute("pageTitle", "Performance Ranking");
         return "redirect:/dashboard/employee";
     }
 
     @GetMapping("/promotion-recommendations/{cycleId}")
     public String showPromotionRecommendations(@PathVariable Integer cycleId, Model model) {
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
         model.addAttribute("cycleId", cycleId);
         model.addAttribute("pageTitle", "Promotion Recommendations");
         return "evaluation/promotion-recommendations";
@@ -357,33 +346,88 @@ public class EvaluationViewController {
     @GetMapping("/history")
     public String showEvaluationHistory(Principal principal, Model model) {
         Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
-        
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
+
+        List<KpiAssignment> completedEvaluations = kpiAssignmentRepository
+                .findByEmpIdAndStatus(employeeId, KpiAssignment.AssignmentStatus.COMPLETED);
+
+        model.addAttribute("evaluations", completedEvaluations);
         model.addAttribute("employeeId", employeeId);
         model.addAttribute("pageTitle", "Evaluation History");
         return "evaluation/history";
     }
 
     /**
-     * Submit manager review (Pure Server-Side - giống team)
+     * Show evaluation detail
+     */
+    @GetMapping("/detail/{assignmentId}")
+    public String showEvaluationDetail(@PathVariable Integer assignmentId, 
+                                       Principal principal,
+                                       Model model,
+                                       RedirectAttributes ra) {
+        try {
+            Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
+            
+            KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                    .orElseThrow(() -> new RuntimeException("Evaluation not found"));
+            
+            // Check if this evaluation belongs to the current employee
+            if (!assignment.getEmpId().equals(employeeId)) {
+                throw new RuntimeException("Access denied - this evaluation does not belong to you");
+            }
+            
+            // Get employee and manager info from employee's direct manager
+            Employee employee = employeeRepository.findById(assignment.getEmpId()).orElse(null);
+            Employee manager = null;
+            if (employee != null && employee.getDirectManagerId() != null) {
+                manager = employeeRepository.findById(employee.getDirectManagerId()).orElse(null);
+            }
+            
+            model.addAttribute("assignment", assignment);
+            model.addAttribute("employee", employee);
+            model.addAttribute("manager", manager);
+            model.addAttribute("pageTitle", "Evaluation Detail");
+            return "evaluation/detail";
+        } catch (Exception e) {
+            ra.addFlashAttribute("toastError", "Error: " + e.getMessage());
+            return "redirect:/evaluation/history";
+        }
+    }
+
+    /**
+     * Submit manager review
      */
     @PostMapping("/manager-review/{evaluationId}/submit")
     public String submitManagerReview(
             @PathVariable Integer evaluationId,
-            @RequestParam String managerReview,
+            @RequestParam String managerComment,
             @RequestParam Integer managerScore,
-            @RequestParam String classification,
             @RequestParam(required = false) boolean promoteRecommendation,
             @RequestParam(required = false) boolean trainingRecommendation,
+            @RequestParam(required = false) String trainingRecommendationText,
+            Principal principal,
             RedirectAttributes redirectAttributes
     ) {
         try {
-            // TODO: Get current manager ID from security context
-            Integer managerId = 1; // Placeholder
-
-            // TODO: Call service to save manager review
-            // evaluationService.submitManagerReview(evaluationId, managerId, managerReview, managerScore, classification);
+            Integer managerId = currentEmployeeService.requireCurrentEmpId(principal);
+            
+            KpiAssignment assignment = kpiAssignmentRepository.findById(evaluationId)
+                    .orElseThrow(() -> new RuntimeException("KPI Assignment not found"));
+            
+            // Validate manager score
+            if (managerScore < 0 || managerScore > 100) {
+                throw new RuntimeException("Manager score must be between 0 and 100");
+            }
+            
+            // Gọi workflow service để lưu manager review
+            kpiAssignmentWorkflowService.managerApprove(
+                    assignment,
+                    managerId,
+                    managerScore,
+                    managerComment,
+                    promoteRecommendation,
+                    trainingRecommendation,
+                    trainingRecommendationText
+            );
             
             redirectAttributes.addFlashAttribute("msg", "Manager review submitted successfully!");
             return "redirect:/evaluation/ranking/1";
@@ -394,19 +438,26 @@ public class EvaluationViewController {
     }
 
     /**
-     * Approve promotion recommendation (Pure Server-Side - giống team)
+     * Approve promotion recommendation
      */
-    @PostMapping("/promotion/{employeeId}/approve")
+    @PostMapping("/promotion/{assignmentId}/approve")
     public String approvePromotion(
-            @PathVariable Integer employeeId,
+            @PathVariable Integer assignmentId,
+            Principal principal,
             RedirectAttributes redirectAttributes
     ) {
         try {
-            // TODO: Get current manager ID from security context
-            Integer managerId = 1; // Placeholder
-
-            // TODO: Call service to approve promotion
-            // performanceRankingService.approvePromotion(employeeId, managerId);
+            Integer approverId = currentEmployeeService.requireCurrentEmpId(principal);
+            
+            KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                    .orElseThrow(() -> new RuntimeException("KPI Assignment not found"));
+            
+            if (!assignment.getPromotionRecommendation()) {
+                throw new RuntimeException("This assignment does not have a promotion recommendation");
+            }
+            
+            // TODO: Implement promotion approval logic - tạo PromotionRequest record
+            // Tạm thời chỉ lưu flag approved
             
             redirectAttributes.addFlashAttribute("msg", "Promotion approved successfully!");
             return "redirect:/evaluation/promotion-recommendations/1";

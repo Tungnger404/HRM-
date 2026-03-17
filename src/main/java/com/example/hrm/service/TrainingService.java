@@ -8,6 +8,7 @@ import com.example.hrm.entity.TrainingProgram.TrainingStatus;
 import com.example.hrm.entity.TrainingRecommendation.RecommendationStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +34,8 @@ public interface TrainingService {
     // Training Assignment
     // =========================================================
 
-    TrainingAssignment assignTraining(Integer empId, Integer programId, Integer assignedBy, String objective);
+    TrainingAssignment assignTraining(Integer empId, Integer programId, Integer assignedBy, String objective,
+                                      LocalDate startDate, LocalDate endDate);
 
     TrainingAssignment assignMentor(Integer empId, Integer mentorId, Integer assignedBy, String objective);
 

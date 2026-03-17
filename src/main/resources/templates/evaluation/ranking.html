@@ -96,48 +96,42 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr th:each="a, stat : ${assignments}">
-                                    <td class="text-center"><strong th:text="${stat.count}">1</strong></td>
-                                    <td th:text="${'EMP' + a.empId}">EMP001</td>
+                                <tr th:each="ranking, stat : ${rankings}">
+                                    <td class="text-center"><strong th:text="${ranking.rankOverall != null ? ranking.rankOverall : stat.count}">1</strong></td>
+                                    <td th:text="${'EMP' + ranking.empId}">EMP001</td>
                                     <td><strong
-                                            th:text="${empNames[a.empId] != null ? empNames[a.empId] : 'Employee #' + a.empId}">Employee</strong>
+                                            th:text="${empNames[ranking.empId] != null ? empNames[ranking.empId] : 'Employee #' + ranking.empId}">Employee</strong>
                                     </td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td class="text-end" th:text="${a.selfScore != null ? a.selfScore : '-'}">-</td>
-                                    <td class="text-end" th:text="${a.managerScore != null ? a.managerScore : '-'}">-
-                                    </td>
-                                    <td class="text-end">
-                                        <strong th:text="${a.managerScore != null ? a.managerScore : (a.selfScore != null ? a.selfScore : '-')}">-</strong>
+                                    <td th:text="${ranking.rankInDept != null ? ranking.rankInDept : '-'}">-</td>
+                                    <td th:text="${ranking.totalEmployeesInDept != null ? ranking.totalEmployeesInDept : '-'}">-</td>
+                                    <td class="text-end" th:text="${ranking.finalScore != null ? ranking.finalScore : '-'}">-</td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${ranking.classification == 'A' ? ' bg-success' :
+                                                  (ranking.classification == 'B' ? ' bg-primary' :
+                                                  (ranking.classification == 'C' ? ' bg-warning' :
+                                                  (ranking.classification == 'D' ? ' bg-danger' : ' bg-secondary')))}"
+                                              th:text="${ranking.classification != null ? ranking.classification : '-'}">
+                                            -
+                                        </span>
                                     </td>
                                     <td>
-        <span class="badge"
-              th:classappend="${a.classification == 'A' ? ' bg-success' :
-                              (a.classification == 'B' ? ' bg-primary' :
-                              (a.classification == 'C' ? ' bg-warning' :
-                              (a.classification == 'D' ? ' bg-danger' : ' bg-secondary')))}"
-              th:text="${a.classification != null ? a.classification : a.status}">
-            -
-        </span>
-                                    </td>
-                                    <td>
-        <span class="badge bg-light text-dark"
-              th:text="${a.promotionRecommendation != null and a.promotionRecommendation ? 'Promotion Review' :
-                        ((a.classification == 'C' or a.classification == 'D'
-                        or (a.trainingRecommendation != null and !#strings.isEmpty(a.trainingRecommendation)))
-                        ? 'Training Required' : 'Maintain Performance')}">
-            Maintain Performance
-        </span>
+                                        <span class="badge"
+                                              th:classappend="${ranking.isPromotionEligible ? 'bg-light text-dark' : 'bg-secondary'}"
+                                              th:text="${ranking.isPromotionEligible ? 'Promotion Eligible' :
+                                                  (ranking.isTrainingRequired ? 'Training Required' : 'Maintain Performance')}">
+                                            Maintain Performance
+                                        </span>
                                     </td>
                                     <td>
                                         <a class="btn btn-sm btn-primary"
-                                           th:href="@{/manager/evaluation/review/{id}(id=${a.assignmentId})}">
-                                            Review
+                                           th:href="@{/manager/evaluation/review/{id}(id=${ranking.rankId})}">
+                                            View Details
                                         </a>
                                     </td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(assignments)}">
-                                    <td colspan="11" class="text-center text-muted">No ranking data found for this
+                                <tr th:if="${#lists.isEmpty(rankings)}">
+                                    <td colspan="9" class="text-center text-muted">No ranking data found for this
                                         cycle.
                                     </td>
                                 </tr>

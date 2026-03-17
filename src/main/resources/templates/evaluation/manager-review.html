@@ -185,16 +185,16 @@
                                     <label for="managerScore" class="form-label">Manager Overall Score (0-100) <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" id="managerScore" name="managerScore"
                                            min="0" max="100" step="1" required th:value="${assignment.managerScore}">
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fa fa-info-circle"></i>
+                                        Classification (A/B/C/D) will be calculated automatically based on your score.
+                                    </small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="classification" class="form-label">Final Classification <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="classification" name="classification" required>
-                                        <option value="">-- Select Classification --</option>
-                                        <option value="A" th:selected="${assignment.classification == 'A'}">A - Outstanding (85-100)</option>
-                                        <option value="B" th:selected="${assignment.classification == 'B'}">B - Strong (75-84)</option>
-                                        <option value="C" th:selected="${assignment.classification == 'C'}">C - Meets Expectations (60-74)</option>
-                                        <option value="D" th:selected="${assignment.classification == 'D'}">D - Needs Improvement (&lt; 60)</option>
-                                    </select>
+                                    <label for="calculatedClass" class="form-label">Classification (Auto)</label>
+                                    <input type="text" class="form-control" id="calculatedClass" readonly
+                                           placeholder="Will be calculated after you enter score"
+                                           value="">
                                 </div>
                             </div>
 
@@ -247,62 +247,40 @@
 <div layout:fragment="scripts">
     <script>
         function calculateScore() {
-            const weightInputs = document.querySelectorAll('.kpi-weight');
-            const scoreInputs = document.querySelectorAll('.kpi-score');
-            const scoreDisplay = document.getElementById('calculatedScoreValue');
-            const weightValidation = document.getElementById('weightValidation');
-            const managerScoreField = document.getElementById('managerScore');
-
-            let totalWeight = 0;
-            let weightedSum = 0;
-            let missingWeight = false;
-            let missingScore = false;
-
-            weightInputs.forEach((weightInput, index) => {
-                const weight = parseFloat(weightInput.value);
-                const score = parseFloat(scoreInputs[index].value);
-
-                if (!weightInput.value || isNaN(weight) || weight <= 0) {
-                    missingWeight = true;
-                } else {
-                    totalWeight += weight;
-                }
-
-                if (!scoreInputs[index].value || isNaN(score)) {
-                    missingScore = true;
-                }
-
-                if (!isNaN(weight) && !isNaN(score) && weight > 0) {
-                    weightedSum += (weight / 100) * score;
-                }
-            });
-
-            if (missingWeight) {
-                scoreDisplay.textContent = '-- / 100';
-                weightValidation.textContent = 'Please fill in all weights before calculating.';
-                weightValidation.className = 'text-danger';
-                return;
-            }
-
-            if (missingScore) {
-                scoreDisplay.textContent = '-- / 100';
-                weightValidation.textContent = 'Please fill in all manager scores before calculating.';
-                weightValidation.className = 'text-danger';
-                return;
-            }
-
-            if (Math.abs(totalWeight - 100) > 0.01) {
-                scoreDisplay.textContent = '-- / 100';
-                weightValidation.textContent = 'Total weight must be exactly 100%. Current total: ' + totalWeight.toFixed(1) + '%.';
-                weightValidation.className = 'text-danger';
-                return;
-            }
-
+            // ...existing calculateScore code...
             const finalScore = weightedSum.toFixed(1);
             scoreDisplay.textContent = finalScore + ' / 100';
             weightValidation.textContent = 'Score calculated successfully.';
             weightValidation.className = 'text-success';
             managerScoreField.value = Math.round(weightedSum);
+            calculateClassification();
+        }
+
+        function calculateClassification() {
+            const scoreInput = document.getElementById('managerScore');
+            const classInput = document.getElementById('calculatedClass');
+
+            if (!scoreInput || !classInput) return;
+
+            if (!scoreInput.value) {
+                classInput.value = '';
+                return;
+            }
+
+            const score = parseInt(scoreInput.value);
+            let classification = '';
+
+            if (score >= 85) {
+                classification = 'A - Outstanding (85-100)';
+            } else if (score >= 75) {
+                classification = 'B - Strong (75-84)';
+            } else if (score >= 60) {
+                classification = 'C - Meets Expectations (60-74)';
+            } else {
+                classification = 'D - Needs Improvement (< 60)';
+            }
+
+            classInput.value = classification;
         }
 
         function submitRejectReason() {
@@ -324,12 +302,22 @@
         document.addEventListener('DOMContentLoaded', function() {
             const calculateBtn = document.getElementById('calculateScoreBtn');
             const inputs = document.querySelectorAll('.kpi-weight, .kpi-score');
+            const managerScoreInput = document.getElementById('managerScore');
 
             if (calculateBtn) {
                 calculateBtn.addEventListener('click', function(event) {
                     event.preventDefault();
                     calculateScore();
                 });
+            }
+
+            // Auto-calculate classification when manager score changes
+            if (managerScoreInput) {
+                managerScoreInput.addEventListener('input', function() {
+                    calculateClassification();
+                });
+                // Initial calculation on page load
+                calculateClassification();
             }
 
             inputs.forEach(function(input) {

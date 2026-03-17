@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Training Detail - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Training Detail</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/employee/training/my-training}">My Training</a></li>
+                        <li class="breadcrumb-item active">Detail</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <strong>Training Information</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Course Name:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.programName}">Java Programming</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Category:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.trainingType != null ? assignment.trainingType : 'N/A'}">COURSE</div>
+                        </div>
+                        <div class="row mb-3" th:if="${program != null}">
+                            <div class="col-md-4"><strong>Description:</strong></div>
+                            <div class="col-md-8" th:text="${program.description != null ? program.description : 'N/A'}">Course description</div>
+                        </div>
+                        <div class="row mb-3" th:if="${program != null and program.skillCategory != null}">
+                            <div class="col-md-4"><strong>Skills:</strong></div>
+                            <div class="col-md-8" th:text="${program.skillCategory}">Technical</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Objective:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.objective != null ? assignment.objective : 'N/A'}">Improve programming skills</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Assigned Date:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.assignedAt != null ? #temporals.format(assignment.assignedAt, 'dd/MM/yyyy') : (assignment.startDate != null ? #temporals.format(assignment.startDate, 'dd/MM/yyyy') : 'N/A')}">01/01/2024</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Deadline:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.endDate != null ? #temporals.format(assignment.endDate, 'dd/MM/yyyy') : 'N/A'}">31/03/2024</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Current Status:</strong></div>
+                            <div class="col-md-8">
+                                <span class="badge" 
+                                      th:classappend="${assignment.status.name() == 'ASSIGNED' ? 'bg-secondary' : 
+                                                      (assignment.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                      (assignment.status.name() == 'PENDING_REVIEW' ? 'bg-warning' : 
+                                                      (assignment.status.name() == 'COMPLETED' ? 'bg-success' : 
+                                                      (assignment.status.name() == 'REJECTED' ? 'bg-danger' : 'bg-secondary'))))}"
+                                      th:text="${assignment.status}">ASSIGNED</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3" th:if="${assignment.reviewComment != null}">
+                            <div class="col-md-4"><strong>Review Comment:</strong></div>
+                            <div class="col-md-8">
+                                <div class="alert alert-info" th:text="${assignment.reviewComment}">Review comment here</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Evidence Form -->
+                <div class="card" th:if="${assignment.status.name() == 'IN_PROGRESS' or assignment.status.name() == 'REJECTED'}">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Submit Completion Evidence</strong>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" th:action="@{/employee/training/{id}/submit-evidence(id=${assignment.assignId})}" enctype="multipart/form-data">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            
+                            <div class="mb-3">
+                                <label for="completionNote" class="form-label">Completion Note <span class="text-danger">*</span></label>
+                                <textarea id="completionNote" name="completionNote" class="form-control" rows="4" 
+                                          placeholder="Describe what you learned and how you completed the training" required></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="completionDate" class="form-label">Completion Date <span class="text-danger">*</span></label>
+                                <input type="date" id="completionDate" name="completionDate" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="certificateFile" class="form-label">Certificate / Evidence File</label>
+                                <input type="file" id="certificateFile" name="certificateFile" class="form-control" 
+                                       accept=".pdf,.jpg,.jpeg,.png">
+                                <small class="text-muted">Upload your certificate, screenshot, or completion proof (PDF, JPG, PNG)</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="certificateCode" class="form-label">Certificate Code / Link</label>
+                                <input type="text" id="certificateCode" name="certificateCode" class="form-control" 
+                                       placeholder="Enter certificate code or course link (optional)">
+                            </div>
+
+                            <button type="submit" class="btn btn-success">
+                                <i class="fa fa-paper-plane"></i> Submit Evidence
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- View Submission -->
+                <div class="card" th:if="${assignment.status.name() == 'PENDING_REVIEW' or assignment.status.name() == 'COMPLETED'}">
+                    <div class="card-header bg-info text-white">
+                        <strong>Submitted Evidence</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Completion Note:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.completionNote}">Completion note</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Completion Date:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.completionDate != null ? #temporals.format(assignment.completionDate, 'dd/MM/yyyy') : 'N/A'}">15/03/2024</div>
+                        </div>
+                        <div class="row mb-3" th:if="${assignment.certificateCode != null}">
+                            <div class="col-md-4"><strong>Certificate Code:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.certificateCode}">CERT-12345</div>
+                        </div>
+                        <div class="row mb-3" th:if="${assignment.certificateFilePath != null}">
+                            <div class="col-md-4"><strong>Certificate File:</strong></div>
+                            <div class="col-md-8">
+                                <a th:href="@{/documents/{path}(path=${assignment.certificateFilePath})}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fa fa-download"></i> View Certificate
+                                </a>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Submitted At:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.submittedAt != null ? #temporals.format(assignment.submittedAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">15/03/2024 10:30</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Actions</strong>
+                    </div>
+                    <div class="card-body">
+                        <form th:if="${assignment.status.name() == 'ASSIGNED'}" 
+                              method="post" 
+                              th:action="@{/employee/training/{id}/start(id=${assignment.assignId})}">
+                            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                <i class="fa fa-play"></i> Start Learning
+                            </button>
+                        </form>
+
+                        <a th:href="@{/employee/training/my-training}" class="btn btn-secondary w-100">
+                            <i class="fa fa-arrow-left"></i> Back to My Training
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

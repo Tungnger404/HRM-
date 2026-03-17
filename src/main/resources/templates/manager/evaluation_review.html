@@ -134,21 +134,25 @@
                             <label class="form-label fw-bold">
                                 Manager Score <span class="text-danger">*</span>
                             </label>
-                            <input type="number" name="managerScore" class="form-control"
+                            <input type="number" id="managerScore" name="managerScore" class="form-control"
                                    min="0" max="100" required>
+                            <small class="form-text text-muted">
+                                Score 85-100: A (Outstanding) | 75-84: B (Strong) | 60-74: C (Meets Expectations) | Below 60: D (Needs Improvement)
+                            </small>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">
                                 Classification <span class="text-danger">*</span>
                             </label>
-                            <select name="classification" class="form-select" required>
-                                <option value="">-- Select Classification --</option>
-                                <option value="A">A - Outstanding (85-100)</option>
-                                <option value="B">B - Strong (75-84)</option>
-                                <option value="C">C - Meets Expectations (60-74)</option>
-                                <option value="D">D - Needs Improvement (&lt; 60)</option>
-                            </select>
+                            <div class="input-group">
+                                <input type="text" id="classificationDisplay" class="form-control" readonly
+                                       placeholder="Will be calculated automatically">
+                                <span class="input-group-text" id="classificationLabel">-</span>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                Classification will be automatically calculated based on your Manager Score
+                            </small>
                         </div>
 
                         <div class="mb-3">
@@ -200,6 +204,43 @@
 
         </div>
     </div>
+
+    <script>
+        // Automatic Classification Calculation
+        document.getElementById('managerScore').addEventListener('input', function() {
+            const score = parseInt(this.value);
+            const displayField = document.getElementById('classificationDisplay');
+            const labelField = document.getElementById('classificationLabel');
+
+            if (isNaN(score)) {
+                displayField.value = '';
+                labelField.textContent = '-';
+                return;
+            }
+
+            let classification = 'D';
+            let label = 'D - Needs Improvement';
+
+            if (score >= 85) {
+                classification = 'A';
+                label = 'A - Outstanding';
+            } else if (score >= 75) {
+                classification = 'B';
+                label = 'B - Strong';
+            } else if (score >= 60) {
+                classification = 'C';
+                label = 'C - Meets Expectations';
+            }
+
+            displayField.value = classification;
+            labelField.textContent = label;
+        });
+
+        // Trigger calculation on page load if score is pre-filled
+        window.addEventListener('load', function() {
+            document.getElementById('managerScore').dispatchEvent(new Event('input'));
+        });
+    </script>
 
 </div>
 </body>

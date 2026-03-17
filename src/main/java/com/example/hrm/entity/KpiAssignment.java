@@ -117,6 +117,9 @@ public class KpiAssignment {
     @Column(name = "manager_reviewed_at")
     private LocalDateTime managerReviewedAt;
 
+    @Column(name = "manager_rejection_reason", columnDefinition = "NVARCHAR(MAX)")
+    private String managerRejectionReason;
+
     // Constructors
     public KpiAssignment() {}
 
@@ -223,6 +226,9 @@ public class KpiAssignment {
 
     public LocalDateTime getManagerReviewedAt() { return managerReviewedAt; }
     public void setManagerReviewedAt(LocalDateTime managerReviewedAt) { this.managerReviewedAt = managerReviewedAt; }
+
+    public String getManagerRejectionReason() { return managerRejectionReason; }
+    public void setManagerRejectionReason(String managerRejectionReason) { this.managerRejectionReason = managerRejectionReason; }
 
     @Override
     public String toString() {

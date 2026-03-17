@@ -27,6 +27,7 @@
                                     <tr>
                                         <th>Cycle</th>
                                         <th>Period</th>
+                                        <th>Reviewed At</th>
                                         <th>Self Score</th>
                                         <th>Manager Score</th>
                                         <th>Total Score</th>
@@ -36,33 +37,31 @@
                                     </tr>
                                 </thead>
                                 <tbody id="evaluationTableBody">
-                                    <!-- Sample data -->
-                                    <tr>
-                                        <td>Q4 2023</td>
-                                        <td>Oct - Dec 2023</td>
-                                        <td><span class="badge bg-info">85</span></td>
-                                        <td><span class="badge bg-success">88</span></td>
-                                        <td><strong>86.5</strong></td>
-                                        <td><span class="badge bg-success">A - Excellent</span></td>
-                                        <td><span class="badge bg-success">Completed</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary" onclick="viewDetail(1)">
-                                                <i class="fa fa-eye"></i> View
-                                            </button>
-                                        </td>
+                                    <tr th:if="${#lists.isEmpty(evaluations)}">
+                                        <td colspan="9" class="text-center text-muted">No evaluation records found</td>
                                     </tr>
-                                    <tr>
-                                        <td>Q3 2023</td>
-                                        <td>Jul - Sep 2023</td>
-                                        <td><span class="badge bg-info">80</span></td>
-                                        <td><span class="badge bg-success">82</span></td>
-                                        <td><strong>81.0</strong></td>
-                                        <td><span class="badge bg-primary">B - Good</span></td>
-                                        <td><span class="badge bg-success">Completed</span></td>
+                                    <tr th:each="eval : ${evaluations}">
+                                        <td th:text="${eval.cycleId != null ? 'Cycle ' + eval.cycleId : 'N/A'}">Cycle 1</td>
+                                        <td th:text="${eval.assignedAt != null ? #temporals.format(eval.assignedAt, 'dd/MM/yyyy') + ' - ' + (eval.managerReviewedAt != null ? #temporals.format(eval.managerReviewedAt, 'dd/MM/yyyy') : 'Ongoing') : 'N/A'}">01/01/2024 - 31/03/2024</td>
+                                        <td th:text="${eval.managerReviewedAt != null ? #temporals.format(eval.managerReviewedAt, 'dd/MM/yyyy HH:mm') : 'Not reviewed yet'}">15/01/2024 14:30</td>
+                                        <td><span class="badge bg-info" th:text="${eval.selfScore != null ? eval.selfScore : 'N/A'}">85</span></td>
+                                        <td><span class="badge bg-success" th:text="${eval.managerScore != null ? eval.managerScore : 'N/A'}">88</span></td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary" onclick="viewDetail(2)">
+                                            <strong th:if="${eval.selfScore != null and eval.managerScore != null}" 
+                                                    th:text="${(eval.selfScore + eval.managerScore) / 2.0}">86.5</strong>
+                                            <span th:unless="${eval.selfScore != null and eval.managerScore != null}">N/A</span>
+                                            <br><small class="text-muted">(avg)</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${eval.classification == 'A' ? 'bg-success' : (eval.classification == 'B' ? 'bg-primary' : (eval.classification == 'C' ? 'bg-warning' : 'bg-danger'))}"
+                                                  th:text="${eval.classification != null ? eval.classification : 'N/A'}">A</span>
+                                        </td>
+                                        <td><span class="badge bg-success" th:text="${eval.status}">COMPLETED</span></td>
+                                        <td>
+                                            <a th:href="@{/evaluation/detail/{id}(id=${eval.assignmentId})}" class="btn btn-sm btn-primary">
                                                 <i class="fa fa-eye"></i> View
-                                            </button>
+                                            </a>
                                         </td>
                                     </tr>
                                 </tbody>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Training Recommendations & Assignment - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Training Recommendations & Assignment</h2>
+                <p class="text-muted mb-0">Review and assign training recommendations from evaluations.</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Pending Recommendations</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Employee</th>
+                                        <th>Reason</th>
+                                        <th>Priority</th>
+                                        <th>Recommended At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(recommendations)}">
+                                        <td colspan="6" class="text-center text-muted">No pending recommendations</td>
+                                    </tr>
+                                    <tr th:each="rec : ${recommendations}">
+                                        <td th:text="${rec.recommendationId}">1</td>
+                                        <td>
+                                            <span th:if="${teamMembers != null}">
+                                                <span th:each="emp : ${teamMembers}" 
+                                                      th:if="${emp.empId == rec.empId}"
+                                                      th:text="${emp.fullName}">Employee Name</span>
+                                            </span>
+                                            <span th:unless="${teamMembers != null}" th:text="'ID: ' + ${rec.empId}">ID: 1</span>
+                                        </td>
+                                        <td th:text="${rec.reason}">Performance improvement needed</td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${rec.priority == 'HIGH' ? 'bg-danger' : (rec.priority == 'MEDIUM' ? 'bg-warning' : 'bg-info')}"
+                                                  th:text="${rec.priority}">HIGH</span>
+                                        </td>
+                                        <td th:text="${rec.recommendedAt != null ? #temporals.format(rec.recommendedAt, 'dd/MM/yyyy HH:mm') : '-'}">01/01/2024 10:00</td>
+                                        <td>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-success me-1 assignBtn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#assignModal"
+                                                    th:data-rec-id="${rec.recommendationId}"
+                                                    th:data-emp-id="${rec.empId}"
+                                                    th:data-emp-name="${rec.empId}">
+                                                <i class="fa fa-check"></i> Assign
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-danger dismissBtn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#dismissModal"
+                                                    th:data-rec-id="${rec.recommendationId}">
+                                                <i class="fa fa-times"></i> Dismiss
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Modal -->
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignModalLabel">Assign Training</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="assignForm" method="post">
+                    <input type="hidden" name="programId" id="programIdHidden">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Employee:</strong></label>
+                            <p id="employeeDisplay" class="form-control-plaintext">---</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="trainingType" class="form-label">Training Type <span class="text-danger">*</span></label>
+                            <select id="trainingType" name="trainingType" class="form-select" required>
+                                <option value="">-- Select Type --</option>
+                                <option value="OFFLINE">Offline Training</option>
+                                <option value="ONLINE">Online Training</option>
+                            </select>
+                        </div>
+                        <div id="offlineSection" style="display: none;">
+                            <div class="mb-3">
+                                <label for="programId" class="form-label">Training Program <span class="text-danger">*</span></label>
+                                <select id="programId" name="programId" class="form-select">
+                                    <option value="">-- Select Program --</option>
+                                    <option th:each="prog : ${programs}"
+                                            th:value="${prog.programId}"
+                                            th:text="${prog.programCode + ' - ' + prog.programName}">TR-001 - Program</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="onlineSection" style="display: none;">
+                            <div class="mb-3">
+                                <label for="onlineProgramName" class="form-label">Program Name <span class="text-danger">*</span></label>
+                                <input type="text" id="onlineProgramName" name="onlineProgramName" class="form-control"
+                                       placeholder="e.g., Python Advanced Course">
+                            </div>
+                            <div class="mb-3">
+                                <label for="onlineProgramUrl" class="form-label">Course URL <span class="text-danger">*</span></label>
+                                <input type="url" id="onlineProgramUrl" name="onlineProgramUrl" class="form-control"
+                                       placeholder="e.g., https://www.youtube.com/... or https://www.coursera.org/...">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" id="startDate" name="startDate" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
+                            <input type="date" id="endDate" name="endDate" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Assign Training</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dismiss Modal -->
+    <div class="modal fade" id="dismissModal" tabindex="-1" aria-labelledby="dismissModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dismissModalLabel">Dismiss Recommendation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="dismissForm" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="modal-body">
+                        <p>Are you sure you want to dismiss this training recommendation?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Dismiss</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+<script>
+    const assignForm = document.getElementById('assignForm');
+    const dismissForm = document.getElementById('dismissForm');
+    const trainingTypeSelect = document.getElementById('trainingType');
+    const offlineSection = document.getElementById('offlineSection');
+    const onlineSection = document.getElementById('onlineSection');
+    const programIdSelect = document.getElementById('programId');
+    const onlineProgramName = document.getElementById('onlineProgramName');
+    const onlineProgramUrl = document.getElementById('onlineProgramUrl');
+
+    // Toggle between offline and online training
+    trainingTypeSelect.addEventListener('change', function() {
+        if (this.value === 'ONLINE') {
+            offlineSection.style.display = 'none';
+            onlineSection.style.display = 'block';
+            programIdSelect.removeAttribute('required');
+            onlineProgramName.setAttribute('required', 'required');
+            onlineProgramUrl.setAttribute('required', 'required');
+        } else if (this.value === 'OFFLINE') {
+            offlineSection.style.display = 'block';
+            onlineSection.style.display = 'none';
+            programIdSelect.setAttribute('required', 'required');
+            onlineProgramName.removeAttribute('required');
+            onlineProgramUrl.removeAttribute('required');
+        } else {
+            offlineSection.style.display = 'none';
+            onlineSection.style.display = 'none';
+        }
+    });
+
+    // Handle Assign button click
+    document.querySelectorAll('.assignBtn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const recId = this.getAttribute('data-rec-id');
+            const empId = this.getAttribute('data-emp-id');
+            const empName = this.getAttribute('data-emp-name');
+
+            // Set form action
+            assignForm.action = '/manager/training/recommendations/' + recId + '/assign';
+
+            // Display employee
+            document.getElementById('employeeDisplay').textContent = 'Employee ID: ' + empId;
+
+            // Reset form
+            trainingTypeSelect.value = '';
+            offlineSection.style.display = 'none';
+            onlineSection.style.display = 'none';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            programIdSelect.value = '';
+            onlineProgramName.value = '';
+            onlineProgramUrl.value = '';
+        });
+    });
+
+    // Handle Dismiss button click
+    document.querySelectorAll('.dismissBtn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const recId = this.getAttribute('data-rec-id');
+            dismissForm.action = '/manager/training/recommendations/' + recId + '/dismiss';
+        });
+    });
+
+    // Validate form submission
+    assignForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const trainingType = trainingTypeSelect.value;
+        if (trainingType === 'OFFLINE') {
+            if (!programIdSelect.value) {
+                alert('Please select a training program');
+                return;
+            }
+            assignForm.action = assignForm.action.replace('/assign', '/assign');
+        } else if (trainingType === 'ONLINE') {
+            if (!onlineProgramName.value || !onlineProgramUrl.value) {
+                alert('Please fill in both program name and URL');
+                return;
+            }
+        } else {
+            alert('Please select training type');
+            return;
+        }
+
+        this.submit();
+    });
+</script>
+</div>
+</body>
+</html>

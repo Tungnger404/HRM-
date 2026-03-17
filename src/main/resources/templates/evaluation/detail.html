@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Evaluation Detail - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2>Evaluation Detail</h2>
+                        <p class="text-muted">Review your complete evaluation record</p>
+                    </div>
+                    <a href="/evaluation/history" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Back to History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left side: Evaluation Info -->
+            <div class="col-lg-8">
+                <!-- Summary Card -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Evaluation Summary</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Evaluation Period:</strong></p>
+                                <p th:text="${assignment.assignedAt != null ? #temporals.format(assignment.assignedAt, 'dd/MM/yyyy') + ' - ' + (assignment.managerReviewedAt != null ? #temporals.format(assignment.managerReviewedAt, 'dd/MM/yyyy') : 'Ongoing') : 'N/A'}">
+                                    01/01/2024 - 31/03/2024
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Status:</strong></p>
+                                <p>
+                                    <span class="badge bg-success" th:text="${assignment.status}">COMPLETED</span>
+                                </p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Self Score:</strong></p>
+                                <h4><span class="badge bg-info" th:text="${assignment.selfScore != null ? assignment.selfScore : 'N/A'}">78</span></h4>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Manager Score:</strong></p>
+                                <h4><span class="badge bg-success" th:text="${assignment.managerScore != null ? assignment.managerScore : 'N/A'}">89</span></h4>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Total Score:</strong></p>
+                                <h4 th:if="${assignment.selfScore != null and assignment.managerScore != null}"
+                                    th:text="${(assignment.selfScore + assignment.managerScore) / 2.0}">83.5</h4>
+                                <h4 th:unless="${assignment.selfScore != null and assignment.managerScore != null}">N/A</h4>
+                                <small class="text-muted">(Average of Self & Manager)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Classification:</strong></p>
+                                <h4>
+                                    <span class="badge"
+                                          th:classappend="${assignment.classification == 'A' ? 'bg-success' : (assignment.classification == 'B' ? 'bg-primary' : (assignment.classification == 'C' ? 'bg-warning' : 'bg-danger'))}"
+                                          th:text="${assignment.classification != null ? assignment.classification : 'N/A'}">B</span>
+                                </h4>
+                                <small class="text-muted">(Based on Manager Score)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manager Feedback -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <strong>Manager Feedback</strong>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${manager != null}">
+                            <p class="mb-2"><strong>Reviewed by:</strong> <span th:text="${manager.fullName}">Manager Name</span></p>
+                        </div>
+                        <p class="mb-2"><strong>Review Date:</strong>
+                            <span th:text="${assignment.managerReviewedAt != null ? #temporals.format(assignment.managerReviewedAt, 'dd/MM/yyyy HH:mm') : 'Not reviewed yet'}">
+                                17/03/2026 20:21
+                            </span>
+                        </p>
+
+                        <!-- Rejection Reason (if rejected) -->
+                        <div th:if="${assignment.status.name() == 'MANAGER_REJECTED' and assignment.managerRejectionReason != null}"
+                             class="alert alert-danger mt-3">
+                            <h6 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> Rejection Reason</h6>
+                            <p style="white-space: pre-wrap; margin: 0;" th:text="${assignment.managerRejectionReason}">
+                                Rejection reason will appear here...
+                            </p>
+                        </div>
+
+                        <hr>
+                        <p class="mb-2"><strong>Manager Comment:</strong></p>
+                        <div class="border p-3 rounded bg-light" style="white-space: pre-wrap; min-height: 100px;">
+                            <p th:text="${assignment.managerComment != null ? assignment.managerComment : 'No comment provided'}">
+                                Good performance. Keep it up!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <strong>Manager Recommendations</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" disabled
+                                       th:checked="${assignment.promotionRecommendation == true}" />
+                                <label class="form-check-label">
+                                    Recommend for Promotion
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" disabled
+                                       th:checked="${assignment.trainingRecommendation != null and !assignment.trainingRecommendation.isEmpty()}" />
+                                <label class="form-check-label">
+                                    Recommend for Training
+                                </label>
+                            </div>
+                            <div th:if="${assignment.trainingRecommendation != null and !assignment.trainingRecommendation.isEmpty()}"
+                                 class="alert alert-info mt-2">
+                                <strong>Training Recommendation:</strong><br>
+                                <p style="white-space: pre-wrap;" th:text="${assignment.trainingRecommendation}">
+                                    Training details...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right side: Classification Info -->
+            <div class="col-lg-4">
+                <!-- Classification Card -->
+                <div class="card mb-3">
+                    <div class="card-header text-white"
+                         th:classappend="${assignment.classification == 'A' ? 'bg-success' : (assignment.classification == 'B' ? 'bg-primary' : (assignment.classification == 'C' ? 'bg-warning' : 'bg-danger'))}">
+                        <strong>Classification Details</strong>
+                    </div>
+                    <div class="card-body text-center">
+                        <div style="font-size: 48px; font-weight: bold; margin: 20px 0;">
+                            <span class="badge p-3"
+                                  th:classappend="${assignment.classification == 'A' ? 'bg-success' : (assignment.classification == 'B' ? 'bg-primary' : (assignment.classification == 'C' ? 'bg-warning' : 'bg-danger'))}"
+                                  th:text="${assignment.classification}">B</span>
+                        </div>
+                        <p class="text-muted">
+                            <span th:if="${assignment.classification == 'A'}">Outstanding Performance</span>
+                            <span th:if="${assignment.classification == 'B'}">Strong Performance</span>
+                            <span th:if="${assignment.classification == 'C'}">Meets Expectations</span>
+                            <span th:if="${assignment.classification == 'D'}">Needs Improvement</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Score Range Guide -->
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <strong>Scoring Guide</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <span class="badge bg-success">A</span>
+                            <small>85-100: Outstanding</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-primary">B</span>
+                            <small>75-84: Strong</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-warning">C</span>
+                            <small>60-74: Meets Expectations</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-danger">D</span>
+                            <small>Below 60: Needs Improvement</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+

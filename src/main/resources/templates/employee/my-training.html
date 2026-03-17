@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>My Training - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>My Training</h2>
+                <p class="text-muted mb-0">View and manage your assigned training courses.</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Assigned Training Courses</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Course Name</th>
+                                        <th>Category</th>
+                                        <th>Assigned Date</th>
+                                        <th>Due Date</th>
+                                        <th>Assigned By</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(assignments)}">
+                                        <td colspan="7" class="text-center text-muted">No training assignments found</td>
+                                    </tr>
+                                    <tr th:each="assign : ${assignments}">
+                                        <td th:text="${assign.programName != null ? assign.programName : 'N/A'}">Java Programming</td>
+                                        <td th:text="${assign.trainingType != null ? assign.trainingType : 'N/A'}">COURSE</td>
+                                        <td th:text="${assign.assignedAt != null ? #temporals.format(assign.assignedAt, 'dd/MM/yyyy') : (assign.startDate != null ? #temporals.format(assign.startDate, 'dd/MM/yyyy') : 'N/A')}">01/01/2024</td>
+                                        <td th:text="${assign.endDate != null ? #temporals.format(assign.endDate, 'dd/MM/yyyy') : 'N/A'}">31/03/2024</td>
+                                        <td th:text="${assign.assignedBy != null ? 'Manager ID: ' + assign.assignedBy : 'N/A'}">Manager ID: 5</td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${assign.status.name() == 'ASSIGNED' ? 'bg-secondary' : 
+                                                                  (assign.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                                  (assign.status.name() == 'PENDING_REVIEW' ? 'bg-warning' : 
+                                                                  (assign.status.name() == 'COMPLETED' ? 'bg-success' : 
+                                                                  (assign.status.name() == 'REJECTED' ? 'bg-danger' : 'bg-secondary'))))}"
+                                                  th:text="${assign.status}">ASSIGNED</span>
+                                        </td>
+                                        <td>
+                                            <a th:href="@{/employee/training/detail/{id}(id=${assign.assignId})}" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="fa fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

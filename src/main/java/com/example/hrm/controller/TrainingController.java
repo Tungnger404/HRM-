@@ -90,7 +90,7 @@ public class TrainingController {
             Integer assignedBy = ((Number) body.get("assignedBy")).intValue();
             String objective = (String) body.get("objective");
 
-            TrainingAssignment assignment = trainingService.assignTraining(empId, programId, assignedBy, objective);
+            TrainingAssignment assignment = trainingService.assignTraining(empId, programId, assignedBy, objective, null, null);
             return ResponseEntity.status(HttpStatus.CREATED).body(assignment);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

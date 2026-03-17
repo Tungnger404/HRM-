@@ -85,7 +85,8 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @Transactional
-    public TrainingAssignment assignTraining(Integer empId, Integer programId, Integer assignedBy, String objective) {
+    public TrainingAssignment assignTraining(Integer empId, Integer programId, Integer assignedBy, String objective,
+                                            LocalDate startDate, LocalDate endDate) {
         // Check if program exists
         TrainingProgram program = trainingProgramRepository.findById(programId)
                 .orElseThrow(() -> new RuntimeException("Training program not found"));
@@ -97,8 +98,10 @@ public class TrainingServiceImpl implements TrainingService {
         assignment.setAssignedBy(assignedBy);
         assignment.setObjective(objective);
         assignment.setTrainingType("COURSE");
-        assignment.setStatus(AssignmentStatus.PLANNED);
-        assignment.setStartDate(LocalDate.now());
+        assignment.setStatus(AssignmentStatus.ASSIGNED);
+        assignment.setStartDate(startDate != null ? startDate : LocalDate.now());
+        assignment.setEndDate(endDate);
+        assignment.setAssignedAt(LocalDateTime.now());
         assignment = trainingAssignmentRepository.save(assignment);
 
         // Auto-create progress record
@@ -107,6 +110,7 @@ public class TrainingServiceImpl implements TrainingService {
         progress.setEmpId(empId);
         progress.setProgramId(programId);
         progress.setEnrollmentDate(LocalDate.now());
+        progress.setStartDate(startDate != null ? startDate : LocalDate.now());
         progress.setStatus(ProgressStatus.NOT_STARTED);
         progress.setCompletionPercentage(BigDecimal.ZERO);
         progress.setUpdatedAt(LocalDateTime.now());
@@ -230,9 +234,6 @@ public class TrainingServiceImpl implements TrainingService {
         progress.setCompletionPercentage(new BigDecimal(100));
         progress.setUpdatedAt(LocalDateTime.now());
 
-        // TODO: Send notification to employee: "Vui lòng upload chứng chỉ hoàn thành"
-        // TODO: Send notification to manager: "Nhân viên X đã hoàn thành khóa học, đang chờ upload chứng chỉ"
-
         return trainingProgressRepository.save(progress);
     }
 
@@ -324,7 +325,7 @@ public class TrainingServiceImpl implements TrainingService {
         rec.setProgramId(programId);
         rec.setReason(reason);
         rec.setPriority(priority);
-        rec.setStatus(RecommendationStatus.PENDING);
+        rec.setStatus(RecommendationStatus.RECOMMENDED);
         rec.setRecommendedBy(recommendedBy);
         rec.setRecommendedAt(LocalDateTime.now());
 

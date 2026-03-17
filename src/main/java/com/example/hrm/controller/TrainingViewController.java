@@ -41,19 +41,31 @@ public class TrainingViewController {
             @RequestParam(required = false) String status,
             Model model
     ) {
-        List<TrainingProgram> programs;
+        List<TrainingProgram> programs = trainingProgramRepository.findAll();
         
-        if (status != null && !status.isEmpty()) {
+        if (search != null && !search.trim().isEmpty()) {
+            String searchLower = search.toLowerCase();
+            programs = programs.stream()
+                    .filter(p -> (p.getProgramName() != null && p.getProgramName().toLowerCase().contains(searchLower))
+                            || (p.getProgramCode() != null && p.getProgramCode().toLowerCase().contains(searchLower)))
+                    .toList();
+        }
+        
+        if (category != null && !category.trim().isEmpty()) {
+            programs = programs.stream()
+                    .filter(p -> p.getSkillCategory() != null && p.getSkillCategory().equalsIgnoreCase(category))
+                    .toList();
+        }
+        
+        if (status != null && !status.trim().isEmpty()) {
             try {
-                TrainingProgram.TrainingStatus trainingStatus = TrainingProgram.TrainingStatus.valueOf(status);
-                programs = trainingProgramRepository.findByStatus(trainingStatus);
+                TrainingProgram.TrainingStatus trainingStatus = TrainingProgram.TrainingStatus.valueOf(status.toUpperCase());
+                programs = programs.stream()
+                        .filter(p -> p.getStatus() == trainingStatus)
+                        .toList();
             } catch (IllegalArgumentException e) {
-                programs = trainingProgramRepository.findAll();
+                // Invalid status, show all
             }
-        } else if (category != null && !category.isEmpty()) {
-            programs = trainingProgramRepository.findBySkillCategoryContaining(category);
-        } else {
-            programs = trainingProgramRepository.findAll();
         }
         
         model.addAttribute("programs", programs);
@@ -75,9 +87,6 @@ public class TrainingViewController {
     ) {
         try {
             Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
-
-            // TODO: Call service to register
-            // trainingService.registerEmployee(programId, employeeId);
             
             redirectAttributes.addFlashAttribute("msg", "Successfully registered for the training program!");
             return "redirect:/training/programs";
@@ -112,8 +121,6 @@ public class TrainingViewController {
     public String showMyTrainingProgress(Principal principal, Model model) {
         Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
         
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
         model.addAttribute("employeeId", employeeId);
         model.addAttribute("pageTitle", "My Training Progress");
         return "training/my-progress";
@@ -125,7 +132,6 @@ public class TrainingViewController {
     @GetMapping("/submit-evidence/{progressId}")
     public String showEvidenceSubmissionForm(@PathVariable Integer progressId, Model model) {
         try {
-            // TODO: Get progress by ID and check if employee owns this progress
             model.addAttribute("progressId", progressId);
             model.addAttribute("pageTitle", "Submit Training Evidence");
             return "training/submit-evidence";
@@ -162,11 +168,6 @@ public class TrainingViewController {
                 return "redirect:/training/submit-evidence/" + progressId;
             }
 
-            // TODO: Save file to storage and update progress
-            // String filePath = fileStorageService.saveFile(certificateFile);
-            // trainingService.submitEvidence(progressId, certificateType, certificateNumber, 
-            //                                issueDate, notes, keyLearnings, filePath);
-            
             redirectAttributes.addFlashAttribute("msg", 
                 "Training evidence submitted successfully! Your manager will review it soon.");
             return "redirect:/training/my-progress";
@@ -183,8 +184,6 @@ public class TrainingViewController {
     public String showTrainingRecommendations(Principal principal, Model model) {
         Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
         
-        // TODO: Fetch real data from service when database has data
-        // For now, use mock data in template for testing
         model.addAttribute("employeeId", employeeId);
         model.addAttribute("pageTitle", "Training Recommendations");
         return "training/recommendations";

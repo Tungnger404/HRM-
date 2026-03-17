@@ -8,10 +8,10 @@ import java.time.LocalDateTime;
 public class TrainingRecommendation {
 
     public enum RecommendationStatus {
-        PENDING,
-        ACCEPTED,
-        REJECTED,
-        ASSIGNED
+        RECOMMENDED,
+        ASSIGNED,
+        DISMISSED,
+        COMPLETED
     }
 
     @Id
@@ -36,7 +36,7 @@ public class TrainingRecommendation {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
-    private RecommendationStatus status = RecommendationStatus.PENDING;
+    private RecommendationStatus status = RecommendationStatus.RECOMMENDED;
 
     @Column(name = "recommended_by")
     private Integer recommendedBy;

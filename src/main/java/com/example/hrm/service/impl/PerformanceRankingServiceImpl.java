@@ -23,7 +23,7 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
     private PerformanceRankingRepository performanceRankingRepository;
 
     @Autowired
-    private EvaluationRepository evaluationRepository;
+    private KpiAssignmentRepository kpiAssignmentRepository;
 
     @Autowired
     private EvaluationDetailRepository evaluationDetailRepository;
@@ -42,34 +42,41 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
     @Override
     @Transactional
     public void calculateRankingsForCycle(Integer cycleId) {
-        // Get all completed evaluations in this cycle
-        List<Evaluation> evaluations = evaluationRepository.findByCycleIdAndStatus(
-                cycleId, Evaluation.EvaluationStatus.COMPLETED);
+        System.out.println("DEBUG: calculateRankingsForCycle called for cycle " + cycleId);
+        
+        // Get all completed KPI assignments in this cycle
+        List<KpiAssignment> assignments = kpiAssignmentRepository.findByCycleId(cycleId).stream()
+                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.COMPLETED)
+                .collect(Collectors.toList());
 
-        if (evaluations.isEmpty()) {
+        System.out.println("DEBUG: Found " + assignments.size() + " completed assignments for cycle " + cycleId);
+
+        if (assignments.isEmpty()) {
+            System.out.println("DEBUG: No completed assignments found, returning");
             return;
         }
 
-        // Sort by final_score DESC
-        evaluations.sort(Comparator.comparing(Evaluation::getFinalScore,
+        // Sort by manager_score DESC
+        assignments.sort(Comparator.comparing(KpiAssignment::getManagerScore,
                 Comparator.nullsLast(Comparator.reverseOrder())));
 
-        int totalEmployees = evaluations.size();
+        int totalEmployees = assignments.size();
 
         // Calculate rank for each employee
-        for (int i = 0; i < evaluations.size(); i++) {
-            Evaluation eval = evaluations.get(i);
+        for (int i = 0; i < assignments.size(); i++) {
+            KpiAssignment assignment = assignments.get(i);
 
             // Check if ranking already exists
             PerformanceRanking ranking = performanceRankingRepository
-                    .findByCycleIdAndEmpId(cycleId, eval.getEmpId())
+                    .findByCycleIdAndEmpId(cycleId, assignment.getEmpId())
                     .orElse(new PerformanceRanking());
 
             ranking.setCycleId(cycleId);
-            ranking.setEmpId(eval.getEmpId());
-            ranking.setFinalScore(eval.getFinalScore());
+            ranking.setEmpId(assignment.getEmpId());
+            ranking.setFinalScore(assignment.getManagerScore() != null ? 
+                    BigDecimal.valueOf(assignment.getManagerScore()) : BigDecimal.ZERO);
             ranking.setRankOverall(i + 1);
-            ranking.setClassification(eval.getClassification());
+            ranking.setClassification(assignment.getClassification());
 
             // Calculate percentile
             BigDecimal percentile = BigDecimal.valueOf((totalEmployees - i) * 100.0 / totalEmployees)
@@ -77,7 +84,7 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
             ranking.setPercentile(percentile);
 
             // Determine if training required (C or D)
-            boolean needTraining = "C".equals(eval.getClassification()) || "D".equals(eval.getClassification());
+            boolean needTraining = "C".equals(assignment.getClassification()) || "D".equals(assignment.getClassification());
             ranking.setIsTrainingRequired(needTraining);
 
             if (ranking.getCreatedAt() == null) {
@@ -85,7 +92,10 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
             }
 
             performanceRankingRepository.save(ranking);
+            System.out.println("DEBUG: Saved ranking for emp " + assignment.getEmpId() + " with rank " + (i + 1));
         }
+        
+        System.out.println("DEBUG: Completed calculating rankings for cycle " + cycleId);
     }
 
     @Override
@@ -111,7 +121,6 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
                 isEligible = true;
                 recommendation = "Xuất sắc, nằm trong top 5 nhân viên. Đề xuất thăng chức.";
             }
-            // Rule 3: Check history - 2 consecutive cycles with A/B (TODO: implement later)
 
             ranking.setIsPromotionEligible(isEligible);
             ranking.setRewardRecommendation(recommendation);
@@ -146,32 +155,30 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
 
     @Override
     @Transactional
-    public List<TrainingRecommendation> autoCreateTrainingRecommendations(Integer evalId) {
-        Evaluation evaluation = evaluationRepository.findById(evalId)
-                .orElseThrow(() -> new RuntimeException("Evaluation not found"));
+    public List<TrainingRecommendation> autoCreateTrainingRecommendations(Integer assignmentId) {
+        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new RuntimeException("KPI Assignment not found"));
 
-        String classification = evaluation.getClassification();
+        String classification = assignment.getClassification();
         List<TrainingRecommendation> recommendations = new ArrayList<>();
 
         switch (classification) {
             case "D":
             case "C":
                 // Nhân viên yếu - tạo recommendation priority HIGH
-                recommendations = analyzeWeakKPIsAndRecommend(evalId);
+                recommendations = analyzeWeakKPIsAndRecommend(assignmentId);
                 for (TrainingRecommendation rec : recommendations) {
                     rec.setPriority("HIGH");
                     rec.setReason(rec.getReason() + " [ĐÁNH GIÁ YẾU - CẦN ĐÀO TẠO BẮT BUỘC]");
                 }
-                // TODO: Send notification to Manager
                 break;
 
             case "B":
                 // Nhân viên trung bình - tạo recommendation priority MEDIUM
-                recommendations = analyzeWeakKPIsAndRecommend(evalId);
+                recommendations = analyzeWeakKPIsAndRecommend(assignmentId);
                 for (TrainingRecommendation rec : recommendations) {
                     rec.setPriority("MEDIUM");
                 }
-                // TODO: Send notification to Employee
                 break;
 
             case "A":
@@ -188,21 +195,19 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
 
     @Override
     @Transactional
-    public List<TrainingRecommendation> analyzeWeakKPIsAndRecommend(Integer evalId) {
+    public List<TrainingRecommendation> analyzeWeakKPIsAndRecommend(Integer assignmentId) {
         List<TrainingRecommendation> recommendations = new ArrayList<>();
 
-        // Get evaluation
-        Evaluation evaluation = evaluationRepository.findById(evalId)
-                .orElseThrow(() -> new RuntimeException("Evaluation not found"));
+        // Get KPI assignment
+        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new RuntimeException("KPI Assignment not found"));
 
-        // Find KPIs with finalScore < 60 (weak)
-        List<EvaluationDetail> weakKPIs = evaluationDetailRepository.findByEvalId(evalId).stream()
-                .filter(detail -> detail.getFinalScore() != null &&
-                        detail.getFinalScore().compareTo(new BigDecimal("60")) < 0)
-                .collect(Collectors.toList());
+        Integer empId = assignment.getEmpId();
 
-        if (weakKPIs.isEmpty()) {
-            // No weak KPI, but still classification C/D
+        // Since KpiAssignment doesn't have detail KPI breakdown in this system,
+        // we'll recommend general improvement programs based on classification
+        
+        if ("C".equals(assignment.getClassification()) || "D".equals(assignment.getClassification())) {
             // Recommend general improvement courses
             List<TrainingProgram> generalPrograms = trainingProgramRepository
                     .findByStatus(TrainingProgram.TrainingStatus.ACTIVE).stream()
@@ -210,56 +215,19 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
                     .collect(Collectors.toList());
 
             for (TrainingProgram program : generalPrograms) {
-                TrainingRecommendation rec = createRecommendation(
-                        evaluation.getEmpId(),
-                        evalId,
-                        program.getProgramId(),
-                        "Đề xuất cải thiện năng lực tổng thể",
-                        "MEDIUM",
-                        null // system auto
-                );
-                recommendations.add(rec);
-            }
-            return recommendations;
-        }
-
-        // For each weak KPI, find matching training programs
-        for (EvaluationDetail detail : weakKPIs) {
-            KpiTemplate kpi = kpiTemplateRepository.findById(detail.getKpiId())
-                    .orElse(null);
-
-            if (kpi == null) continue;
-
-            // Match training programs by skill_category containing KPI name
-            List<TrainingProgram> matchedPrograms = trainingProgramRepository
-                    .findBySkillCategoryContaining(kpi.getKpiName());
-
-            if (matchedPrograms.isEmpty()) {
-                // Try fuzzy match (split by space and search)
-                String[] keywords = kpi.getKpiName().split("\\s+");
-                for (String keyword : keywords) {
-                    matchedPrograms.addAll(trainingProgramRepository
-                            .findBySkillCategoryContaining(keyword));
-                }
-            }
-
-            // Create recommendation for the best matched program
-            if (!matchedPrograms.isEmpty()) {
-                TrainingProgram program = matchedPrograms.get(0); // Take first match
-
                 String reason = String.format(
-                        "KPI '%s' chỉ đạt %.2f điểm (yếu). Cần đào tạo kỹ năng: %s",
-                        kpi.getKpiName(),
-                        detail.getFinalScore(),
+                        "Nhân viên đạt classification %s (score: %d). Cần cải thiện kỹ năng: %s",
+                        assignment.getClassification(),
+                        assignment.getManagerScore() != null ? assignment.getManagerScore() : 0,
                         program.getSkillCategory()
                 );
 
                 TrainingRecommendation rec = createRecommendation(
-                        evaluation.getEmpId(),
-                        evalId,
+                        empId,
+                        null,
                         program.getProgramId(),
                         reason,
-                        "HIGH",
+                        "MEDIUM",
                         null // system auto
                 );
                 recommendations.add(rec);
@@ -275,11 +243,11 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
                                                        String priority, Integer recommendedBy) {
         TrainingRecommendation rec = new TrainingRecommendation();
         rec.setEmpId(empId);
-        rec.setEvalId(evalId);
+        rec.setEvalId(evalId); // May be null - from KpiAssignment instead
         rec.setProgramId(programId);
         rec.setReason(reason);
         rec.setPriority(priority);
-        rec.setStatus(RecommendationStatus.PENDING);
+        rec.setStatus(RecommendationStatus.RECOMMENDED);
         rec.setRecommendedBy(recommendedBy); // null = system
         rec.setRecommendedAt(LocalDateTime.now());
 
