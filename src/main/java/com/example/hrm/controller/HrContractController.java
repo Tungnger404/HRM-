@@ -23,46 +23,60 @@ public class HrContractController {
 
     @GetMapping
     public String list(@RequestParam(value = "empId", required = false) Integer empId,
+                       @RequestParam(value = "contractType", required = false) String contractType,
+                       @RequestParam(value = "expiringOnly", required = false, defaultValue = "false") boolean expiringOnly,
                        Model model,
                        @ModelAttribute("msg") String msg,
                        @ModelAttribute("err") String err) {
-        List<Contract> contracts = contractService.list(empId);
+
+        List<Contract> contracts;
+
+        if (expiringOnly) {
+            contracts = contractService.listExpiringWithin30Days();
+        } else {
+            contracts = contractService.list(empId);
+        }
+
+        if (contractType != null && !contractType.isBlank()) {
+            contracts = contracts.stream()
+                    .filter(c -> c.getContractType() != null
+                            && contractType.equalsIgnoreCase(c.getContractType()))
+                    .toList();
+        }
+
         model.addAttribute("contracts", contracts);
         model.addAttribute("empId", empId);
+        model.addAttribute("contractType", contractType);
+        model.addAttribute("expiringOnly", expiringOnly);
+
         return "hr/contracts_list";
     }
 
-    @PostMapping("/create")
-    public String create(@RequestParam("empId") Integer empId,
-                         @RequestParam("startDate") LocalDate startDate,
-                         @RequestParam(value = "endDate", required = false) LocalDate endDate,
-                         @RequestParam("baseSalary") BigDecimal baseSalary,
-                         @RequestParam(value = "status", required = false) String status,
-                         RedirectAttributes ra) {
-        try {
-            contractService.create(empId, startDate, endDate, baseSalary, status);
-            ra.addFlashAttribute("msg", "Created contract!");
-        } catch (Exception ex) {
-            ra.addFlashAttribute("err", ex.getMessage());
-        }
-        return "redirect:/hr/contracts?empId=" + empId;
+    @GetMapping("/{id}")
+    public String detail(@PathVariable Integer id,
+                         Model model,
+                         @ModelAttribute("msg") String msg,
+                         @ModelAttribute("err") String err) {
+        Contract contract = contractService.get(id);
+        model.addAttribute("contract", contract);
+        return "hr/contract_detail";
     }
 
-    @PostMapping("/{id}/update")
-    public String update(@PathVariable Integer id,
-                         @RequestParam("startDate") LocalDate startDate,
-                         @RequestParam(value = "endDate", required = false) LocalDate endDate,
-                         @RequestParam("baseSalary") BigDecimal baseSalary,
-                         @RequestParam("status") String status,
-                         RedirectAttributes ra) {
+    @PostMapping("/{id}/detail-update")
+    public String updateDetail(@PathVariable Integer id,
+                               @RequestParam("startDate") LocalDate startDate,
+                               @RequestParam(value = "endDate", required = false) LocalDate endDate,
+                               @RequestParam("baseSalary") BigDecimal baseSalary,
+                               @RequestParam("status") String status,
+                               @RequestParam("contractType") String contractType,
+                               RedirectAttributes ra) {
         try {
-            Contract c = contractService.update(id, startDate, endDate, baseSalary, status);
-            ra.addFlashAttribute("msg", "Updated contract!");
-            return "redirect:/hr/contracts?empId=" + c.getEmployee().getEmpId();
+            contractService.updateDetail(id, startDate, endDate, baseSalary, status, contractType);
+            ra.addFlashAttribute("msg", "Contract updated successfully.");
         } catch (Exception ex) {
             ra.addFlashAttribute("err", ex.getMessage());
-            return "redirect:/hr/contracts";
         }
+        return "redirect:/hr/contracts/" + id;
     }
 
     @PostMapping("/{id}/terminate")
@@ -70,12 +84,38 @@ public class HrContractController {
         try {
             Contract c = contractService.get(id);
             Integer empId = c.getEmployee().getEmpId();
+
             contractService.terminate(id);
-            ra.addFlashAttribute("msg", "Terminated contract!");
+
+            ra.addFlashAttribute("msg", "Contract terminated successfully.");
             return "redirect:/hr/contracts?empId=" + empId;
         } catch (Exception ex) {
             ra.addFlashAttribute("err", ex.getMessage());
             return "redirect:/hr/contracts";
         }
+    }
+
+    @PostMapping("/{id}/approve-official")
+    public String approveOfficial(@PathVariable Integer id,
+                                  RedirectAttributes ra) {
+        try {
+            contractService.approveOfficial(id);
+            ra.addFlashAttribute("msg", "Employee has been approved as active official staff.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("err", ex.getMessage());
+        }
+        return "redirect:/hr/contracts?expiringOnly=true";
+    }
+
+    @PostMapping("/{id}/reject")
+    public String reject(@PathVariable Integer id,
+                         RedirectAttributes ra) {
+        try {
+            contractService.rejectEmployee(id);
+            ra.addFlashAttribute("msg", "Employee has been rejected.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("err", ex.getMessage());
+        }
+        return "redirect:/hr/contracts?expiringOnly=true";
     }
 }

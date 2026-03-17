@@ -21,14 +21,15 @@ public interface PayrollManagerService {
     List<Integer> findBatchIdsByPayslipIds(List<Integer> payslipIds);
 
     void rejectPayslip(Integer payslipId);
+    void rejectPayslip(Integer accessEmpId, Integer rejectedByEmpId, Integer payslipId, String reason);
+
+    void deletePayslipFromBatch(Integer accessEmpId, Integer payslipId);
 
     List<PayrollRowDTO> listPayrollRowsForManager(Integer managerEmpId, String q, String status, Integer periodId);
 
     List<PayrollPeriodSummaryDTO> listPayrollPeriods();
 
     List<PayrollBatchSummaryDTO> listBatchesByPeriod(Integer periodId);
-
-    List<EmployeeSearchResultDTO> searchEmployeesForBatch(Integer batchId, String keyword);
 
     PayrollBatchDetailDTO viewBatchDetail(Integer batchId);
 
@@ -40,8 +41,18 @@ public interface PayrollManagerService {
 
     void approveBatch(Integer batchId, Integer approverEmpId);
 
-    void rejectBatch(Integer batchId);
+    void unlockPeriod(Integer periodId);
+
+    Integer deleteDraftBatch(Integer batchId);
+
+    void deletePeriod(Integer periodId);
+
+    void rejectBatch(Integer batchId, Integer rejectedByEmpId, String reason);
+
+    List<EmployeeSearchResultDTO> searchEmployeesForBatch(Integer managerEmpId, Integer batchId, String keyword);
+
+    Integer addEmployeeToPayroll(Integer managerEmpId, Integer batchId, Integer empId, BigDecimal baseSalary);
 
     List<PayrollBatchSummaryDTO> listDraftBatches();
-    Integer addEmployeeToPayroll(Integer batchId, Integer empId, BigDecimal baseSalary);
+
 }

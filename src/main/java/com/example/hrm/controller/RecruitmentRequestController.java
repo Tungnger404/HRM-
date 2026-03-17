@@ -25,31 +25,41 @@ public class RecruitmentRequestController {
     private final DepartmentRepository departmentRepository;
     private final JobPositionRepository jobPositionRepository;
 
-    // ✅ thêm để lấy emp từ Spring Security (không phá code cũ)
+
     private final CurrentEmployeeService currentEmployeeService;
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        model.addAttribute("dto", new RecruitmentRequestCreateDTO());
+        RecruitmentRequestCreateDTO dto = new RecruitmentRequestCreateDTO();
+        dto.setDeadline(java.time.LocalDate.now().plusDays(7));
+        model.addAttribute("dto", dto);
         model.addAttribute("departments", departmentRepository.findAll());
         model.addAttribute("jobs", jobPositionRepository.findAll());
         return "recruitment-request/create";
-
     }
 
     @PostMapping("/create")
     public String create(@ModelAttribute("dto") RecruitmentRequestCreateDTO dto,
                          Principal principal,
-                         HttpSession session) {
-
+                         HttpSession session,
+                         org.springframework.web.servlet.mvc.support.RedirectAttributes ra) { // Thêm RedirectAttributes
+        if (dto.getDeadline() != null && dto.getDeadline().isBefore(java.time.LocalDate.now())) {
+            ra.addFlashAttribute("err", "Hạn chót không được là ngày trong quá khứ!");
+            return "redirect:/recruitment-request/create";
+        }
         if (dto.getCreatorId() == null && principal != null) {
             Employee emp = currentEmployeeService.requireEmployee(principal);
             dto.setCreatorId(emp.getEmpId());
-            session.setAttribute("LOGIN_EMPLOYEE", emp); // giữ tương thích
+            session.setAttribute("LOGIN_EMPLOYEE", emp);
         }
 
-        recruitmentRequestService.createRecruitmentRequest(dto);
-        return "redirect:/recruitment-request/create?success=true";
+        try {
+            recruitmentRequestService.createRecruitmentRequest(dto);
+            return "redirect:/recruitment-request/create?success=true";
+        } catch (Exception e) {
+            ra.addFlashAttribute("err", "Lỗi hệ thống: " + e.getMessage());
+            return "redirect:/recruitment-request/create";
+        }
     }
 
     @GetMapping("/my-requests")

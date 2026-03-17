@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Từ chối Offer - HRM System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1+f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .success-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            max-width: 500px;
+            text-align: center;
+        }
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            background: #fef2f2;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            font-size: 40px;
+        }
+        .btn-home {
+            background: #1e293b;
+            color: white;
+            border-radius: 12px;
+            padding: 12px 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-home:hover {
+            background: #334155;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="success-card">
+    <div class="icon-circle">
+        <i class="bi bi-x-circle-fill"></i>
+    </div>
+    <h2 class="fw-bold mb-3">Xác nhận từ chối</h2>
+    <p class="text-muted mb-4">
+        Bạn đã từ chối lời mời làm việc thành công. Hệ thống đã ghi nhận phản hồi của bạn. Cảm ơn bạn đã quan tâm đến cơ hội nghề nghiệp tại công ty.
+    </p>
+    <a href="/careers" class="btn btn-home">Quay lại trang chủ</a>
+</div>
+
+</body>
+</html>

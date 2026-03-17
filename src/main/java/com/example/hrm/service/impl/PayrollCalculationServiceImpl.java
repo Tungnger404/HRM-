@@ -11,6 +11,8 @@ import com.example.hrm.service.PayrollCalculationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.hrm.entity.Employee;
+import com.example.hrm.repository.EmployeeRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,6 +28,7 @@ public class PayrollCalculationServiceImpl implements PayrollCalculationService 
     private final PayslipItemRepository itemRepo;
     private final PayslipRepository payslipRepo;
     private final PayrollBatchRepository batchRepo;
+    private final EmployeeRepository employeeRepo;
 
     @Override
     public PayslipComputation compute(Integer empId,
@@ -37,6 +40,18 @@ public class PayrollCalculationServiceImpl implements PayrollCalculationService 
                                       BigDecimal otHours) {
 
         BigDecimal base = nz(baseSalary).setScale(2, RoundingMode.HALF_UP);
+
+        if (empId != null) {
+            Employee emp = employeeRepo.findById(empId).orElse(null);
+            String empStatus = (emp == null || emp.getStatus() == null)
+                    ? ""
+                    : emp.getStatus().trim().toUpperCase();
+
+            if ("PROBATION".equals(empStatus)) {
+                base = base.multiply(BigDecimal.valueOf(0.85))
+                        .setScale(2, RoundingMode.HALF_UP);
+            }
+        }
         BigDecimal standard = nz(standardDays);
         BigDecimal actual = nz(actualDays);
         BigDecimal ot = nz(otHours);

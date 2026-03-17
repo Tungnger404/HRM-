@@ -26,53 +26,29 @@ public class JobPostingServiceImpl implements JobPostingService {
 
     @Override
     public List<JobPosting> getAll() {
-        autoExpire(); // Tự động cập nhật các tin hết hạn trước khi lấy danh sách
+        autoExpire();
         return repository.findAll();
     }
 
     @Override
     public void create(JobPostingCreateDTO dto) {
-
         RecruitmentRequest req = reqRepo.findById(dto.getReqId())
                 .orElseThrow(() -> new RuntimeException("Request not found"));
-
-        // Kiểm tra điều kiện luồng: Request phải được duyệt mới cho đăng tuyển
-        if (req.getStatus() != RecruitmentRequestStatus.APPROVED && req.getStatus() != RecruitmentRequestStatus.CLOSED) {
-            throw new RuntimeException("Recruitment Request must be APPROVED or CLOSED");
-        }
-
         JobDescription jd = jdRepo.findById(dto.getJdId())
                 .orElseThrow(() -> new RuntimeException("Job Description not found"));
-
-        if (jd.getStatus() != JobDescriptionStatus.ACTIVE) {
-            throw new RuntimeException("Job Description must be ACTIVE to publish");
-        }
-
-        // Validate ngày tháng
-        if (dto.getExpiryDate() != null && dto.getPublishDate() != null) {
-            if (dto.getExpiryDate().isBefore(dto.getPublishDate())) {
-                throw new RuntimeException("Expiry date must be after publish date");
-            }
-        }
-
         String slug = generateUniqueSlug(dto.getTitle());
-
-        // Ưu tiên lấy dữ liệu từ JD nếu các trường trong DTO bị trống (Auto-fill logic)
         String finalDescription = (dto.getDescription() == null || dto.getDescription().isBlank())
                 ? jd.getResponsibilities() : dto.getDescription();
-        String finalRequirements = (dto.getRequirements() == null || dto.getRequirements().isBlank())
-                ? jd.getRequirements() : dto.getRequirements();
-        String finalBenefits = (dto.getBenefits() == null || dto.getBenefits().isBlank())
-                ? jd.getBenefits() : dto.getBenefits();
-
+        String finalLocation = (dto.getLocation() == null || dto.getLocation().isBlank())
+                ? jd.getWorkingLocation() : dto.getLocation();
         JobPosting posting = JobPosting.builder()
                 .recruitmentRequest(req)
                 .jobDescription(jd)
                 .title(dto.getTitle())
                 .description(finalDescription)
-                .requirements(finalRequirements)
-                .benefits(finalBenefits)
-                .location(jd.getWorkingLocation()) // Lấy địa điểm từ JD
+                .requirements(dto.getRequirements() == null || dto.getRequirements().isBlank() ? jd.getRequirements() : dto.getRequirements())
+                .benefits(dto.getBenefits() == null || dto.getBenefits().isBlank() ? jd.getBenefits() : dto.getBenefits())
+                .location(finalLocation)
                 .publishDate(dto.getPublishDate())
                 .expiryDate(dto.getExpiryDate())
                 .status("OPEN")
@@ -80,11 +56,8 @@ public class JobPostingServiceImpl implements JobPostingService {
                 .isPublic(true)
                 .viewCount(0)
                 .build();
-
         repository.save(posting);
     }
-
-    // Các hàm changeStatus, delete, autoExpire giữ nguyên logic của bạn...
 
     @Override
     public void changeStatus(Integer id, String status) {
@@ -110,7 +83,6 @@ public class JobPostingServiceImpl implements JobPostingService {
         }
     }
 
-    // Luồng Public Career Page
     @Override
     public List<JobPosting> getPublicOpenJobs() {
         return repository.findByIsPublicTrueAndStatusAndExpiryDateAfter("OPEN", LocalDate.now());
@@ -152,4 +124,28 @@ public class JobPostingServiceImpl implements JobPostingService {
                 .replaceAll("-+", "-")
                 .replaceAll("^-|-$", "");
     }
+    @Override
+    public JobPosting getById(Integer id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tin tuyển dụng ID: " + id));
+    }
+
+    @Override
+    public void update(Integer id, JobPostingCreateDTO dto) {
+        JobPosting posting = getById(id);
+        posting.setTitle(dto.getTitle());
+        posting.setDescription(dto.getDescription());
+        posting.setRequirements(dto.getRequirements());
+        posting.setBenefits(dto.getBenefits());
+        posting.setLocation(dto.getLocation());
+        posting.setPublishDate(dto.getPublishDate());
+        posting.setExpiryDate(dto.getExpiryDate());
+        if (!posting.getRecruitmentRequest().getReqId().equals(dto.getReqId())) {
+            RecruitmentRequest req = reqRepo.findById(dto.getReqId()).orElseThrow();
+            posting.setRecruitmentRequest(req);
+        }
+
+        repository.save(posting);
+    }
+
 }

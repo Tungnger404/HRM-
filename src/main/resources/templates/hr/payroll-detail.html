@@ -1,0 +1,131 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>HR Payslip Detail</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-0">Payslip Detail</h2>
+            <div class="text-body-secondary small">HR xem chi tiết phiếu lương để đối soát</div>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="javascript:history.back()">Back</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <p class="mb-1"><b>Employee:</b> <span th:text="${p.employeeName}"></span></p>
+                    <p class="mb-1"><b>Employee Code:</b> <span th:text="${'NV' + p.empId}"></span></p>
+                    <p class="mb-1" th:if="${p.jobTitle != null and !#strings.isEmpty(p.jobTitle)}"><b>Job Title:</b> <span th:text="${p.jobTitle}"></span></p>
+                    <p class="mb-1" th:if="${p.email != null and !#strings.isEmpty(p.email)}"><b>Email:</b> <span th:text="${p.email}"></span></p>
+                    <p class="mb-0" th:if="${p.phone != null and !#strings.isEmpty(p.phone)}"><b>Phone:</b> <span th:text="${p.phone}"></span></p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><b>Period:</b> <span th:text="${p.period}"></span></p>
+                    <p class="mb-1"><b>Payslip ID:</b> <span th:text="${p.payslipId}"></span></p>
+                    <p class="mb-1"><b>Total Income:</b>
+                        <span th:text="${p.totalIncome == null ? '0' : #numbers.formatDecimal(p.totalIncome, 1, 'COMMA', 0, 'POINT')}"></span>
+                    </p>
+                    <p class="mb-1"><b>Total Deduction:</b>
+                        <span th:text="${p.totalDeduction == null ? '0' : #numbers.formatDecimal(p.totalDeduction, 1, 'COMMA', 0, 'POINT')}"></span>
+                    </p>
+                    <p class="mb-0"><b>Net Salary:</b>
+                        <span th:text="${p.netSalary == null ? '0' : #numbers.formatDecimal(p.netSalary, 1, 'COMMA', 0, 'POINT')}"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><b>Work & Calculation Details</b></div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <tbody>
+                <tr>
+                    <th style="width:240px;">Base Salary</th>
+                    <td class="text-end" th:text="${p.baseSalary == null ? '0' : #numbers.formatDecimal(p.baseSalary, 1, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+                <tr>
+                    <th>Standard Work Days</th>
+                    <td class="text-end" th:text="${p.standardWorkDays == null ? '0' : p.standardWorkDays}"></td>
+                </tr>
+                <tr>
+                    <th>Actual Work Days</th>
+                    <td class="text-end" th:text="${p.actualWorkDays == null ? '0' : p.actualWorkDays}"></td>
+                </tr>
+                <tr>
+                    <th>OT Hours</th>
+                    <td class="text-end" th:text="${p.otHours == null ? '0' : p.otHours}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><b>Income Items</b></div>
+                <div class="card-body table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th style="width:160px;">Code</th>
+                            <th>Name</th>
+                            <th class="text-end" style="width:200px;">Amount</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="it : ${p.items}" th:if="${it.type == 'INCOME'}">
+                            <td th:text="${it.code}"></td>
+                            <td th:text="${it.name}"></td>
+                            <td class="text-end" th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
+                        </tr>
+                        <tr th:if="${p.items == null or #lists.isEmpty(p.items.?[type == 'INCOME'])}">
+                            <td colspan="3" class="text-center text-muted">No income items</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><b>Deduction Items</b></div>
+                <div class="card-body table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th style="width:160px;">Code</th>
+                            <th>Name</th>
+                            <th class="text-end" style="width:200px;">Amount</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="it : ${p.items}" th:if="${it.type == 'DEDUCTION'}">
+                            <td th:text="${it.code}"></td>
+                            <td th:text="${it.name}"></td>
+                            <td class="text-end" th:text="${it.amount == null ? '0' : #numbers.formatDecimal(it.amount, 1, 'COMMA', 0, 'POINT')}"></td>
+                        </tr>
+                        <tr th:if="${p.items == null or #lists.isEmpty(p.items.?[type == 'DEDUCTION'])}">
+                            <td colspan="3" class="text-center text-muted">No deduction items</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -2,8 +2,10 @@ package com.example.hrm.service.impl;
 
 import com.example.hrm.entity.DocumentStatus;
 import com.example.hrm.entity.DocumentType;
+import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.EmployeeDocument;
 import com.example.hrm.repository.EmployeeDocumentRepository;
+import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.EmployeeDocumentService;
 import org.springframework.stereotype.Service;
@@ -12,16 +14,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-
 @Service
 public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
 
     private final EmployeeDocumentRepository repo;
     private final DocumentStorageService storage;
+    private final EmployeeRepository employeeRepository;
 
-    public EmployeeDocumentServiceImpl(EmployeeDocumentRepository repo, DocumentStorageService storage) {
+    public EmployeeDocumentServiceImpl(EmployeeDocumentRepository repo,
+                                       DocumentStorageService storage,
+                                       EmployeeRepository employeeRepository) {
         this.repo = repo;
         this.storage = storage;
+        this.employeeRepository = employeeRepository;
     }
 
     @Override
@@ -120,5 +125,12 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
     public EmployeeDocument get(Integer docId) {
         return repo.findById(docId)
                 .orElseThrow(() -> new IllegalArgumentException("Document not found: " + docId));
+    }
+
+    @Override
+    public List<Employee> findEmployeesForManagerDepartment(Integer managerDeptId, String q, String status) {
+        String qq = (q == null) ? "" : q.trim();
+        String st = (status == null) ? "" : status.trim();
+        return employeeRepository.searchEmployeesBySameDepartment(managerDeptId, qq, st);
     }
 }

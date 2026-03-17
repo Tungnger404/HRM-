@@ -6,7 +6,6 @@ import java.time.LocalDate;
 
 @Data
 public class JobPostingCreateDTO {
-
     private Integer reqId;
     private Integer jdId;
 
@@ -14,6 +13,9 @@ public class JobPostingCreateDTO {
     private String description;
     private String requirements;
     private String benefits;
+
+    private String location;
+    private String employmentType;
 
     private LocalDate publishDate;
     private LocalDate expiryDate;

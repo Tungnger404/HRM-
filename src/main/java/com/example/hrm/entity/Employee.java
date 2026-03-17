@@ -33,6 +33,7 @@ public class Employee {
     @Column(name = "phone", length = 20)
     private String phone;
 
+
     @Column(name = "address", length = 255)
     private String address;
 
@@ -57,6 +58,10 @@ public class Employee {
     // ✅ THÊM field này để EmployeeServiceImpl gọi được getJoinDate/setJoinDate
     @Column(name = "join_date")
     private LocalDate joinDate;
+
+    @Builder.Default
+    @Column(name = "include_in_payroll", nullable = false, columnDefinition = "bit default 0")
+    private Boolean includeInPayroll = false;
 
     // ✅ Compat: code cũ gọi getId()
     @Transient

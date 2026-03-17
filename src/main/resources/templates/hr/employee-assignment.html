@@ -11,8 +11,8 @@
 
   <style>
     .assignment-container{
-      max-width:1100px;
-      margin:28px auto;
+      max-width:1200px;
+      margin:30px auto;
       padding:0 20px;
     }
 
@@ -32,33 +32,34 @@
     }
 
     .assignment-title{
-      font-size:32px;
+      font-size:28px;
       font-weight:800;
       color:#1f2937;
-      line-height:1.2;
       margin:0;
+      line-height:1.2;
     }
 
     .assignment-subtitle{
+      margin:0;
       font-size:14px;
       color:#6b7280;
-      margin:0;
     }
 
     .btn{
-      height:40px;
-      padding:0 16px;
+      height:38px;
+      padding:0 14px;
       border-radius:10px;
       border:1px solid #d1d5db;
       background:#fff;
-      color:#111827;
       cursor:pointer;
       font-weight:700;
       text-decoration:none;
       display:inline-flex;
       align-items:center;
       justify-content:center;
+      gap:8px;
       transition:all .2s ease;
+      font-size:14px;
     }
 
     .btn:hover{
@@ -77,7 +78,6 @@
     }
 
     .btn-secondary{
-      background:#fff;
       color:#374151;
     }
 
@@ -104,7 +104,7 @@
 
     .assignment-grid{
       display:grid;
-      grid-template-columns:360px 1fr;
+      grid-template-columns:340px 1fr;
       gap:22px;
       align-items:start;
     }
@@ -113,7 +113,8 @@
       background:#fff;
       border:1px solid #e5e7eb;
       border-radius:18px;
-      box-shadow:0 10px 30px rgba(15, 23, 42, 0.05);
+      box-shadow:0 10px 28px rgba(15,23,42,.05);
+      overflow:hidden;
     }
 
     .card-header{
@@ -144,22 +145,22 @@
     }
 
     .employee-avatar{
-      width:56px;
-      height:56px;
+      width:64px;
+      height:64px;
       border-radius:50%;
-      background:linear-gradient(135deg, #2563eb, #1e40af);
+      background:linear-gradient(135deg,#2563eb,#1e40af);
       color:#fff;
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size:22px;
+      font-size:24px;
       font-weight:800;
       margin-bottom:14px;
-      box-shadow:0 8px 20px rgba(37, 99, 235, 0.25);
+      box-shadow:0 10px 20px rgba(37,99,235,.25);
     }
 
     .employee-name{
-      font-size:20px;
+      font-size:21px;
       font-weight:800;
       color:#111827;
       margin-bottom:4px;
@@ -187,9 +188,9 @@
     .info-label{
       font-size:12px;
       font-weight:800;
+      text-transform:uppercase;
       letter-spacing:.04em;
       color:#6b7280;
-      text-transform:uppercase;
       margin-bottom:6px;
     }
 
@@ -198,6 +199,41 @@
       font-weight:700;
       color:#111827;
       word-break:break-word;
+    }
+
+    .summary-box{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:14px;
+      margin-bottom:20px;
+    }
+
+    .summary-item{
+      border:1px dashed #dbeafe;
+      background:#f8fbff;
+      border-radius:14px;
+      padding:14px;
+    }
+
+    .summary-item-title{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:#6b7280;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+
+    .summary-item-value{
+      font-size:15px;
+      font-weight:700;
+      color:#0f172a;
+    }
+
+    .section-divider{
+      height:1px;
+      background:#f1f5f9;
+      margin:22px 0;
     }
 
     .form-grid{
@@ -250,7 +286,7 @@
     }
 
     .textarea{
-      min-height:120px;
+      min-height:110px;
       resize:vertical;
     }
 
@@ -264,43 +300,72 @@
       display:flex;
       justify-content:flex-end;
       gap:12px;
-      padding-top:8px;
       flex-wrap:wrap;
+      padding-top:8px;
     }
 
-    .section-divider{
-      height:1px;
-      background:#f1f5f9;
-      margin:22px 0;
-    }
-
-    .summary-box{
+    .history-grid{
       display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:14px;
-      margin-top:4px;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+      margin-top:22px;
     }
 
-    .summary-item{
-      border:1px dashed #dbeafe;
-      background:#f8fbff;
-      border-radius:14px;
-      padding:14px;
+    .table-wrap{
+      overflow:auto;
     }
 
-    .summary-item-title{
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:520px;
+    }
+
+    .table th,
+    .table td{
+      padding:12px 14px;
+      border-bottom:1px solid #eef2f7;
+      text-align:left;
+      vertical-align:top;
+      font-size:14px;
+    }
+
+    .table th{
       font-size:12px;
       text-transform:uppercase;
-      letter-spacing:.05em;
-      color:#6b7280;
+      letter-spacing:.04em;
+      color:#64748b;
+      background:#f8fafc;
       font-weight:800;
-      margin-bottom:8px;
     }
 
-    .summary-item-value{
-      font-size:15px;
+    .muted{
+      color:#64748b;
+      font-size:13px;
+    }
+
+    .empty-box{
+      border:1px dashed #d1d5db;
+      border-radius:14px;
+      background:#f8fafc;
+      padding:18px;
+      color:#64748b;
+      font-size:14px;
+      text-align:center;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:28px;
+      height:28px;
+      padding:0 10px;
+      border-radius:999px;
+      font-size:12px;
       font-weight:700;
-      color:#0f172a;
+      background:#eef2ff;
+      color:#4338ca;
     }
 
     @media (max-width: 960px){
@@ -312,8 +377,9 @@
         position:static;
       }
 
+      .summary-box,
       .form-grid,
-      .summary-box{
+      .history-grid{
         grid-template-columns:1fr;
       }
     }
@@ -328,13 +394,12 @@
       <div class="assignment-title-wrap">
         <h1 class="assignment-title">Change Department / Job</h1>
         <p class="assignment-subtitle">
-          HR can transfer employee to another department and assign a new active job position
         </p>
       </div>
 
       <a class="btn btn-secondary"
          th:href="@{'/hr/employees/' + ${employee.empId}}">
-        Back to Employee Detail
+        ← Back to Employee Detail
       </a>
     </div>
 
@@ -343,16 +408,18 @@
 
     <div class="assignment-grid">
 
+      <!-- LEFT PANEL -->
       <div class="employee-panel">
         <div class="card">
           <div class="card-header">
             <h2 class="card-title">Employee Information</h2>
-            <p class="card-subtitle">Current assignment details</p>
+            <p class="card-subtitle">Current assignment overview</p>
           </div>
 
           <div class="card-body">
             <div class="employee-avatar"
                  th:text="${employee.fullName != null && !#strings.isEmpty(employee.fullName) ? #strings.substring(employee.fullName,0,1).toUpperCase() : 'E'}">
+              E
             </div>
 
             <div class="employee-name" th:text="${employee.fullName}">Employee Name</div>
@@ -379,9 +446,16 @@
               </div>
 
               <div class="info-item">
-                <div class="info-label">Instruction</div>
+                <div class="info-label">History Summary</div>
                 <div class="info-value" style="font-weight:600; color:#475569;">
-                  Department is loaded from database. Job dropdown only shows active positions.
+                  <div style="margin-bottom:8px;">
+                    Department changes:
+                    <span class="badge" th:text="${#lists.size(deptHistories)}">0</span>
+                  </div>
+                  <div>
+                    Job changes:
+                    <span class="badge" th:text="${#lists.size(jobHistories)}">0</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -389,7 +463,10 @@
         </div>
       </div>
 
+
+      <!-- RIGHT PANEL -->
       <div>
+        <!-- FORM -->
         <div class="card">
           <div class="card-header">
             <h2 class="card-title">Update Assignment</h2>
@@ -414,7 +491,7 @@
                   <div class="summary-item-title">Current Job</div>
                   <div class="summary-item-value"
                        th:text="${employee.jobPosition != null ? employee.jobPosition.title : '-'}">
-                    DEV
+                    Developer
                   </div>
                 </div>
               </div>
@@ -431,7 +508,7 @@
                             th:text="${d.deptName}">
                     </option>
                   </select>
-                  <div class="hint">All departments are loaded from database.</div>
+
                 </div>
 
                 <div class="field">
@@ -443,7 +520,7 @@
                             th:text="${j.title}">
                     </option>
                   </select>
-                  <div class="hint">Only active jobs are displayed here.</div>
+
                 </div>
 
                 <div class="field field-full">
@@ -454,7 +531,7 @@
                             class="textarea"
                             th:field="*{reason}"
                             placeholder="Enter the reason for changing department or job position..."></textarea>
-                  <div class="hint">Example: Internal transfer, promotion, organization change...</div>
+
                 </div>
               </div>
 
@@ -467,6 +544,99 @@
               </div>
             </form>
           </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="history-grid">
+
+          <!-- DEPARTMENT HISTORY -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Department Transfer History</h2>
+
+            </div>
+
+            <div class="card-body">
+              <div th:if="${#lists.isEmpty(deptHistories)}" class="empty-box">
+                No department transfer history yet.
+              </div>
+
+              <div th:if="${!#lists.isEmpty(deptHistories)}" class="table-wrap">
+                <table class="table">
+                  <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Reason</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr th:each="h : ${deptHistories}">
+                    <td th:text="${h.transferDate}">2026-03-15</td>
+                    <td th:text="${h.fromDepartment != null ? h.fromDepartment.deptName : '-'}">IT</td>
+                    <td th:text="${h.toDepartment != null ? h.toDepartment.deptName : '-'}">HR</td>
+                    <td>
+                      <div th:text="${h.reason != null && !#strings.isEmpty(h.reason) ? h.reason : '-'}">
+                        Internal transfer
+                      </div>
+                      <div class="muted"
+                           th:if="${h.createdAt != null}"
+                           th:text="'Created at: ' + ${#temporals.format(h.createdAt, 'yyyy-MM-dd HH:mm')}">
+                        Created at: 2026-03-15 10:20
+                      </div>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- JOB HISTORY -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Job Change History</h2>
+
+            </div>
+
+            <div class="card-body">
+              <div th:if="${#lists.isEmpty(jobHistories)}" class="empty-box">
+                No job change history yet.
+              </div>
+
+              <div th:if="${!#lists.isEmpty(jobHistories)}" class="table-wrap">
+                <table class="table">
+                  <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Reason</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr th:each="h : ${jobHistories}">
+                    <td th:text="${h.changeDate}">2026-03-15</td>
+                    <td th:text="${h.fromJob != null ? h.fromJob.title : '-'}">Developer</td>
+                    <td th:text="${h.toJob != null ? h.toJob.title : '-'}">Senior Developer</td>
+                    <td>
+                      <div th:text="${h.reason != null && !#strings.isEmpty(h.reason) ? h.reason : '-'}">
+                        Promotion
+                      </div>
+                      <div class="muted"
+                           th:if="${h.createdAt != null}"
+                           th:text="'Created at: ' + ${#temporals.format(h.createdAt, 'yyyy-MM-dd HH:mm')}">
+                        Created at: 2026-03-15 10:20
+                      </div>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

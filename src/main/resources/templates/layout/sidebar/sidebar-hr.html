@@ -34,6 +34,17 @@
 
     <li class="nav-item">
       <a class="nav-link"
+         th:href="@{/hr/contracts}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/contracts')} ? 'active' : ''">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-file"></use>
+        </svg>
+        Contract Management
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link"
          th:href="@{/hr/job-positions}"
          th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">
         <svg class="nav-icon">
@@ -43,16 +54,75 @@
       </a>
     </li>
 
+    <li class="nav-title">Payroll</li>
+
+    <li class="nav-group"
+        th:classappend="${#strings.startsWith(currentUri, '/hr/payroll') or #strings.startsWith(currentUri, '/hr/inquiries')} ? 'show' : ''">
+      <a class="nav-link nav-group-toggle" href="#">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-money"></use>
+        </svg>
+        Payroll
+      </a>
+
+      <ul class="nav-group-items">
+        <li class="nav-item">
+          <a class="nav-link"
+             th:href="@{/hr/payroll/payslips}"
+             th:classappend="${#strings.startsWith(currentUri, '/hr/payroll/payslips')} ? 'active' : ''">
+            <span class="nav-icon"></span>
+            Payslips
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link"
+             th:href="@{/hr/payroll/rejected}"
+             th:classappend="${#strings.startsWith(currentUri, '/hr/payroll/rejected')} ? 'active' : ''">
+            <span class="nav-icon"></span>
+            Rejected Payslips
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link"
+             th:href="@{/hr/inquiries}"
+             th:classappend="${#strings.startsWith(currentUri, '/hr/inquiries')} ? 'active' : ''">
+            <span class="nav-icon"></span>
+            Payroll Inquiries
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link"
+             th:href="@{/hr/payroll/periods}"
+             th:classappend="${#strings.startsWith(currentUri, '/hr/payroll/periods')} ? 'active' : ''">
+            <span class="nav-icon"></span>
+            Payroll Periods
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link"
+             th:href="@{/hr/payroll/benefits}"
+             th:classappend="${#strings.startsWith(currentUri, '/hr/payroll/benefits')} ? 'active' : ''">
+            <span class="nav-icon"></span>
+            Benefits
+          </a>
+        </li>
+      </ul>
+    </li>
+
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/view-request}">
-      <!--   th:classappend="${#strings.startsWith(currentUri, '/hr/job-positions')} ? 'active' : ''">-->
         <svg class="nav-icon">
           <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-briefcase"></use>
         </svg>
         View Request
       </a>
     </li>
+
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/schedules/monthly}"
@@ -63,6 +133,7 @@
         Monthly Shift Schedule
       </a>
     </li>
+
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/shifts}"
@@ -89,6 +160,7 @@
         Shift Assignments
       </a>
     </li>
+
     <li class="nav-title">Evaluation & KPI</li>
 
     <li class="nav-group" th:classappend="${#strings.startsWith(currentUri, '/hr/kpi')} ? 'show' : ''">
@@ -98,7 +170,7 @@
       </a>
       <ul class="nav-group-items compact">
         <li class="nav-item">
-          <a class="nav-link" th:href="@{/hr/kpi/configure}" 
+          <a class="nav-link" th:href="@{/hr/kpi/configure}"
              th:classappend="${#strings.endsWith(currentUri, '/configure')} ? 'active' : ''">
             <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
             Send Template
@@ -113,7 +185,6 @@
         </li>
       </ul>
     </li>
-
 
     <li class="nav-title">RECRUITMENT MANAGEMENT</li>
 

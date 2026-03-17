@@ -6,6 +6,7 @@ import com.example.hrm.entity.CandidateStatus;
 import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.User;
 import com.example.hrm.repository.CandidateRepository;
+import com.example.hrm.repository.DepartmentRepository;
 import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.repository.UserRepository;
 import com.example.hrm.service.EmployeeService;
@@ -19,21 +20,25 @@ import java.util.List;
 
 @Service
 @Transactional
+
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository repo;
     private final CandidateRepository candidateRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DepartmentRepository departmentRepository;
 
     public EmployeeServiceImpl(EmployeeRepository repo,
                                CandidateRepository candidateRepository,
                                UserRepository userRepository,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder,
+                               DepartmentRepository departmentRepository) { // Thêm vào đây
         this.repo = repo;
         this.candidateRepository = candidateRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.departmentRepository = departmentRepository; // Và gán ở đây
     }
 
     @Override
@@ -62,6 +67,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         if (e.getJoinDate() == null) {
             e.setJoinDate(LocalDate.now());
+        }
+
+        if (e.getIncludeInPayroll() == null) {
+            e.setIncludeInPayroll(false);
         }
 
         return repo.save(e);
@@ -171,15 +180,19 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void createEmployeeFromCandidate(Integer candidateId,
-                                            LocalDate joinDate) {
+    @Transactional
+    public void createEmployeeFromCandidate(Integer candidateId, LocalDate joinDate,
+                                            Integer jobId, Integer deptId,
+                                            String identityCard, String taxCode) {
 
-        Candidate candidate = candidateRepository.findById(candidateId)
-                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+        Integer managerId = departmentRepository.findManagerIdByDeptId(deptId);
 
-        if (candidate.getStatus() != CandidateStatus.ONBOARDING) {
-            throw new RuntimeException("Candidate not in onboarding stage");
+        if (managerId == null) {
+            managerId = 3;
         }
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ứng viên"));
+
 
         User user = User.builder()
                 .username(candidate.getEmail())
@@ -189,20 +202,43 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
-
         user = userRepository.save(user);
+
 
         Employee employee = Employee.builder()
                 .userId(user.getUserId())
                 .fullName(candidate.getFullName())
                 .phone(candidate.getPhone())
+                .gender(candidate.getGender())
+                .dob(candidate.getDob())
+                .address(candidate.getAddress())
+                .identityCard(identityCard)
+                .taxCode(taxCode)
                 .status("PROBATION")
                 .joinDate(joinDate != null ? joinDate : LocalDate.now())
+                .includeInPayroll(false)
+                .jobId(jobId)
+                .deptId(deptId)
+                .directManagerId(managerId)
                 .build();
-
         repo.save(employee);
 
         candidate.setStatus(CandidateStatus.HIRED);
         candidateRepository.save(candidate);
+    }
+
+    @Override
+    public List<Employee> listManagedByDepartment(Integer managerDeptId, String q, String status) {
+        List<Employee> employees = repo.findByDeptIdOrderByFullNameAsc(managerDeptId);
+
+        String keyword = q == null ? "" : q.trim().toLowerCase();
+        String st = status == null ? "" : status.trim().toUpperCase();
+
+        return employees.stream()
+                .filter(e -> keyword.isBlank()
+                        || (e.getFullName() != null && e.getFullName().toLowerCase().contains(keyword)))
+                .filter(e -> st.isBlank()
+                        || (e.getStatus() != null && e.getStatus().equalsIgnoreCase(st)))
+                .toList();
     }
 }

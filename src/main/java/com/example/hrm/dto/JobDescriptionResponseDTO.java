@@ -13,6 +13,7 @@ public class JobDescriptionResponseDTO {
     private String workingLocation;
     private JobDescriptionStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String responsibilities;
     private String requirements;
     private String benefits;

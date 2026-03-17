@@ -34,7 +34,9 @@ public class AdminProfileController {
         }
 
         Optional<User> uOpt = userRepo.findByUsername(principal);
-        if (uOpt.isEmpty()) uOpt = userRepo.findByEmail(principal);
+        if (uOpt.isEmpty()) {
+            uOpt = userRepo.findByEmail(principal);
+        }
 
         if (uOpt.isEmpty()) {
             model.addAttribute("err", "User not found for: " + principal);
@@ -47,6 +49,6 @@ public class AdminProfileController {
         Employee e = employeeRepo.findByUserId(u.getUserId()).orElse(null);
         model.addAttribute("e", e);
 
-        return "admin/profile"; // templates/admin/profile.html
+        return "admin/profile";
     }
 }

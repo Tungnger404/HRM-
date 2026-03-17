@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}"
+      th:with="sidebar='sidebar-hr'">
+
+<head>
+    <title>Edit Job Posting</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script th:inline="javascript">
+        // Hàm xuất file PDF
+        function exportToPDF() {
+            // Chọn vùng nội dung cần xuất (Cột bên phải: Posting Content)
+            const element = document.getElementById('pdf-content');
+            const jobTitle = document.getElementById('titleInput').value || 'Job_Posting';
+
+            // Cấu hình xuất file
+            const opt = {
+                margin:       [15, 15],
+                filename:     'Job_Posting_' + jobTitle + '.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Thực hiện chuyển đổi và tải về
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Hàm tự động bốc dữ liệu từ JD sang các ô nhập liệu
+        function forceAutofill(selectElement) {
+            const id = selectElement.value;
+            if (!id) return;
+
+            selectElement.disabled = true;
+
+            fetch('/api/jd/' + id)
+                .then(response => {
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    return response.json();
+                })
+                .then(data => {
+                    const mapping = {
+                        "titleInput": data.title,
+                        "descriptionInput": data.responsibilities,
+                        "requirementsInput": data.requirements,
+                        "benefitsInput": data.benefits
+                    };
+
+                    for (let fieldId in mapping) {
+                        const el = document.getElementById(fieldId);
+                        if (el) {
+                            el.value = mapping[fieldId] || "";
+                            el.style.backgroundColor = "#fffbeb";
+                            el.style.border = "2px solid #f59e0b";
+                            setTimeout(() => {
+                                el.style.backgroundColor = "";
+                                el.style.border = "";
+                            }, 1000);
+                        }
+                    }
+                })
+                .catch(error => console.error("Error fetching JD:", error))
+                .finally(() => {
+                    selectElement.disabled = false;
+                });
+        }
+
+        // Logic kiểm tra ngày tháng
+        document.addEventListener('DOMContentLoaded', function() {
+            const publishInput = document.querySelector('input[name="publishDate"]');
+            const expiryInput = document.querySelector('input[name="expiryDate"]');
+
+            function checkDateLogic() {
+                if (publishInput.value && expiryInput.value) {
+                    const d1 = new Date(publishInput.value);
+                    const d2 = new Date(expiryInput.value);
+
+                    if (d2 < d1) {
+                        alert("Lỗi: Ngày hết hạn không thể trước ngày đăng tin!");
+                        expiryInput.value = "";
+                    }
+                }
+            }
+
+            if(publishInput) publishInput.addEventListener('change', checkDateLogic);
+            if(expiryInput) expiryInput.addEventListener('change', checkDateLogic);
+        });
+        function copyPostingLink() {
+            const baseUrl = window.location.origin;
+
+            // Giả sử bạn có biến jobSlug từ Backend trả về (ví dụ: 'developer')
+            // Nếu không có slug, bạn có thể lấy giá trị từ ô titleInput rồi biến đổi thành không dấu
+            const title = document.getElementById('titleInput').value
+                .toLowerCase()
+                .replace(/ /g, '-')
+                .replace(/[^\w-]+/g, '');
+
+            const publicLink = `${baseUrl}/careers/${title}`;
+
+            navigator.clipboard.writeText(publicLink).then(() => {
+                alert("Đã copy link: " + publicLink);
+            });
+        }
+    </script>
+
+    <style>
+        /* Tối ưu khi xuất PDF: Ẩn các nút bấm trong file PDF */
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+
+<body>
+<main layout:fragment="content">
+    <div class="container py-4">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold text-dark">Edit Job Posting</h2>
+                <p class="text-muted">Chỉnh sửa thông tin bài đăng tuyển dụng ID: <span th:text="${postingId}" class="fw-bold text-primary"></span></p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary rounded-pill px-4 shadow-sm" onclick="copyPostingLink()">
+                    <i class="fas fa-link me-2"></i>Copy Link
+                </button>
+                <button type="button" class="btn btn-danger rounded-pill px-4 shadow-sm" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>Xuất PDF
+                </button>
+                <a th:href="@{/hr/job-posting}" class="btn btn-outline-secondary rounded-pill">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${err}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${err}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <form th:action="@{/hr/job-posting/edit/{id}(id=${postingId})}" th:object="${dto}" method="post">
+            <div class="row g-4">
+
+                <div class="col-lg-4">
+                    <div class="card p-4 shadow-sm border-0" style="border-radius: 15px;">
+                        <h5 class="fw-bold text-warning mb-4"><i class="fas fa-cog me-2"></i>Settings</h5>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Recruitment Request</label>
+                            <select class="form-select border-warning" th:field="*{reqId}" required>
+                                <option th:each="r : ${requests}"
+                                        th:value="${r.reqId}"
+                                        th:text="'Request #' + ${r.reqId} + ' (' + ${r.jobPosition.title} + ')'">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Job Description Template</label>
+                            <select id="jdSelect" class="form-select border-warning" th:field="*{jdId}"
+                                    onchange="forceAutofill(this)" required>
+                                <option th:each="jd : ${descriptions}"
+                                        th:value="${jd.id}"
+                                        th:text="'JD #' + ${jd.id} + ' - ' + ${jd.job.title}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Ngày đăng tin</label>
+                            <input type="date" class="form-control" th:field="*{publishDate}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Ngày hết hạn</label>
+                            <input type="date" class="form-control" th:field="*{expiryDate}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div id="pdf-content" class="card p-4 shadow-sm border-0" style="border-radius: 15px;">
+                        <h5 class="fw-bold text-primary mb-4 no-print"><i class="fas fa-edit me-2"></i>Posting Content</h5>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Tiêu đề bài đăng</label>
+                            <input type="text" id="titleInput" class="form-control form-control-lg fw-bold border-primary"
+                                   th:field="*{title}" placeholder="Nhập tiêu đề hấp dẫn..." required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Mô tả công việc (Responsibilities)</label>
+                            <textarea id="descriptionInput" class="form-control" rows="6"
+                                      th:field="*{description}" placeholder="Mô tả các nhiệm vụ chính..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Yêu cầu ứng viên (Requirements)</label>
+                            <textarea id="requirementsInput" class="form-control" rows="6"
+                                      th:field="*{requirements}" placeholder="Kỹ năng, kinh nghiệm cần thiết..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Quyền lợi (Benefits)</label>
+                            <textarea id="benefitsInput" class="form-control" rows="4"
+                                      th:field="*{benefits}" placeholder="Chế độ lương thưởng, bảo hiểm..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Địa điểm làm việc</label>
+                            <input type="text" class="form-control" th:field="*{location}" placeholder="Ví dụ: Hà Nội, Remote...">
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-3 mt-2 no-print" data-html2canvas-ignore="true">
+                            <button type="reset" class="btn btn-light px-4 rounded-pill">
+                                <i class="fas fa-undo me-2"></i>Hoàn tác
+                            </button>
+                            <button type="submit" class="btn btn-primary px-5 rounded-pill fw-bold shadow-sm">
+                                <i class="fas fa-save me-2"></i>Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

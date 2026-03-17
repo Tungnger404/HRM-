@@ -1,14 +1,15 @@
 package com.example.hrm.controller;
 
-import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.entity.Contract;
 import com.example.hrm.repository.ContractRepository;
-
+import com.example.hrm.repository.EmployeeRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Controller
 public class DashbroadController {
@@ -49,7 +50,6 @@ public class DashbroadController {
         return "auth/AdminDashbroad";
     }
 
-    // ✅ CORE HR DASHBOARD
     @GetMapping("/dashboard/hr")
     public String hrDash(Model model) {
 
@@ -58,20 +58,21 @@ public class DashbroadController {
         LocalDate today = LocalDate.now();
         LocalDate next30Days = today.plusDays(30);
 
-        long expiringContracts =
-                contractRepository.countByEndDateBetween(today, next30Days);
+        long expiringContracts = contractRepository.countExpiringActiveContracts(today, next30Days);
 
         long active = employeeRepository.countByStatus("ACTIVE");
         long inactive = employeeRepository.countByStatus("INACTIVE");
         long resigned = employeeRepository.countByStatus("RESIGNED");
 
-        model.addAttribute("sidebar", "sidebar-hr.html");
+        List<Contract> expiringContractList = contractRepository.findExpiringActiveContracts(today, next30Days);
 
+        model.addAttribute("sidebar", "sidebar-hr.html");
         model.addAttribute("totalEmployees", totalEmployees);
         model.addAttribute("expiringContracts", expiringContracts);
         model.addAttribute("active", active);
         model.addAttribute("inactive", inactive);
         model.addAttribute("resigned", resigned);
+        model.addAttribute("expiringContractList", expiringContractList);
 
         return "auth/HrDashbroad";
     }

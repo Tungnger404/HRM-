@@ -284,6 +284,16 @@
             tomorrow.setDate(tomorrow.getDate() + 1);
             dateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
         }
+
+        const publishInput = document.getElementById('publishDate');
+        const expiryInput = document.getElementById('expiryDate');
+
+        publishInput.addEventListener('change', function() {
+            expiryInput.setAttribute('min', this.value);
+            if (expiryInput.value && expiryInput.value < this.value) {
+                expiryInput.value = this.value;
+            }
+        });
     });
 </script>
 

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -59,4 +60,13 @@ public class Payslip {
     @Column(name = "slip_status", nullable = false, length = 20)
     @Builder.Default
     private String slipStatus = "ACTIVE";
+
+    @Column(name = "reject_reason", length = 1000)
+    private String rejectReason;
+
+    @Column(name = "rejected_by")
+    private Integer rejectedBy;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
 }

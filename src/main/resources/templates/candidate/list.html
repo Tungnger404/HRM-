@@ -12,12 +12,8 @@
         .filter-card { border: none; border-radius: 15px; background: #f8fafc; border: 1px solid #e2e8f0; }
         .table-card { border: none; border-radius: 15px; overflow: hidden; }
         .candidate-table thead th {
-            background-color: #f1f5f9;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-            color: #475569;
+            background-color: #f1f5f9; text-transform: uppercase; font-size: 0.75rem;
+            letter-spacing: 0.5px; font-weight: 700; color: #475569;
         }
         .status-badge { font-weight: 600; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; }
         .score-indicator {
@@ -25,11 +21,11 @@
             border-radius: 50%; font-weight: 700; background: #f1f5f9;
         }
         .batch-action-bar {
-            position: sticky; bottom: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; background: #1e293b; color: white; padding: 12px 25px;
-            border-radius: 50px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            display: none; /* Hiện lên bằng JS khi có checkbox được chọn */
-            align-items: center; gap: 20px;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; background: #1e293b; color: white !important;
+            padding: 12px 30px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: none; align-items: center; justify-content: center; gap: 20px;
+            min-width: 380px; border: 1px solid rgba(255,255,255,0.1);
         }
     </style>
 </head>
@@ -49,7 +45,6 @@
             <div class="card-body p-3">
                 <form method="get" th:action="@{/hr/candidates}" class="row g-2 align-items-center">
                     <input type="hidden" name="postingId" th:value="${postingId}" />
-
                     <div class="col-md-5">
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
@@ -57,14 +52,12 @@
                                    placeholder="Search by name or email..." th:value="${keyword}">
                         </div>
                     </div>
-
                     <div class="col-md-3">
                         <select name="status" class="form-select">
                             <option value="">-- Filter by Status --</option>
                             <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${status == s}"></option>
                         </select>
                     </div>
-
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100 fw-bold">Apply</button>
                     </div>
@@ -97,7 +90,7 @@
                             <tr th:each="c : ${candidates}">
                                 <td class="ps-4">
                                     <input type="checkbox" name="candidateIds" th:value="${c.candidateId}"
-                                           th:if="${c.status == T(com.example.hrm.entity.CandidateStatus).SCREENING}"
+                                           th:if="${c.status.name() == 'SCREENING'}"
                                            class="form-check-input candidate-checkbox">
                                 </td>
                                 <td class="text-start">
@@ -105,14 +98,14 @@
                                     <small class="text-muted" th:text="${c.email}">email@example.com</small>
                                 </td>
                                 <td>
-                                        <span th:switch="${c.status.name()}">
-                                            <span th:case="'APPLIED'" class="badge status-badge bg-secondary-subtle text-secondary border border-secondary">APPLIED</span>
-                                            <span th:case="'SCREENING'" class="badge status-badge bg-info-subtle text-info border border-info">SCREENING</span>
-                                            <span th:case="'INTERVIEWING'" class="badge status-badge bg-primary-subtle text-primary border border-primary">INTERVIEWING</span>
-                                            <span th:case="'PASSED'" class="badge status-badge bg-success-subtle text-success border border-success">PASSED</span>
-                                            <span th:case="'REJECTED'" class="badge status-badge bg-danger-subtle text-danger border border-danger">REJECTED</span>
-                                            <span th:case="*" class="badge status-badge bg-light text-dark border" th:text="${c.status}"></span>
-                                        </span>
+                                    <span th:switch="${c.status.name()}">
+                                        <span th:case="'APPLIED'" class="badge status-badge bg-secondary-subtle text-secondary border border-secondary">APPLIED</span>
+                                        <span th:case="'SCREENING'" class="badge status-badge bg-info-subtle text-info border border-info">SCREENING</span>
+                                        <span th:case="'INTERVIEWING'" class="badge status-badge bg-primary-subtle text-primary border border-primary">INTERVIEWING</span>
+                                        <span th:case="'PASSED'" class="badge status-badge bg-success-subtle text-success border border-success">PASSED</span>
+                                        <span th:case="'REJECTED'" class="badge status-badge bg-danger-subtle text-danger border border-danger">REJECTED</span>
+                                        <span th:case="*" class="badge status-badge bg-light text-dark border" th:text="${c.status}"></span>
+                                    </span>
                                 </td>
                                 <td>
                                     <div th:if="${c.screeningScore != null}"
@@ -122,17 +115,19 @@
                                     <span th:if="${c.screeningScore == null}" class="text-muted small">--</span>
                                 </td>
                                 <td class="pe-4">
-                                    <a th:href="@{/hr/candidates/detail/{id}(id=${c.candidateId}, postingId=${postingId})}"
-                                       class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                        <i class="bi bi-eye me-1"></i> View Detail
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <tr th:if="${#lists.isEmpty(candidates)}">
-                                <td colspan="5" class="py-5 text-muted">
-                                    <i class="bi bi-person-x fs-1 d-block mb-2 opacity-25"></i>
-                                    No candidates found for this criteria.
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <a th:href="@{/hr/candidates/detail/{id}(id=${c.candidateId}, postingId=${postingId})}"
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        <button th:if="${c.status.name() == 'SCREENING'}"
+                                                type="button"
+                                                class="btn btn-sm btn-warning rounded-pill px-3 fw-bold"
+                                                th:data-id="${c.candidateId}"
+                                                onclick="openModalForOne(this)">
+                                            <i class="bi bi-calendar-plus"></i> Schedule
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             </tbody>
@@ -142,72 +137,130 @@
             </div>
 
             <div id="stickyBar" class="batch-action-bar">
-                <span class="small fw-bold"><i class="bi bi-check2-all me-2"></i> <span id="selectedCount">0</span> selected</span>
-                <button type="button" class="btn btn-warning btn-sm fw-bold rounded-pill px-3"
-                        data-bs-toggle="modal" data-bs-target="#batchModal">
-                    <i class="bi bi-calendar-plus me-1"></i> Schedule Interview
+                <span class="fw-bold"><i class="bi bi-check2-all me-2"></i><span id="selectedCount">0</span> selected</span>
+                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="showModal()">
+                    <i class="bi bi-calendar-plus me-2"></i> Schedule Interview
                 </button>
             </div>
         </form>
 
-        <div class="modal fade" id="batchModal" tabindex="-1">
+        <div class="modal fade" id="batchModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 3000;">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
                     <div class="modal-header bg-warning text-white py-3 border-0" style="border-radius: 20px 20px 0 0;">
-                        <h5 class="modal-title fw-bold"><i class="bi bi-calendar-event me-2"></i>Batch Interview Schedule</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        <h5 class="modal-title fw-bold"><i class="bi bi-calendar-event me-2"></i>Interview Schedule</h5>
+                        <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
                         <div class="mb-4">
                             <label class="form-label fw-bold small text-muted text-uppercase">Date & Time</label>
-                            <input type="datetime-local" name="interviewDate" class="form-control form-control-lg bg-light border-0" form="batchForm" required>
+                            <input type="datetime-local" id="mDate" class="form-control form-control-lg bg-light border-0" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-muted text-uppercase">Location / Method</label>
-                            <input type="text" name="location" class="form-control form-control-lg bg-light border-0"
-                                   placeholder="Office Room 302 or Google Meet link..." form="batchForm" required>
+                            <input type="text" id="mLoc" class="form-control form-control-lg bg-light border-0" placeholder="Office Room 302..." required>
                         </div>
                     </div>
                     <div class="modal-footer border-0 p-4">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" form="batchForm" class="btn btn-warning rounded-pill px-4 fw-bold">
-                            Confirm & Send Invitation
-                        </button>
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-coreui-dismiss="modal">Cancel</button>
+                        <button type="button" id="btnConfirmSubmit" onclick="submitBatch()" class="btn btn-warning rounded-pill px-4 fw-bold">Confirm</button>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
 <script layout:fragment="script">
-    const selectAll = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.candidate-checkbox');
-    const stickyBar = document.getElementById('stickyBar');
-    const countDisplay = document.getElementById('selectedCount');
+    // Hàm để thiết lập ngày tối thiểu là hiện tại
+    function setMinDateTime() {
+        const now = new Date();
+        // Chuyển múi giờ về đúng định dạng ISO (YYYY-MM-DDTHH:MM) mà input yêu cầu
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const minDateTime = now.toISOString().slice(0, 16);
+        document.getElementById('mDate').setAttribute('min', minDateTime);
+    }
 
-    function toggleStickyBar() {
-        const checkedCount = document.querySelectorAll('.candidate-checkbox:checked').length;
-        if (checkedCount > 0) {
-            stickyBar.style.display = 'flex';
-            countDisplay.innerText = checkedCount;
+    // Gọi hàm này khi trang web vừa load xong
+    document.addEventListener('DOMContentLoaded', setMinDateTime);
+    // Hàm hiển thị Modal
+    function showModal() {
+        const modalElement = document.getElementById('batchModal');
+        const myModal = new coreui.Modal(modalElement);
+        myModal.show();
+    }
+
+    // Khi nhấn nút Schedule ở từng dòng
+    function openModalForOne(btn) {
+        const id = btn.getAttribute('data-id');
+        // Reset checkbox và chọn đúng người này
+        document.querySelectorAll('.candidate-checkbox').forEach(cb => cb.checked = false);
+        if(document.getElementById('selectAll')) document.getElementById('selectAll').checked = false;
+
+        const target = document.querySelector(`input[value="${id}"]`);
+        if(target) target.checked = true;
+
+        updateBar();
+        showModal();
+    }
+
+    // Cập nhật thanh đen (Sticky Bar)
+    function updateBar() {
+        const count = document.querySelectorAll('.candidate-checkbox:checked').length;
+        const bar = document.getElementById('stickyBar');
+        const countDisplay = document.getElementById('selectedCount');
+
+        if (count > 0) {
+            bar.style.display = 'flex';
+            countDisplay.innerText = count;
         } else {
-            stickyBar.style.display = 'none';
+            bar.style.display = 'none';
         }
     }
 
-    if(selectAll) {
-        selectAll.addEventListener('change', (e) => {
-            checkboxes.forEach(cb => cb.checked = e.target.checked);
-            toggleStickyBar();
-        });
-    }
-
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', toggleStickyBar);
+    // Xử lý Checkbox Select All
+    document.getElementById('selectAll')?.addEventListener('change', function(e) {
+        document.querySelectorAll('.candidate-checkbox').forEach(cb => cb.checked = e.target.checked);
+        updateBar();
     });
-</script>
 
+    // Lắng nghe thay đổi của từng checkbox
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('candidate-checkbox')) {
+            updateBar();
+        }
+    });
+
+    // Hàm Submit chính
+    function submitBatch() {
+        const dateVal = document.getElementById('mDate').value;
+        const locVal = document.getElementById('mLoc').value;
+
+        if(!dateVal || !locVal) {
+            alert("nhập thiếu ngày hoặc địa điểm ");
+            return;
+        }
+
+        // Đổi trạng thái nút Confirm để tránh bấm nhiều lần
+        const btn = document.getElementById('btnConfirmSubmit');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.7';
+
+        // Đổ dữ liệu vào form chính và submit
+        const mainForm = document.getElementById('batchForm');
+
+        const inputDate = document.createElement('input');
+        inputDate.type = 'hidden'; inputDate.name = 'interviewDate'; inputDate.value = dateVal;
+
+        const inputLoc = document.createElement('input');
+        inputLoc.type = 'hidden'; inputLoc.name = 'location'; inputLoc.value = locVal;
+
+        mainForm.appendChild(inputDate);
+        mainForm.appendChild(inputLoc);
+
+        mainForm.submit();
+    }
+</script>
 </body>
 </html>
