@@ -1,7 +1,9 @@
 package com.example.hrm.repository;
 
 import com.example.hrm.entity.Contract;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
@@ -37,8 +39,6 @@ public interface ContractRepository extends JpaRepository<Contract, Integer> {
     """)
     List<Contract> findActiveContracts(@Param("empId") Integer empId);
 
-    long countByEndDateBetween(LocalDate start, LocalDate end);
-
     @Query("""
         select count(c) from Contract c
         where c.status = 'ACTIVE'
@@ -57,4 +57,17 @@ public interface ContractRepository extends JpaRepository<Contract, Integer> {
     """)
     List<Contract> findExpiringActiveContracts(@Param("today") LocalDate today,
                                                @Param("next30") LocalDate next30);
+
+    @Modifying
+    @Query("""
+        update Contract c
+        set c.status = 'TERMINATED'
+        where c.employee.empId = :empId
+          and c.status = 'ACTIVE'
+    """)
+    int terminateAllActiveContractsByEmpId(@Param("empId") Integer empId);
+
+    boolean existsByContractNumber(String contractNumber);
+
+    boolean existsByContractNumberAndIdNot(String contractNumber, Integer id);
 }

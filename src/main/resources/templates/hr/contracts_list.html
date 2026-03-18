@@ -4,405 +4,466 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HR - Contracts</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Employee Contracts</title>
 
-  <style>
-    .wrap{
-      max-width: 1280px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
+    <style>
+        .wrap{
+            max-width:1200px;
+            margin:24px auto;
+            padding:0 16px;
+        }
 
-    .card{
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-    }
+        .grid{
+            display:grid;
+            grid-template-columns: 1.15fr 1.85fr;
+            gap:18px;
+        }
 
-    .top{
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
+        .card{
+            background:#fff;
+            border:1px solid #e5e7eb;
+            border-radius:16px;
+            padding:18px;
+            box-shadow:0 8px 24px rgba(15,23,42,0.06);
+        }
 
-    .title{
-      font-size: 22px;
-      font-weight: 800;
-      color: #111827;
-    }
+        .title{
+            font-size:22px;
+            font-weight:800;
+            color:#111827;
+        }
 
-    .sub{
-      margin-top: 4px;
-      color: #6b7280;
-      font-size: 14px;
-    }
+        .sub{
+            margin-top:4px;
+            color:#6b7280;
+            font-size:14px;
+        }
 
-    .toolbar{
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+        .section-title{
+            font-size:16px;
+            font-weight:800;
+            margin-bottom:14px;
+            color:#111827;
+        }
 
-    input, select{
-      height: 40px;
-      padding: 0 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      outline: none;
-      background: #fff;
-      font-size: 14px;
-    }
+        .meta{
+            display:grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap:12px;
+            margin-top:16px;
+        }
 
-    input:focus, select:focus{
-      border-color: #f5b400;
-      box-shadow: 0 0 0 3px rgba(245, 180, 0, 0.12);
-    }
+        .meta-box{
+            background:#f8fafc;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            padding:12px;
+        }
 
-    .btn{
-      height: 40px;
-      padding: 0 14px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      background: #fff;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 14px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #111827;
-      transition: 0.18s ease;
-    }
+        .meta-label{
+            font-size:12px;
+            color:#6b7280;
+            margin-bottom:4px;
+        }
 
-    .btn:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-    }
+        .meta-value{
+            font-size:15px;
+            font-weight:800;
+            color:#111827;
+        }
 
-    .btn-primary{
-      background: #f5b400;
-      border-color: #f5b400;
-      color: #111827;
-    }
+        .msg{
+            margin:14px 0;
+            padding:12px 14px;
+            border-radius:12px;
+            border:1px solid #bbf7d0;
+            background:#ecfdf5;
+            color:#065f46;
+            font-size:14px;
+        }
 
-    .btn-success{
-      background: #16a34a;
-      border-color: #16a34a;
-      color: #fff;
-    }
+        .msg-err{
+            border:1px solid #fecaca;
+            background:#fef2f2;
+            color:#991b1b;
+        }
 
-    .btn-danger{
-      background: #dc2626;
-      border-color: #dc2626;
-      color: #fff;
-    }
+        .form-grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:14px;
+        }
 
-    .btn-soft{
-      background: #f9fafb;
-    }
+        .field{
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
 
-    .msg{
-      margin: 14px 0;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid #bbf7d0;
-      background: #ecfdf5;
-      color: #065f46;
-      font-size: 14px;
-    }
+        .field.full{
+            grid-column:1 / -1;
+        }
 
-    .msg-err{
-      border: 1px solid #fecaca;
-      background: #fef2f2;
-      color: #991b1b;
-    }
+        .field label{
+            font-size:14px;
+            font-weight:700;
+            color:#374151;
+        }
 
-    .table-wrap{
-      overflow-x: auto;
-      margin-top: 14px;
-      border: 1px solid #eef2f7;
-      border-radius: 14px;
-    }
+        input, select{
+            height:42px;
+            padding:0 12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            outline:none;
+            font-size:14px;
+            background:#fff;
+        }
 
-    .table{
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      min-width: 1080px;
-    }
+        input:focus, select:focus{
+            border-color:#f5b400;
+            box-shadow:0 0 0 3px rgba(245,180,0,0.12);
+        }
 
-    .table th,
-    .table td{
-      padding: 14px 12px;
-      border-bottom: 1px solid #eef2f7;
-      text-align: left;
-      font-size: 14px;
-      vertical-align: middle;
-    }
+        .btn{
+            height:40px;
+            padding:0 14px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            background:#fff;
+            cursor:pointer;
+            font-weight:700;
+            font-size:14px;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            color:#111827;
+            transition:0.18s ease;
+        }
 
-    .table th{
-      background: #f8fafc;
-      color: #64748b;
-      font-weight: 800;
-      white-space: nowrap;
-    }
+        .btn:hover{
+            text-decoration:none;
+            transform:translateY(-1px);
+            box-shadow:0 6px 16px rgba(15,23,42,0.08);
+        }
 
-    .table tbody tr:hover{
-      background: #fcfcfd;
-    }
+        .btn-primary{
+            background:#f5b400;
+            border-color:#f5b400;
+            color:#111827;
+        }
 
-    .emp-name{
-      font-weight: 700;
-      color: #111827;
-    }
+        .btn-danger{
+            background:#dc2626;
+            border-color:#dc2626;
+            color:#fff;
+        }
 
-    .badge{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 5px 11px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-      border: 1px solid transparent;
-      white-space: nowrap;
-    }
+        .btn-soft{
+            background:#f9fafb;
+        }
 
-    .status-active{
-      background: #ecfdf5;
-      color: #047857;
-      border-color: #a7f3d0;
-    }
+        .table-wrap{
+            overflow-x:auto;
+            margin-top:12px;
+            border:1px solid #eef2f7;
+            border-radius:14px;
+        }
 
-    .status-expired{
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #fdba74;
-    }
+        .table{
+            width:100%;
+            border-collapse:collapse;
+            background:#fff;
+            min-width:900px;
+        }
 
-    .status-terminated{
-      background: #fef2f2;
-      color: #b91c1c;
-      border-color: #fca5a5;
-    }
+        .table th,
+        .table td{
+            padding:14px 12px;
+            border-bottom:1px solid #eef2f7;
+            text-align:left;
+            font-size:14px;
+            vertical-align:middle;
+        }
 
-    .type-probation{
-      background: #eff6ff;
-      color: #1d4ed8;
-      border-color: #93c5fd;
-    }
+        .table th{
+            background:#f8fafc;
+            color:#64748b;
+            font-weight:800;
+            white-space:nowrap;
+        }
 
-    .type-official-indefinite{
-      background: #f5f3ff;
-      color: #6d28d9;
-      border-color: #c4b5fd;
-    }
+        .badge{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:5px 11px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:800;
+            border:1px solid transparent;
+            white-space:nowrap;
+        }
 
-    .type-official-1-year{
-      background: #f0fdf4;
-      color: #15803d;
-      border-color: #86efac;
-    }
+        .status-active{
+            background:#ecfdf5;
+            color:#047857;
+            border-color:#a7f3d0;
+        }
 
-    .type-intern{
-      background: #fdf4ff;
-      color: #a21caf;
-      border-color: #f0abfc;
-    }
+        .status-expired{
+            background:#fff7ed;
+            color:#c2410c;
+            border-color:#fdba74;
+        }
 
-    .emp-active{
-      background: #ecfdf5;
-      color: #047857;
-      border-color: #a7f3d0;
-    }
+        .status-terminated{
+            background:#fef2f2;
+            color:#b91c1c;
+            border-color:#fca5a5;
+        }
 
-    .emp-probation{
-      background: #eff6ff;
-      color: #1d4ed8;
-      border-color: #93c5fd;
-    }
+        .type-probation{
+            background:#eff6ff;
+            color:#1d4ed8;
+            border-color:#93c5fd;
+        }
 
-    .emp-onleave{
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #fdba74;
-    }
+        .type-official-indefinite{
+            background:#f5f3ff;
+            color:#6d28d9;
+            border-color:#c4b5fd;
+        }
 
-    .emp-resigned{
-      background: #f3f4f6;
-      color: #4b5563;
-      border-color: #d1d5db;
-    }
+        .type-official-1-year{
+            background:#f0fdf4;
+            color:#15803d;
+            border-color:#86efac;
+        }
 
-    .badge-default{
-      background: #f3f4f6;
-      color: #374151;
-      border-color: #d1d5db;
-    }
+        .type-intern{
+            background:#fdf4ff;
+            color:#a21caf;
+            border-color:#f0abfc;
+        }
 
-    .actions{
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+        .actions{
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+        }
 
-    .empty{
-      padding: 20px 12px;
-      text-align: center;
-      color: #6b7280;
-    }
-  </style>
+        .empty{
+            padding:20px 12px;
+            text-align:center;
+            color:#6b7280;
+        }
+
+        @media (max-width: 992px){
+            .grid{
+                grid-template-columns:1fr;
+            }
+        }
+    </style>
 </head>
 
 <body>
 <main layout:fragment="content">
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <div>
-          <div class="title">HR - Contract Management</div>
-          <div class="sub">Review expiring contracts and filter by employee or contract type.</div>
+    <div class="wrap">
+        <div class="grid">
+
+            <div class="card">
+                <div class="title">Contract Management</div>
+                <div class="sub">Create a new contract for this employee. If status is ACTIVE, old ACTIVE contracts will be moved to TERMINATED.</div>
+
+                <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
+                <div class="msg msg-err" th:if="${err != null and err != ''}" th:text="${err}"></div>
+
+                <div class="meta">
+                    <div class="meta-box">
+                        <div class="meta-label">Employee Name</div>
+                        <div class="meta-value" th:text="${employee.fullName}">Nguyen Van A</div>
+                    </div>
+                    <div class="meta-box">
+                        <div class="meta-label">Employee ID</div>
+                        <div class="meta-value" th:text="${employee.empId}">1001</div>
+                    </div>
+                    <div class="meta-box">
+                        <div class="meta-label">Department</div>
+                        <div class="meta-value" th:text="${employee.department != null ? employee.department.deptName : ''}">IT</div>
+                    </div>
+                    <div class="meta-box">
+                        <div class="meta-label">Job Position</div>
+                        <div class="meta-value" th:text="${employee.jobPosition != null ? employee.jobPosition.title : ''}">Developer</div>
+                    </div>
+                </div>
+
+                <div style="height:16px;"></div>
+
+                <div class="section-title">Create New Contract</div>
+
+                <form method="post" th:action="@{'/hr/contracts/' + ${employee.empId} + '/create'}" class="form-grid">
+                    <div class="field full">
+                        <label>Contract Number</label>
+                        <input type="text" name="contractNumber" placeholder="Leave blank to auto-generate">
+                    </div>
+
+                    <div class="field">
+                        <label>Contract Type</label>
+                        <select name="contractType" id="createContractType" required>
+                            <option value="PROBATION">PROBATION</option>
+                            <option value="OFFICIAL_1_YEAR">OFFICIAL_1_YEAR</option>
+                            <option value="OFFICIAL_INDEFINITE">OFFICIAL_INDEFINITE</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>Status</label>
+                        <select name="status" required>
+                            <option value="ACTIVE" selected>ACTIVE</option>
+                            <option value="EXPIRED">EXPIRED</option>
+                            <option value="TERMINATED">TERMINATED</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>Start Date</label>
+                        <input type="date" name="startDate" id="createStartDate" required>
+                    </div>
+
+                    <div class="field">
+                        <label>End Date</label>
+                        <input type="date" name="endDate" id="createEndDate">
+                    </div>
+
+                    <div class="field full">
+                        <label>Base Salary</label>
+                        <input type="number" step="0.01" name="baseSalary" required>
+                    </div>
+
+                    <div class="actions full">
+                        <button class="btn btn-primary" type="submit">Create Contract</button>
+                        <a class="btn btn-soft" th:href="@{/hr/contracts}">Back to Employee List</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="title">Contract List</div>
+                <div class="sub">All contracts of this employee.</div>
+
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Contract Number</th>
+                            <th>Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Base Salary</th>
+                            <th>Status</th>
+                            <th style="width:180px;">Action</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:if="${contracts == null or #lists.isEmpty(contracts)}">
+                            <td colspan="8" class="empty">No contracts found for this employee.</td>
+                        </tr>
+
+                        <tr th:each="c : ${contracts}">
+                            <td th:text="${c.id}"></td>
+                            <td th:text="${c.contractNumber}"></td>
+                            <td>
+                <span class="badge"
+                      th:text="${c.contractType}"
+                      th:classappend="${
+                        c.contractType == 'PROBATION' ? ' type-probation' :
+                        (c.contractType == 'OFFICIAL_INDEFINITE' ? ' type-official-indefinite' :
+                        (c.contractType == 'OFFICIAL_1_YEAR' ? ' type-official-1-year' :
+                        (c.contractType == 'INTERN' ? ' type-intern' : '')))
+                      }">
+                </span>
+                            </td>
+                            <td th:text="${c.startDate}"></td>
+                            <td th:text="${c.endDate}"></td>
+                            <td th:text="${#numbers.formatDecimal(c.baseSalary, 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td>
+                <span class="badge"
+                      th:text="${c.status}"
+                      th:classappend="${
+                        c.status == 'ACTIVE' ? ' status-active' :
+                        (c.status == 'EXPIRED' ? ' status-expired' :
+                        (c.status == 'TERMINATED' ? ' status-terminated' : ''))
+                      }">
+                </span>
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <a class="btn" th:href="@{'/hr/contracts/detail/' + ${c.id}}">Edit</a>
+
+                                    <form method="post"
+                                          th:action="@{'/hr/contracts/detail/' + ${c.id} + '/terminate'}"
+                                          th:if="${c.status == 'ACTIVE'}"
+                                          onsubmit="return confirm('Terminate this contract?');">
+                                        <button class="btn btn-danger" type="submit">Terminate</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
-
-        <form method="get" th:action="@{/hr/contracts}" class="toolbar">
-          <input type="number"
-                 name="empId"
-                 placeholder="Emp ID"
-                 style="width:140px"
-                 th:value="${empId}">
-
-          <select name="contractType" style="width:220px">
-            <option value="">All Contract Types</option>
-            <option value="PROBATION" th:selected="${contractType == 'PROBATION'}">PROBATION</option>
-            <option value="OFFICIAL_INDEFINITE" th:selected="${contractType == 'OFFICIAL_INDEFINITE'}">OFFICIAL_INDEFINITE</option>
-            <option value="OFFICIAL_1_YEAR" th:selected="${contractType == 'OFFICIAL_1_YEAR'}">OFFICIAL_1_YEAR</option>
-            <option value="INTERN" th:selected="${contractType == 'INTERN'}">INTERN</option>
-          </select>
-
-          <button class="btn btn-primary" type="submit">Filter</button>
-          <a class="btn btn-soft" th:href="@{/hr/contracts(expiringOnly=true)}">Expiring Only</a>
-          <a class="btn btn-soft" th:href="@{/hr/contracts}">Reset</a>
-        </form>
-      </div>
-
-      <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
-      <div class="msg msg-err" th:if="${err != null and err != ''}" th:text="${err}"></div>
-
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-          <tr>
-            <th>ID</th>
-            <th>Contract No.</th>
-            <th>Emp ID</th>
-            <th>Employee</th>
-            <th>Contract Type</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Salary</th>
-            <th>Contract Status</th>
-            <th>Employee Status</th>
-            <th style="width:260px">Action</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr th:if="${#lists.isEmpty(contracts)}">
-            <td colspan="11" class="empty">No contracts found.</td>
-          </tr>
-
-          <tr th:each="c : ${contracts}">
-            <td th:text="${c.id}">1</td>
-            <td th:text="${c.contractNumber}">CT00001</td>
-            <td th:text="${c.employee.empId}">1</td>
-            <td class="emp-name" th:text="${c.employee.fullName}">Employee Name</td>
-
-            <td>
-              <span class="badge"
-                    th:classappend="${
-                      c.contractType == 'PROBATION' ? ' type-probation' :
-                      (c.contractType == 'OFFICIAL_INDEFINITE' ? ' type-official-indefinite' :
-                      (c.contractType == 'OFFICIAL_1_YEAR' ? ' type-official-1-year' :
-                      (c.contractType == 'INTERN' ? ' type-intern' : ' badge-default')))
-                    }"
-                    th:text="${c.contractType}">
-                TYPE
-              </span>
-            </td>
-
-            <td th:text="${c.startDate}">2026-03-01</td>
-            <td th:text="${c.endDate != null ? c.endDate : 'No end date'}">No end date</td>
-            <td th:text="${#numbers.formatDecimal(c.baseSalary, 0, 'COMMA', 0, 'POINT')}">8,000,000</td>
-
-            <td>
-              <span class="badge"
-                    th:classappend="${
-                      c.status == 'ACTIVE' ? ' status-active' :
-                      (c.status == 'EXPIRED' ? ' status-expired' :
-                      (c.status == 'TERMINATED' ? ' status-terminated' : ' badge-default'))
-                    }"
-                    th:text="${c.status}">
-                ACTIVE
-              </span>
-            </td>
-
-            <td>
-              <span class="badge"
-                    th:classappend="${
-                      c.employee.status == 'ACTIVE' ? ' emp-active' :
-                      (c.employee.status == 'PROBATION' ? ' emp-probation' :
-                      (c.employee.status == 'ON_LEAVE' ? ' emp-onleave' :
-                      (c.employee.status == 'RESIGNED' ? ' emp-resigned' : ' badge-default')))
-                    }"
-                    th:text="${c.employee.status}">
-                EMP STATUS
-              </span>
-            </td>
-
-            <td>
-              <div class="actions" th:if="${expiringOnly}">
-                <a class="btn" th:href="@{'/hr/contracts/' + ${c.id}}">Detail</a>
-
-                <form method="post" th:action="@{'/hr/contracts/' + ${c.id} + '/approve-official'}">
-                  <button class="btn btn-success" type="submit"
-                          onclick="return confirm('Approve this employee as active official staff?')">
-                    Approve
-                  </button>
-                </form>
-
-                <form method="post" th:action="@{'/hr/contracts/' + ${c.id} + '/reject'}">
-                  <button class="btn btn-danger" type="submit"
-                          onclick="return confirm('Reject this employee?')">
-                    Reject
-                  </button>
-                </form>
-              </div>
-
-              <div class="actions" th:if="${!expiringOnly}">
-                <a class="btn" th:href="@{'/hr/contracts/' + ${c.id}}">Detail</a>
-
-                <form method="post" th:action="@{'/hr/contracts/' + ${c.id} + '/terminate'}">
-                  <button class="btn" type="submit"
-                          onclick="return confirm('Terminate this contract?')">
-                    Terminate
-                  </button>
-                </form>
-              </div>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
-  </div>
+
+    <script>
+        const createType = document.getElementById('createContractType');
+        const createStartDate = document.getElementById('createStartDate');
+        const createEndDate = document.getElementById('createEndDate');
+
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function calculateOneYearEndDate(startValue) {
+            if (!startValue) return '';
+            const start = new Date(startValue + 'T00:00:00');
+            start.setFullYear(start.getFullYear() + 1);
+            return formatDate(start);
+        }
+
+        function syncCreateEndDate() {
+            const type = createType.value;
+            const startValue = createStartDate.value;
+
+            if (type === 'OFFICIAL_INDEFINITE') {
+                createEndDate.value = '';
+                createEndDate.disabled = true;
+                return;
+            }
+
+            createEndDate.disabled = false;
+
+            if (type === 'OFFICIAL_1_YEAR') {
+                createEndDate.value = calculateOneYearEndDate(startValue);
+            }
+        }
+
+        createType.addEventListener('change', syncCreateEndDate);
+        createStartDate.addEventListener('change', syncCreateEndDate);
+
+        syncCreateEndDate();
+    </script>
 </main>
 </body>
 </html>

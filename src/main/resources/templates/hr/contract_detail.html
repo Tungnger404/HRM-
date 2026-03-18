@@ -89,7 +89,7 @@
 
     .meta{
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
       margin-bottom: 20px;
     }
@@ -157,7 +157,7 @@
   <div class="wrap">
     <div class="card">
       <div class="title">Contract Detail</div>
-      <div class="sub">Edit contract type, status, duration, and salary for this employee.</div>
+      <div class="sub">Edit contract type, status, duration, salary, and contract number.</div>
 
       <div class="msg" th:if="${msg != null and msg != ''}" th:text="${msg}"></div>
       <div class="msg msg-err" th:if="${err != null and err != ''}" th:text="${err}"></div>
@@ -172,20 +172,29 @@
           <div class="meta-value" th:text="${contract.employee.empId}">1</div>
         </div>
         <div class="meta-box">
-          <div class="meta-label">Contract Number</div>
-          <div class="meta-value" th:text="${contract.contractNumber}">CT00001</div>
+          <div class="meta-label">Contract ID</div>
+          <div class="meta-value" th:text="${contract.id}">1</div>
+        </div>
+        <div class="meta-box">
+          <div class="meta-label">Current Status</div>
+          <div class="meta-value" th:text="${contract.status}">ACTIVE</div>
         </div>
       </div>
 
-      <form method="post" th:action="@{'/hr/contracts/' + ${contract.id} + '/detail-update'}" class="grid">
+      <form method="post" th:action="@{'/hr/contracts/detail/' + ${contract.id} + '/detail-update'}" class="grid">
+        <div class="field full">
+          <label>Contract Number</label>
+          <input type="text" name="contractNumber" th:value="${contract.contractNumber}">
+        </div>
+
         <div class="field">
           <label>Start Date</label>
-          <input type="date" name="startDate" th:value="${contract.startDate}" required>
+          <input type="date" name="startDate" th:value="${contract.startDate}" id="detailStartDate" required>
         </div>
 
         <div class="field">
           <label>End Date</label>
-          <input type="date" name="endDate" th:value="${contract.endDate}">
+          <input type="date" name="endDate" th:value="${contract.endDate}" id="detailEndDate">
         </div>
 
         <div class="field">
@@ -208,13 +217,12 @@
             <option value="PROBATION" th:selected="${contract.contractType == 'PROBATION'}">PROBATION</option>
             <option value="OFFICIAL_1_YEAR" th:selected="${contract.contractType == 'OFFICIAL_1_YEAR'}">OFFICIAL_1_YEAR</option>
             <option value="OFFICIAL_INDEFINITE" th:selected="${contract.contractType == 'OFFICIAL_INDEFINITE'}">OFFICIAL_INDEFINITE</option>
-            <option value="INTERN" th:selected="${contract.contractType == 'INTERN'}">INTERN</option>
           </select>
         </div>
 
         <div class="actions full">
           <button class="btn btn-primary" type="submit">Save Changes</button>
-          <a class="btn btn-secondary" th:href="@{/hr/contracts}">Back to Contracts</a>
+          <a class="btn btn-secondary" th:href="@{'/hr/contracts/' + ${contract.employee.empId} + '/list'}">Back to Contract List</a>
         </div>
       </form>
     </div>
@@ -222,19 +230,43 @@
 
   <script>
     const contractTypeSelect = document.getElementById('contractTypeSelect');
-    const endDateInput = document.querySelector('input[name="endDate"]');
+    const detailStartDate = document.getElementById('detailStartDate');
+    const endDateInput = document.getElementById('detailEndDate');
+
+    function formatDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function calculateOneYearEndDate(startValue) {
+      if (!startValue) return '';
+      const start = new Date(startValue + 'T00:00:00');
+      start.setFullYear(start.getFullYear() + 1);
+      return formatDate(start);
+    }
 
     function toggleEndDateByType() {
       const type = contractTypeSelect.value;
+      const startValue = detailStartDate.value;
+
       if (type === 'OFFICIAL_INDEFINITE') {
         endDateInput.value = '';
         endDateInput.disabled = true;
-      } else {
-        endDateInput.disabled = false;
+        return;
+      }
+
+      endDateInput.disabled = false;
+
+      if (type === 'OFFICIAL_1_YEAR') {
+        endDateInput.value = calculateOneYearEndDate(startValue);
       }
     }
 
     contractTypeSelect.addEventListener('change', toggleEndDateByType);
+    detailStartDate.addEventListener('change', toggleEndDateByType);
+
     toggleEndDateByType();
   </script>
 </main>

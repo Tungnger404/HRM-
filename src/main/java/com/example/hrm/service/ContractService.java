@@ -7,20 +7,34 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ContractService {
+
     List<Contract> list(Integer empId);
+
+    List<Contract> listByEmployee(Integer empId);
 
     List<Contract> listExpiringWithin30Days();
 
-    Contract create(Integer empId, LocalDate startDate, LocalDate endDate, BigDecimal baseSalary, String status);
+    Contract create(Integer empId,
+                    String contractNumber,
+                    String contractType,
+                    LocalDate startDate,
+                    LocalDate endDate,
+                    BigDecimal baseSalary,
+                    String status);
 
-    Contract update(Integer contractId, LocalDate startDate, LocalDate endDate, BigDecimal baseSalary, String status);
+    Contract update(Integer contractId,
+                    LocalDate startDate,
+                    LocalDate endDate,
+                    BigDecimal baseSalary,
+                    String status);
 
     Contract updateDetail(Integer contractId,
                           LocalDate startDate,
                           LocalDate endDate,
                           BigDecimal baseSalary,
                           String status,
-                          String contractType);
+                          String contractType,
+                          String contractNumber);
 
     void terminate(Integer contractId);
 

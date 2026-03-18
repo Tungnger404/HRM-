@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,6 +33,11 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public List<Contract> listByEmployee(Integer empId) {
+        return contractRepo.findByEmployee_EmpIdOrderByStartDateDesc(empId);
+    }
+
+    @Override
     public List<Contract> listExpiringWithin30Days() {
         LocalDate today = LocalDate.now();
         LocalDate next30 = today.plusDays(30);
@@ -41,6 +47,8 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @Transactional
     public Contract create(Integer empId,
+                           String contractNumber,
+                           String contractType,
                            LocalDate startDate,
                            LocalDate endDate,
                            BigDecimal baseSalary,
@@ -53,18 +61,27 @@ public class ContractServiceImpl implements ContractService {
         Employee e = employeeRepo.findById(empId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + empId));
 
+        String normalizedType = normalizeContractType(contractType, endDate);
+        String normalizedStatus = (status == null || status.isBlank()) ? "ACTIVE" : status.trim().toUpperCase();
+
+        if ("OFFICIAL_INDEFINITE".equalsIgnoreCase(normalizedType)) {
+            endDate = null;
+        } else if ("OFFICIAL_1_YEAR".equalsIgnoreCase(normalizedType) && startDate != null) {
+            endDate = startDate.plusYears(1);
+        }
+
+        if ("ACTIVE".equalsIgnoreCase(normalizedStatus)) {
+            contractRepo.terminateAllActiveContractsByEmpId(empId);
+        }
+
         Contract c = new Contract();
         c.setEmployee(e);
+        c.setContractNumber(buildContractNumber(empId, contractNumber));
+        c.setContractType(normalizedType);
         c.setStartDate(startDate);
         c.setEndDate(endDate);
         c.setBaseSalary(baseSalary);
-        c.setStatus((status == null || status.isBlank()) ? "ACTIVE" : status.trim());
-
-        if (endDate == null) {
-            c.setContractType("OFFICIAL_INDEFINITE");
-        } else {
-            c.setContractType("OFFICIAL_1_YEAR");
-        }
+        c.setStatus(normalizedStatus);
 
         return contractRepo.save(c);
     }
@@ -82,7 +99,7 @@ public class ContractServiceImpl implements ContractService {
         if (startDate != null) c.setStartDate(startDate);
         c.setEndDate(endDate);
         if (baseSalary != null) c.setBaseSalary(baseSalary);
-        if (status != null && !status.isBlank()) c.setStatus(status.trim());
+        if (status != null && !status.isBlank()) c.setStatus(status.trim().toUpperCase());
 
         if (c.getEndDate() == null && !"PROBATION".equalsIgnoreCase(c.getContractType())) {
             c.setContractType("OFFICIAL_INDEFINITE");
@@ -100,7 +117,8 @@ public class ContractServiceImpl implements ContractService {
                                  LocalDate endDate,
                                  BigDecimal baseSalary,
                                  String status,
-                                 String contractType) {
+                                 String contractType,
+                                 String contractNumber) {
 
         Contract c = get(contractId);
 
@@ -117,13 +135,19 @@ public class ContractServiceImpl implements ContractService {
             throw new IllegalArgumentException("contractType is required");
         }
 
+        String normalizedStatus = status.trim().toUpperCase();
+        String normalizedType = normalizeContractType(contractType, endDate);
+
         c.setStartDate(startDate);
         c.setBaseSalary(baseSalary);
-        c.setStatus(status.trim());
-        c.setContractType(contractType.trim());
+        c.setStatus(normalizedStatus);
+        c.setContractType(normalizedType);
+        c.setContractNumber(buildContractNumber(c.getEmployee().getEmpId(), contractNumber));
 
-        if ("OFFICIAL_INDEFINITE".equalsIgnoreCase(contractType)) {
+        if ("OFFICIAL_INDEFINITE".equalsIgnoreCase(normalizedType)) {
             c.setEndDate(null);
+        } else if ("OFFICIAL_1_YEAR".equalsIgnoreCase(normalizedType)) {
+            c.setEndDate(startDate.plusYears(1));
         } else {
             c.setEndDate(endDate);
         }
@@ -141,10 +165,6 @@ public class ContractServiceImpl implements ContractService {
             c.setEndDate(LocalDate.now());
         }
         contractRepo.save(c);
-
-        Employee e = c.getEmployee();
-        e.setStatus("PROBATION");
-        employeeRepo.save(e);
     }
 
     @Override
@@ -160,6 +180,7 @@ public class ContractServiceImpl implements ContractService {
         c.setEndDate(null);
         c.setContractType("OFFICIAL_INDEFINITE");
 
+        contractRepo.terminateAllActiveContractsByEmpId(e.getEmpId());
         contractRepo.save(c);
     }
 
@@ -183,5 +204,28 @@ public class ContractServiceImpl implements ContractService {
     public Contract get(Integer contractId) {
         return contractRepo.findById(contractId)
                 .orElseThrow(() -> new IllegalArgumentException("Contract not found: " + contractId));
+    }
+
+    private String normalizeContractType(String contractType, LocalDate endDate) {
+        if (contractType == null || contractType.isBlank()) {
+            return endDate == null ? "OFFICIAL_INDEFINITE" : "OFFICIAL_1_YEAR";
+        }
+
+        String type = contractType.trim().toUpperCase();
+
+        if (!type.equals("PROBATION")
+                && !type.equals("OFFICIAL_1_YEAR")
+                && !type.equals("OFFICIAL_INDEFINITE")) {
+            throw new IllegalArgumentException("Invalid contract type: " + contractType);
+        }
+
+        return type;
+    }
+
+    private String buildContractNumber(Integer empId, String contractNumber) {
+        if (contractNumber != null && !contractNumber.isBlank()) {
+            return contractNumber.trim();
+        }
+        return "CT-" + empId + "-" + LocalDateTime.now().toString().replace(":", "").replace(".", "");
     }
 }
