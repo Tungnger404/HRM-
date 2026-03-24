@@ -189,7 +189,7 @@
                         <p class="text-muted small">Assessing for Job Posting #<span id="modalPostingId"></span></p>
                     </div>
 
-                    <form th:action="@{/hr/candidates/evaluate}" method="post">
+                    <form th:action="@{/hr/candidates/evaluate}" method="post" id="evaluationForm">
                         <input type="hidden" name="id" id="modalInputId" />
                         <input type="hidden" name="postingId" id="modalInputPostingId" />
 
@@ -197,21 +197,23 @@
                             <label class="form-label fw-bold text-dark small mb-2 text-uppercase">Screening Score (0-100)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-speedometer2"></i></span>
-                                <input type="number" name="score"
+                                <input type="number" name="score" id="scoreInput"
                                        class="form-control bg-light border-start-0 fw-bold"
-                                       min="0" max="100" placeholder="75" required
+                                       min="0" max="100" placeholder="Ví dụ: 75" required
                                        style="height: 55px; font-size: 1.25rem;">
                             </div>
+                            <div id="scoreError" class="text-danger small mt-2" style="display: none;"></div>
                         </div>
 
                         <div class="d-flex gap-3 mt-4">
-                            <button type="submit" name="action" value="reject" class="btn btn-outline-danger w-100 py-3 fw-bold" style="border-radius: 12px;">
+                            <button type="button" onclick="handleEvaluate('reject')" class="btn btn-outline-danger w-100 py-3 fw-bold" style="border-radius: 12px;">
                                 <i class="bi bi-x-lg me-1"></i> Reject
                             </button>
-                            <button type="submit" name="action" value="pass" class="btn btn-success w-100 py-3 fw-bold" style="border-radius: 12px;">
+                            <button type="button" onclick="handleEvaluate('pass')" class="btn btn-success w-100 py-3 fw-bold" style="border-radius: 12px;">
                                 <i class="bi bi-check-lg me-1"></i> Pass
                             </button>
                         </div>
+                        <input type="hidden" name="action" id="actionInput">
                     </form>
                 </div>
             </div>
@@ -233,6 +235,31 @@
 
             var screeningModal = new coreui.Modal(document.getElementById('screeningModal'));
             screeningModal.show();
+        }
+        function handleEvaluate(action) {
+            const score = parseInt(document.getElementById('scoreInput').value);
+            const errorDiv = document.getElementById('scoreError');
+            const form = document.getElementById('evaluationForm');
+            const actionInput = document.getElementById('actionInput');
+            errorDiv.style.display = 'none';
+            errorDiv.innerText = '';
+            if (isNaN(score)) {
+                errorDiv.innerText = 'Vui lòng nhập điểm trước khi đánh giá.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (action === 'pass' && score < 50) {
+                errorDiv.innerText = 'Điểm phải từ 50 trở lên mới có thể PASS.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (action === 'reject' && score >= 50) {
+                errorDiv.innerText = 'Điểm từ 50 trở lên không được phép REJECT.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            actionInput.value = action;
+            form.submit();
         }
     </script>
 </th:block>
