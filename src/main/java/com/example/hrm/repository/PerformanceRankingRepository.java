@@ -20,6 +20,8 @@ public interface PerformanceRankingRepository extends JpaRepository<PerformanceR
 
     List<PerformanceRanking> findByCycleIdAndClassification(Integer cycleId, String classification);
 
+    void deleteByCycleId(Integer cycleId);
+
     List<PerformanceRanking> findByIsTrainingRequiredTrue();
 
     List<PerformanceRanking> findByIsPromotionEligibleTrue();

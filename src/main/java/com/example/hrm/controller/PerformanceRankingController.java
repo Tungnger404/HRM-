@@ -29,8 +29,7 @@ public class PerformanceRankingController {
     public ResponseEntity<String> calculateRankings(@PathVariable Integer cycleId) {
         try {
             performanceRankingService.calculateRankingsForCycle(cycleId);
-            performanceRankingService.markPromotionEligibility(cycleId);
-            return ResponseEntity.ok("Rankings calculated successfully for cycle " + cycleId);
+            return ResponseEntity.ok("Rankings and promotion eligibility refreshed successfully for cycle " + cycleId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error calculating rankings: " + e.getMessage());

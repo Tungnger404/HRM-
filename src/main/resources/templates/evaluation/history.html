@@ -30,7 +30,6 @@
                                         <th>Reviewed At</th>
                                         <th>Self Score</th>
                                         <th>Manager Score</th>
-                                        <th>Total Score</th>
                                         <th>Classification</th>
                                         <th>Status</th>
                                         <th>Actions</th>
@@ -38,7 +37,7 @@
                                 </thead>
                                 <tbody id="evaluationTableBody">
                                     <tr th:if="${#lists.isEmpty(evaluations)}">
-                                        <td colspan="9" class="text-center text-muted">No evaluation records found</td>
+                                        <td colspan="8" class="text-center text-muted">No evaluation records found</td>
                                     </tr>
                                     <tr th:each="eval : ${evaluations}">
                                         <td th:text="${eval.cycleId != null ? 'Cycle ' + eval.cycleId : 'N/A'}">Cycle 1</td>
@@ -46,12 +45,7 @@
                                         <td th:text="${eval.managerReviewedAt != null ? #temporals.format(eval.managerReviewedAt, 'dd/MM/yyyy HH:mm') : 'Not reviewed yet'}">15/01/2024 14:30</td>
                                         <td><span class="badge bg-info" th:text="${eval.selfScore != null ? eval.selfScore : 'N/A'}">85</span></td>
                                         <td><span class="badge bg-success" th:text="${eval.managerScore != null ? eval.managerScore : 'N/A'}">88</span></td>
-                                        <td>
-                                            <strong th:if="${eval.selfScore != null and eval.managerScore != null}" 
-                                                    th:text="${(eval.selfScore + eval.managerScore) / 2.0}">86.5</strong>
-                                            <span th:unless="${eval.selfScore != null and eval.managerScore != null}">N/A</span>
-                                            <br><small class="text-muted">(avg)</small>
-                                        </td>
+
                                         <td>
                                             <span class="badge" 
                                                   th:classappend="${eval.classification == 'A' ? 'bg-success' : (eval.classification == 'B' ? 'bg-primary' : (eval.classification == 'C' ? 'bg-warning' : 'bg-danger'))}"

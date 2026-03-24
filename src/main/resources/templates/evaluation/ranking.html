@@ -102,10 +102,10 @@
                                     <td><strong
                                             th:text="${empNames[ranking.empId] != null ? empNames[ranking.empId] : 'Employee #' + ranking.empId}">Employee</strong>
                                     </td>
-                                    <td th:text="${ranking.rankInDept != null ? ranking.rankInDept : '-'}">-</td>
-                                    <td th:text="${ranking.totalEmployeesInDept != null ? ranking.totalEmployeesInDept : '-'}">-</td>
+                                    <td th:text="${empDeptNames[ranking.empId] != null ? empDeptNames[ranking.empId] : '-'}">-</td>
+                                    <td th:text="${empPositionNames[ranking.empId] != null ? empPositionNames[ranking.empId] : '-'}">-</td>
                                     <td class="text-end" th:text="${ranking.finalScore != null ? ranking.finalScore : '-'}">-</td>
-                                    <td>
+                                     <td>
                                         <span class="badge"
                                               th:classappend="${ranking.classification == 'A' ? ' bg-success' :
                                                   (ranking.classification == 'B' ? ' bg-primary' :
@@ -125,9 +125,11 @@
                                     </td>
                                     <td>
                                         <a class="btn btn-sm btn-primary"
-                                           th:href="@{/manager/evaluation/review/{id}(id=${ranking.rankId})}">
+                                           th:if="${assignmentIds[ranking.empId] != null}"
+                                           th:href="@{/manager/evaluation/review/{id}(id=${assignmentIds[ranking.empId]})}">
                                             View Details
                                         </a>
+                                        <span class="badge bg-secondary" th:if="${assignmentIds[ranking.empId] == null}">No assignment</span>
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(rankings)}">

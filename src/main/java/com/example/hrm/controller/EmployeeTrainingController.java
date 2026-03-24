@@ -93,7 +93,6 @@ public class EmployeeTrainingController {
     public String submitEvidence(
             @PathVariable Integer id,
             @RequestParam String completionNote,
-            @RequestParam String completionDate,
             @RequestParam(required = false) String certificateCode,
             @RequestParam(required = false) MultipartFile certificateFile,
             Principal principal,
@@ -107,13 +106,14 @@ public class EmployeeTrainingController {
                 throw new IllegalArgumentException("Access denied");
             }
 
-            if (assignment.getStatus() != TrainingAssignment.AssignmentStatus.IN_PROGRESS 
+            if (assignment.getStatus() != TrainingAssignment.AssignmentStatus.IN_PROGRESS
+                && assignment.getStatus() != TrainingAssignment.AssignmentStatus.IN_PROCESS
                 && assignment.getStatus() != TrainingAssignment.AssignmentStatus.REJECTED) {
                 throw new IllegalArgumentException("Cannot submit evidence for this training");
             }
 
             assignment.setCompletionNote(completionNote);
-            assignment.setCompletionDate(LocalDate.parse(completionDate));
+            assignment.setCompletionDate(LocalDate.now());
             assignment.setCertificateCode(certificateCode);
             assignment.setSubmittedAt(LocalDateTime.now());
             assignment.setStatus(TrainingAssignment.AssignmentStatus.PENDING_REVIEW);
@@ -125,7 +125,7 @@ public class EmployeeTrainingController {
 
             assignmentRepository.save(assignment);
 
-            ra.addFlashAttribute("toastSuccess", "Evidence submitted successfully! Waiting for review.");
+            ra.addFlashAttribute("toastSuccess", "Evidence submitted successfully! Waiting for manager confirmation.");
             return "redirect:/employee/training/detail/" + id;
         } catch (Exception e) {
             ra.addFlashAttribute("toastError", "Error: " + e.getMessage());

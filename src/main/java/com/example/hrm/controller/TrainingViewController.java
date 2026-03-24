@@ -41,39 +41,7 @@ public class TrainingViewController {
             @RequestParam(required = false) String status,
             Model model
     ) {
-        List<TrainingProgram> programs = trainingProgramRepository.findAll();
-        
-        if (search != null && !search.trim().isEmpty()) {
-            String searchLower = search.toLowerCase();
-            programs = programs.stream()
-                    .filter(p -> (p.getProgramName() != null && p.getProgramName().toLowerCase().contains(searchLower))
-                            || (p.getProgramCode() != null && p.getProgramCode().toLowerCase().contains(searchLower)))
-                    .toList();
-        }
-        
-        if (category != null && !category.trim().isEmpty()) {
-            programs = programs.stream()
-                    .filter(p -> p.getSkillCategory() != null && p.getSkillCategory().equalsIgnoreCase(category))
-                    .toList();
-        }
-        
-        if (status != null && !status.trim().isEmpty()) {
-            try {
-                TrainingProgram.TrainingStatus trainingStatus = TrainingProgram.TrainingStatus.valueOf(status.toUpperCase());
-                programs = programs.stream()
-                        .filter(p -> p.getStatus() == trainingStatus)
-                        .toList();
-            } catch (IllegalArgumentException e) {
-                // Invalid status, show all
-            }
-        }
-        
-        model.addAttribute("programs", programs);
-        model.addAttribute("search", search);
-        model.addAttribute("category", category);
-        model.addAttribute("status", status);
-        model.addAttribute("pageTitle", "Training Programs");
-        return "training/programs";
+        return "redirect:/employee/training/my-training";
     }
 
     /**
@@ -87,7 +55,7 @@ public class TrainingViewController {
     ) {
         try {
             Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
-            
+
             redirectAttributes.addFlashAttribute("msg", "Successfully registered for the training program!");
             return "redirect:/training/programs";
         } catch (Exception e) {
@@ -102,12 +70,12 @@ public class TrainingViewController {
     @GetMapping("/programs/{programId}")
     public String showProgramDetails(@PathVariable Integer programId, Model model, RedirectAttributes ra) {
         TrainingProgram program = trainingProgramRepository.findById(programId).orElse(null);
-        
+
         if (program == null) {
             ra.addFlashAttribute("err", "Training program not found");
             return "redirect:/training/programs";
         }
-        
+
         model.addAttribute("program", program);
         model.addAttribute("programId", programId);
         model.addAttribute("pageTitle", "Training Program Details");
@@ -119,11 +87,7 @@ public class TrainingViewController {
      */
     @GetMapping("/my-progress")
     public String showMyTrainingProgress(Principal principal, Model model) {
-        Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
-        
-        model.addAttribute("employeeId", employeeId);
-        model.addAttribute("pageTitle", "My Training Progress");
-        return "training/my-progress";
+        return "redirect:/employee/training/my-training";
     }
 
     /**
@@ -168,7 +132,7 @@ public class TrainingViewController {
                 return "redirect:/training/submit-evidence/" + progressId;
             }
 
-            redirectAttributes.addFlashAttribute("msg", 
+            redirectAttributes.addFlashAttribute("msg",
                 "Training evidence submitted successfully! Your manager will review it soon.");
             return "redirect:/training/my-progress";
         } catch (Exception e) {
@@ -181,11 +145,8 @@ public class TrainingViewController {
      * Show training recommendations for manager/employee
      */
     @GetMapping("/recommendations")
-    public String showTrainingRecommendations(Principal principal, Model model) {
-        Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
-        
-        model.addAttribute("employeeId", employeeId);
-        model.addAttribute("pageTitle", "Training Recommendations");
-        return "training/recommendations";
+    public String showTrainingRecommendations() {
+        // Keep old route working for existing notifications; page moved to employee training module.
+        return "redirect:/employee/training/my-training";
     }
 }

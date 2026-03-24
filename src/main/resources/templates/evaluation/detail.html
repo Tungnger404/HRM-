@@ -56,13 +56,6 @@
                                 <h4><span class="badge bg-success" th:text="${assignment.managerScore != null ? assignment.managerScore : 'N/A'}">89</span></h4>
                             </div>
                             <div class="col-md-3">
-                                <p class="mb-2"><strong>Total Score:</strong></p>
-                                <h4 th:if="${assignment.selfScore != null and assignment.managerScore != null}"
-                                    th:text="${(assignment.selfScore + assignment.managerScore) / 2.0}">83.5</h4>
-                                <h4 th:unless="${assignment.selfScore != null and assignment.managerScore != null}">N/A</h4>
-                                <small class="text-muted">(Average of Self & Manager)</small>
-                            </div>
-                            <div class="col-md-3">
                                 <p class="mb-2"><strong>Classification:</strong></p>
                                 <h4>
                                     <span class="badge"

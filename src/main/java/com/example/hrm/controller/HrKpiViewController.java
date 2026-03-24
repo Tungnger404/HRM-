@@ -9,6 +9,8 @@ import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.repository.EvalCycleRepository;
 import com.example.hrm.repository.KpiAssignmentRepository;
 import com.example.hrm.repository.KpiEvidenceRepository;
+import com.example.hrm.repository.KpiTemplateRepository;
+import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.FileValidationService;
 import com.example.hrm.service.KpiEvidenceService;
@@ -30,6 +32,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.security.Principal;
 
 @Controller
 @RequestMapping("/hr/kpi")
@@ -46,6 +49,8 @@ public class HrKpiViewController {
     private final FileValidationService fileValidationService;
     private final NotificationService notificationService;
     private final KpiEvidenceService kpiEvidenceService;
+    private final CurrentEmployeeService currentEmployeeService;
+    private final KpiTemplateRepository kpiTemplateRepository;
 
     public HrKpiViewController(EmployeeRepository employeeRepository,
                                DepartmentRepository departmentRepository,
@@ -55,7 +60,9 @@ public class HrKpiViewController {
                                DocumentStorageService documentStorageService,
                                FileValidationService fileValidationService,
                                NotificationService notificationService,
-                               KpiEvidenceService kpiEvidenceService) {
+                               KpiEvidenceService kpiEvidenceService,
+                               CurrentEmployeeService currentEmployeeService,
+                               KpiTemplateRepository kpiTemplateRepository) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.kpiAssignmentRepository = kpiAssignmentRepository;
@@ -65,6 +72,8 @@ public class HrKpiViewController {
         this.fileValidationService = fileValidationService;
         this.notificationService = notificationService;
         this.kpiEvidenceService = kpiEvidenceService;
+        this.currentEmployeeService = currentEmployeeService;
+        this.kpiTemplateRepository = kpiTemplateRepository;
     }
 
     @GetMapping("/configure")
@@ -91,6 +100,7 @@ public class HrKpiViewController {
                                     @RequestParam(required = false) Integer deptId,
                                     @RequestParam(required = false) String hrComment,
                                     @RequestParam MultipartFile excelFile,
+                                    Principal principal,
                                     RedirectAttributes ra) {
 
         try {
@@ -111,6 +121,7 @@ public class HrKpiViewController {
 
             String storedPath = documentStorageService.store(excelFile);
             List<Employee> targetEmployees;
+            Integer currentHrEmpId = currentEmployeeService.requireCurrentEmpId(principal);
 
             switch (applyScope) {
                 case "ALL":
@@ -123,7 +134,7 @@ public class HrKpiViewController {
                         ra.addFlashAttribute("err", "Please select a department");
                         return "redirect:/hr/kpi/configure";
                     }
-                    targetEmployees = employeeRepository.findByDeptId(deptId);
+                    targetEmployees = employeeRepository.findEmployeesOnlyByDeptId(deptId);
                     log.info("Sending KPI to department {}: {} employees", deptId, targetEmployees.size());
                     break;
 
@@ -165,18 +176,22 @@ public class HrKpiViewController {
                         assignment.setHrComment(hrComment);
                         assignment.setStatus(KpiAssignment.AssignmentStatus.ASSIGNED);
                         assignment.setAssignedAt(LocalDateTime.now());
+                        assignment.setAssignedBy(currentHrEmpId);
+                        if ("EMPLOYEE".equals(applyScope)) {
+                            assignment.setDeptId(null);
+                        }
                     } else {
                         log.info("Creating new assignment for emp_id: {}", emp.getEmpId());
                         assignment = new KpiAssignment();
                         assignment.setCycleId(cycleId);
-                        assignment.setKpiId(1);
+                        assignment.setKpiId(resolveDefaultKpiId());
                         assignment.setEmpId(emp.getEmpId());
-                        assignment.setDeptId(emp.getDeptId());
+                        assignment.setDeptId("EMPLOYEE".equals(applyScope) ? null : emp.getDeptId());
                         assignment.setHrExcelTemplatePath(storedPath);
                         assignment.setHrComment(hrComment);
                         assignment.setStatus(KpiAssignment.AssignmentStatus.ASSIGNED);
                         assignment.setAssignedAt(LocalDateTime.now());
-                        assignment.setAssignedBy(104);
+                        assignment.setAssignedBy(currentHrEmpId);
                     }
 
                     KpiAssignment saved = kpiAssignmentRepository.save(assignment);
@@ -194,14 +209,20 @@ public class HrKpiViewController {
                 }
             }
 
-            ra.addFlashAttribute("msg", "KPI template sent successfully to " + successCount + " employee(s)");
-            return "redirect:/hr/kpi/configure";
+            return "redirect:/hr/kpi/pending-verification";
 
         } catch (Exception e) {
             log.error("Upload KPI template failed", e);
             ra.addFlashAttribute("err", "Error: " + e.getMessage());
             return "redirect:/hr/kpi/configure";
         }
+    }
+
+    private Integer resolveDefaultKpiId() {
+        return kpiTemplateRepository.findAllByOrderByKpiNameAsc().stream()
+                .findFirst()
+                .map(template -> template.getKpiId())
+                .orElseThrow(() -> new RuntimeException("No KPI template found. Please create KPI templates first."));
     }
 
     @GetMapping("/pending-verification")
@@ -234,9 +255,15 @@ public class HrKpiViewController {
 
     @PostMapping("/verify/{assignmentId}/approve")
     public String approveKpi(@PathVariable Integer assignmentId,
+                             @RequestParam(required = false) List<String> verificationChecks,
                              @RequestParam(required = false) String hrNote,
                              RedirectAttributes ra) {
         try {
+            if (verificationChecks == null || verificationChecks.isEmpty()) {
+                ra.addFlashAttribute("err", "Please confirm at least one verification checklist item before forwarding.");
+                return "redirect:/hr/kpi/verify/" + assignmentId;
+            }
+
             KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
                     .orElseThrow(() -> new RuntimeException("KPI assignment not found"));
 

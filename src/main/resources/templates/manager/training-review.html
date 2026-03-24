@@ -3,15 +3,15 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
 <head>
-    <title>Review Training Submissions - HRM System</title>
+    <title>Training Evidence Confirmations - HRM System</title>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="container-fluid">
         <div class="row mb-4">
             <div class="col-12">
-                <h2>Review Training Submissions</h2>
-                <p class="text-muted mb-0">Review and approve training completion evidence from your team.</p>
+                <h2>Training Evidence Confirmations</h2>
+                <p class="text-muted mb-0">Review certificate evidence submitted by your team and confirm completion.</p>
             </div>
         </div>
 
@@ -19,7 +19,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <strong>Pending Reviews</strong>
+                        <strong>Pending Confirmations</strong>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -30,54 +30,23 @@
                                         <th>Course</th>
                                         <th>Submitted Date</th>
                                         <th>Completion Date</th>
-                                        <th>Evidence</th>
-                                        <th>Actions</th>
+                                        <th>Action / View Detail</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr th:if="${#lists.isEmpty(submissions)}">
-                                        <td colspan="6" class="text-center text-muted">No pending submissions</td>
+                                        <td colspan="5" class="text-center text-muted">No pending submissions</td>
                                     </tr>
                                     <tr th:each="sub : ${submissions}">
-                                        <td>
-                                            <span th:if="${teamMembers != null}">
-                                                <span th:each="emp : ${teamMembers}" 
-                                                      th:if="${emp.empId == sub.empId}"
-                                                      th:text="${emp.fullName}">Employee Name</span>
-                                            </span>
-                                            <span th:unless="${teamMembers != null}" th:text="'ID: ' + ${sub.empId}">ID: 1</span>
-                                        </td>
+                                        <td th:text="${empNames[sub.empId] != null ? empNames[sub.empId] : ('ID: ' + sub.empId)}">Employee Name</td>
                                         <td th:text="${sub.programName}">Java Programming</td>
                                         <td th:text="${sub.submittedAt != null ? #temporals.format(sub.submittedAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">15/03/2024 10:30</td>
                                         <td th:text="${sub.completionDate != null ? #temporals.format(sub.completionDate, 'dd/MM/yyyy') : 'N/A'}">15/03/2024</td>
                                         <td>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-info"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#evidenceModal"
-                                                    th:attr="data-sub-id=${sub.assignId},
-                                                             data-emp-name=${teamMembers != null ? (teamMembers.stream().filter(e -> e.empId == sub.empId).findFirst().orElse(null)?.fullName ?: 'Employee') : 'Employee'},
-                                                             data-course=${sub.programName},
-                                                             data-note=${sub.completionNote},
-                                                             data-cert-code=${sub.certificateCode},
-                                                             data-cert-path=${sub.certificateFilePath}">
-                                                <i class="fa fa-eye"></i> View
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <form method="post" th:action="@{/manager/training/review/{id}/approve(id=${sub.assignId})}" class="d-inline">
-                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                <button type="submit" class="btn btn-sm btn-success me-1">
-                                                    <i class="fa fa-check"></i> Approve
-                                                </button>
-                                            </form>
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-danger"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#rejectModal"
-                                                    th:attr="data-sub-id=${sub.assignId}">
-                                                <i class="fa fa-times"></i> Reject
-                                            </button>
+                                            <a th:href="@{/manager/training/evidence-confirmations/{id}(id=${sub.assignId})}"
+                                               class="btn btn-sm btn-info">
+                                                <i class="fa fa-eye"></i> View Detail
+                                            </a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -88,113 +57,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Evidence Modal -->
-    <div class="modal fade" id="evidenceModal" tabindex="-1" aria-labelledby="evidenceModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="evidenceModalLabel">Training Evidence</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-4"><strong>Employee:</strong></div>
-                        <div class="col-md-8" id="evidenceEmpName">Employee Name</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4"><strong>Course:</strong></div>
-                        <div class="col-md-8" id="evidenceCourse">Course Name</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4"><strong>Completion Note:</strong></div>
-                        <div class="col-md-8" id="evidenceNote">Completion note</div>
-                    </div>
-                    <div class="row mb-3" id="certCodeRow">
-                        <div class="col-md-4"><strong>Certificate Code:</strong></div>
-                        <div class="col-md-8" id="evidenceCertCode">CERT-12345</div>
-                    </div>
-                    <div class="row mb-3" id="certFileRow">
-                        <div class="col-md-4"><strong>Certificate File:</strong></div>
-                        <div class="col-md-8">
-                            <a id="evidenceCertLink" href="#" class="btn btn-sm btn-outline-primary" target="_blank">
-                                <i class="fa fa-download"></i> View Certificate
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reject Modal -->
-    <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="rejectModalLabel">Reject Evidence</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="rejectForm" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="reviewComment" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
-                            <textarea id="reviewComment" name="reviewComment" class="form-control" rows="4" 
-                                      placeholder="Explain why the evidence is not acceptable" required></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Reject Evidence</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div layout:fragment="scripts">
-<script>
-    const evidenceModal = document.getElementById('evidenceModal');
-    const rejectModal = document.getElementById('rejectModal');
-    const rejectForm = document.getElementById('rejectForm');
-
-    evidenceModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        
-        document.getElementById('evidenceEmpName').textContent = button.getAttribute('data-emp-name') || 'N/A';
-        document.getElementById('evidenceCourse').textContent = button.getAttribute('data-course') || 'N/A';
-        document.getElementById('evidenceNote').textContent = button.getAttribute('data-note') || 'N/A';
-        
-        const certCode = button.getAttribute('data-cert-code');
-        const certPath = button.getAttribute('data-cert-path');
-        
-        if (certCode && certCode !== 'null') {
-            document.getElementById('evidenceCertCode').textContent = certCode;
-            document.getElementById('certCodeRow').style.display = 'flex';
-        } else {
-            document.getElementById('certCodeRow').style.display = 'none';
-        }
-        
-        if (certPath && certPath !== 'null') {
-            document.getElementById('evidenceCertLink').href = '/documents/' + certPath;
-            document.getElementById('certFileRow').style.display = 'flex';
-        } else {
-            document.getElementById('certFileRow').style.display = 'none';
-        }
-    });
-
-    rejectModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const subId = button.getAttribute('data-sub-id');
-        
-        rejectForm.action = '/manager/training/review/' + subId + '/reject';
-    });
-</script>
 </div>
 </body>
 </html>

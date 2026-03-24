@@ -11,6 +11,7 @@ public class TrainingAssignment {
     public enum AssignmentStatus {
         ASSIGNED,
         IN_PROGRESS,
+        IN_PROCESS, // Legacy status kept for backward compatibility
         PENDING_REVIEW,
         COMPLETED,
         REJECTED,

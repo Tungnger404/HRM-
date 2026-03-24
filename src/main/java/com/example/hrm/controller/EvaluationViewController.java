@@ -4,15 +4,16 @@ import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.KpiEvidence;
 import com.example.hrm.repository.EmployeeRepository;
-import com.example.hrm.repository.EvalCycleRepository;
 import com.example.hrm.repository.KpiAssignmentRepository;
 import com.example.hrm.repository.KpiEvidenceRepository;
 import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.FileValidationService;
+import com.example.hrm.service.KpiSubmissionValidationService;
 import com.example.hrm.service.KpiEvidenceService;
 import com.example.hrm.service.KpiAssignmentWorkflowService;
 import com.example.hrm.service.NotificationService;
+import com.example.hrm.service.SubmissionValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -71,6 +72,9 @@ public class EvaluationViewController {
     @Autowired
     private KpiAssignmentWorkflowService kpiAssignmentWorkflowService;
 
+    @Autowired
+    private KpiSubmissionValidationService kpiSubmissionValidationService;
+
     /**
      * STEP 1: Show KPI + Evidence submission form
      */
@@ -91,10 +95,6 @@ public class EvaluationViewController {
                 .orElse(null);
         
         Integer cycleId = assignment != null ? assignment.getCycleId() : 1;
-        
-        System.out.println("Selected assignment: " + (assignment != null ? assignment.getAssignmentId() : "NULL"));
-        System.out.println("Cycle ID: " + cycleId);
-        System.out.println("========================");
         
         if (assignment != null) {
             List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignment.getAssignmentId());
@@ -142,6 +142,18 @@ public class EvaluationViewController {
             String validationError = fileValidationService.validateFiles(kpiExcelFile, evidenceFiles);
             if (validationError != null) {
                 ra.addFlashAttribute("err", validationError);
+                return "redirect:/evaluation/submit-kpi";
+            }
+
+            SubmissionValidationResult draftValidation = kpiSubmissionValidationService.validateDraftSubmission(
+                    assignment,
+                    kpiExcelFile,
+                    evidenceFiles,
+                    employeeComment
+            );
+            if (!draftValidation.isValid()) {
+                ra.addFlashAttribute("err", "Please fix the validation errors before continuing.");
+                ra.addFlashAttribute("validationErrors", draftValidation.getErrors());
                 return "redirect:/evaluation/submit-kpi";
             }
             
@@ -238,6 +250,17 @@ public class EvaluationViewController {
                 && currentStatus != KpiAssignment.AssignmentStatus.MANAGER_REJECTED) {
                 ra.addFlashAttribute("err", "Invalid status for submission");
                 return "redirect:/evaluation/submit-kpi";
+            }
+
+            SubmissionValidationResult finalValidation = kpiSubmissionValidationService.validateBeforeHrSubmission(
+                    assignment,
+                    selfAssessment,
+                    selfScore
+            );
+            if (!finalValidation.isValid()) {
+                ra.addFlashAttribute("err", "Submission failed pre-HR validation. Please correct the issues and submit again.");
+                ra.addFlashAttribute("validationErrors", finalValidation.getErrors());
+                return "redirect:/evaluation/self-review";
             }
             
             assignment.setSelfAssessment(selfAssessment);
@@ -430,7 +453,7 @@ public class EvaluationViewController {
             );
             
             redirectAttributes.addFlashAttribute("msg", "Manager review submitted successfully!");
-            return "redirect:/evaluation/ranking/1";
+            return "redirect:/evaluation/ranking/" + assignment.getCycleId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("err", "Failed to submit review: " + e.getMessage());
             return "redirect:/evaluation/manager-review/" + evaluationId;
@@ -443,12 +466,10 @@ public class EvaluationViewController {
     @PostMapping("/promotion/{assignmentId}/approve")
     public String approvePromotion(
             @PathVariable Integer assignmentId,
-            Principal principal,
+            Principal ignoredPrincipal,
             RedirectAttributes redirectAttributes
     ) {
         try {
-            Integer approverId = currentEmployeeService.requireCurrentEmpId(principal);
-            
             KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
                     .orElseThrow(() -> new RuntimeException("KPI Assignment not found"));
             

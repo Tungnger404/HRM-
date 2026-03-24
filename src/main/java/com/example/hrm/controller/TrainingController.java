@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,8 +90,12 @@ public class TrainingController {
             Integer programId = ((Number) body.get("programId")).intValue();
             Integer assignedBy = ((Number) body.get("assignedBy")).intValue();
             String objective = (String) body.get("objective");
+            String deadlineRaw = body.get("deadline") != null
+                    ? body.get("deadline").toString()
+                    : (body.get("endDate") != null ? body.get("endDate").toString() : null);
+            LocalDate deadline = deadlineRaw != null && !deadlineRaw.isBlank() ? LocalDate.parse(deadlineRaw) : null;
 
-            TrainingAssignment assignment = trainingService.assignTraining(empId, programId, assignedBy, objective, null, null);
+            TrainingAssignment assignment = trainingService.assignTraining(empId, programId, assignedBy, objective, null, deadline);
             return ResponseEntity.status(HttpStatus.CREATED).body(assignment);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
