@@ -6,86 +6,258 @@
 
 <div layout:fragment="content">
 
-    <div class="card">
-        <div class="card-header">
-            <h5>Create Attendance Request</h5>
-        </div>
-
-        <div class="card-body">
-
-            <div th:if="${param.success}" class="alert alert-success">
-                Request submitted successfully!
+    <div class="d-flex justify-content-center align-items-center py-4">
+        <div class="card border-0 shadow-sm rounded-4 w-100" style="max-width: 850px; overflow: hidden;">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4 d-flex justify-content-between align-items-center">
+                <h4 class="fw-bold mb-0 text-dark">Leave Request</h4>
+                <a th:href="@{/employee/requests/my}" class="btn-close" aria-label="Close"></a>
             </div>
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-            <form th:action="@{/employee/requests/create}"
-                  th:object="${request}"
-                  method="post"
-                  enctype="multipart/form-data">
+            <div class="card-body p-4 pt-2">
 
-                <div class="mb-3">
-                    <label class="form-label">Request Type</label>
-                    <select class="form-select" th:field="*{requestType}" id="requestType" required>
-                        <option value="">-- Select Type --</option>
-                        <option value="LEAVE">Leave</option>
-                        <option value="OVERTIME">Overtime</option>
-                        <option value="OTHER">Other</option>
-                    </select>
+                <div th:if="${param.success}" class="alert alert-success border-0 rounded-3 shadow-sm mb-4">
+                    <i class="fas fa-check-circle me-2"></i> Request submitted successfully!
                 </div>
+                <div th:if="${error}" class="alert alert-danger border-0 rounded-3 shadow-sm mb-4" th:text="${error}"></div>
 
-                <div class="mb-3">
-                    <label class="form-label">Target Work Date</label>
-                    <input type="date" class="form-control" th:field="*{targetWorkDate}" required>
-                </div>
+                <form th:action="@{/employee/requests/create}"
+                      th:object="${request}"
+                      method="post"
+                      enctype="multipart/form-data">
+                    
+                    <div class="row g-4">
+                        <!-- Left Column (Form Inputs) -->
+                        <div class="col-md-7 pe-md-4">
+                            
+                            <!-- Leave Type -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-dark mb-1">Leave Type <span class="text-danger">*</span></label>
+                                <select class="form-select fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{requestType}" id="requestType" required>
+                                    <option value="">-- Select Type --</option>
+                                    <option value="LEAVE">Annual Leave</option>
+                                    <option value="OVERTIME">Overtime</option>
+                                    <option value="OTHER">Other Request</option>
+                                </select>
+                            </div>
 
-                <div id="leaveFields">
-                    <div class="mb-3">
-                        <label class="form-label">Start Time (for Leave/Overtime)</label>
-                        <input type="datetime-local" class="form-control" th:field="*{startTime}">
+                            <!-- Target Date -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-dark mb-1">Dates <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{targetWorkDate}" id="targetDate" required>
+                                </div>
+                            </div>
+
+                            <!-- Start/End Times -->
+                            <div class="row g-3 mb-3" id="timeFields">
+                                <div class="col-6">
+                                    <label class="form-label fw-bold small text-dark mb-1">Start Time</label>
+                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{startTime}" id="startTime">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold small text-dark mb-1">End Time</label>
+                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{endTime}" id="endTime">
+                                </div>
+                            </div>
+
+                            <!-- Reason -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-dark mb-1">About</label>
+                                <textarea class="form-control fs-6 p-3 rounded-3 border-secondary-subtle bg-light" 
+                                          th:field="*{reason}" 
+                                          rows="3" 
+                                          placeholder="Include comments for your approver"
+                                          style="resize: none;"></textarea>
+                            </div>
+
+                            <!-- Attachment Drag & Drop -->
+                            <div class="mb-2">
+                                <label class="form-label fw-bold small text-dark mb-1">Attachments</label>
+                                <div class="file-drop-area rounded-4 p-4 text-center position-relative transition-all" 
+                                     id="dropArea" 
+                                     style="border: 2px dashed #cbd5e1; background-color: #f8fafc;">
+                                    <input type="file" 
+                                           name="attachment" 
+                                           id="attachment" 
+                                           class="position-absolute w-100 h-100 opacity-0" 
+                                           style="top:0; left:0; z-index: 2; cursor: pointer;" 
+                                           accept=".pdf,.jpg,.png,.doc,.docx,.gif">
+                                    <div class="file-msg position-relative z-index-1">
+                                        <div class="icon-circle bg-white shadow-sm d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px;">
+                                            <i class="fas fa-image fs-5" style="color: #3b82f6;"></i>
+                                        </div>
+                                        <div class="mb-1">
+                                            <span class="fw-bold" style="color: #3b82f6;">Upload a file</span> 
+                                            <span class="text-secondary">or drag and drop</span>
+                                        </div>
+                                        <div class="small fw-medium" style="color: #94a3b8;">PNG, JPG, GIF up to 10MB</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column (Summary Box) -->
+                        <div class="col-md-5">
+                            <div class="rounded-4 p-4 h-100 d-flex flex-column border" style="background-color: #f8faff; border-color: #e2e8f0 !important;">
+                                <h6 class="fw-bold mb-3 text-dark fs-6">Your Request Includes</h6>
+                                
+                                <div id="summaryItems" class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 pb-3 border-bottom border-light-subtle" id="summaryDateRow" style="display:none !important;">
+                                        <span id="summaryDateText" class="text-secondary fw-medium">Select date</span>
+                                        <span class="text-primary fw-bold bg-white px-2 py-1 rounded shadow-sm small" id="summaryDurationText">All Day</span>
+                                    </div>
+                                    <div class="text-center text-muted small mt-5" id="emptySummaryMsg">
+                                        <i class="far fa-calendar-alt fs-2 text-light mb-2"></i><br>
+                                        Please select dates<br>to see your breakdown.
+                                    </div>
+                                </div>
+
+                                <div class="mt-auto pt-4 border-top border-light-subtle">
+                                    <div class="fw-bold text-dark fs-6" id="totalDaysText">0 days of Leave</div>
+                                    <div class="small fw-medium mt-1" style="color: #64748b;" id="remainingDaysText">Calculated based on times</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">End Time (for Leave/Overtime)</label>
-                        <input type="datetime-local" class="form-control" th:field="*{endTime}">
+                    <!-- Footer Buttons -->
+                    <div class="d-flex justify-content-end mt-4 pt-4 border-top border-secondary-subtle">
+                        <a th:href="@{/employee/requests/my}" class="btn btn-light fw-bold px-4 py-2 me-3 text-secondary rounded-3" style="background-color: #f1f5f9;">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-5 py-2 shadow-sm rounded-3" style="background-color: #3b82f6; border-color: #3b82f6;">Request Now</button>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Upload Attachment (optional)</label>
-                        <input type="file"
-                               class="form-control"
-                               name="attachment"
-                               accept=".pdf,.jpg,.png,.doc,.docx">
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Reason</label>
-                    <textarea class="form-control"
-                              th:field="*{reason}"
-                              rows="3"
-                              placeholder="Enter reason"></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                    Submit Request
-                </button>
-            </form>
-
+                </form>
+            </div>
         </div>
     </div>
 
+    <!-- Additional Custom CSS for Drag and Drop -->
+    <style>
+        .file-drop-area:hover {
+            background-color: #f1f5f9 !important;
+            border-color: #94a3b8 !important;
+        }
+        .file-drop-area.dragover {
+            background-color: #e0f2fe !important;
+            border-color: #3b82f6 !important;
+        }
+    </style>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // Field elements
             const requestType = document.getElementById("requestType");
-            const leaveFields = document.getElementById("leaveFields");
+            const timeFields = document.getElementById("timeFields");
+            const targetDateInput = document.getElementById('targetDate');
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+            
+            // Summary elements
+            const summaryDateRow = document.getElementById('summaryDateRow');
+            const summaryDateText = document.getElementById('summaryDateText');
+            const summaryDurationText = document.getElementById('summaryDurationText');
+            const emptySummaryMsg = document.getElementById('emptySummaryMsg');
+            const totalDaysText = document.getElementById('totalDaysText');
 
-            function updateForm() {
+            // 1. Show/Hide time fields based on Request Type
+            function updateTimeFields() {
                 const type = requestType.value;
-                leaveFields.style.display = (type === "LEAVE" || type === "OVERTIME") ? "block" : "none";
+                if (type === "LEAVE" || type === "OVERTIME") {
+                    timeFields.style.display = "flex";
+                } else {
+                    timeFields.style.display = "none";
+                }
+                calculateDuration();
             }
 
-            requestType.addEventListener("change", updateForm);
-            updateForm();
+            // 2. Dynamic Update of Right Column Summary
+            function calculateDuration() {
+                const dVal = targetDateInput.value;
+                if (!dVal) {
+                    summaryDateRow.style.setProperty('display', 'none', 'important');
+                    emptySummaryMsg.style.display = 'block';
+                    totalDaysText.textContent = '0 days of Request';
+                    return;
+                }
+                
+                emptySummaryMsg.style.display = 'none';
+                summaryDateRow.style.setProperty('display', 'flex', 'important');
+                
+                // Format date nicely (e.g. Aug 05)
+                const dObj = new Date(dVal);
+                if (!isNaN(dObj)) {
+                    const options = { month: 'short', day: '2-digit' };
+                    summaryDateText.textContent = dObj.toLocaleDateString('en-US', options);
+                } else {
+                    summaryDateText.textContent = dVal;
+                }
+
+                let durationLabel = 'All Day';
+                let totalText = '1 day';
+                
+                if (startTimeInput.value && endTimeInput.value) {
+                    const sTime = new Date(startTimeInput.value);
+                    const eTime = new Date(endTimeInput.value);
+                    if (eTime > sTime) {
+                        const diffMs = eTime - sTime;
+                        const diffHrs = (diffMs / (1000 * 60 * 60)).toFixed(1);
+                        durationLabel = diffHrs + ' hrs';
+                        totalText = diffHrs + ' hours';
+                    } else if (eTime.getTime() === sTime.getTime()) {
+                        durationLabel = '0 hrs';
+                        totalText = '0 hours';
+                    }
+                }
+                
+                const typeLabel = requestType.options[requestType.selectedIndex].text || 'Request';
+                summaryDurationText.textContent = durationLabel;
+                totalDaysText.textContent = totalText + ' of ' + typeLabel.replace(/--|Select Type/g, 'Request').trim();
+            }
+
+            // 3. Drag and Drop File Input Logic
+            const fileInput = document.getElementById('attachment');
+            const dropArea = document.getElementById('dropArea');
+            const fileMsg = dropArea.querySelector('.file-msg');
+            const originalMsgHTML = fileMsg.innerHTML;
+
+            fileInput.addEventListener('change', function() {
+                if(this.files && this.files.length > 0) {
+                    fileMsg.innerHTML = `
+                        <div class="icon-circle bg-success shadow-sm d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px;">
+                            <i class="fas fa-check text-white fs-5"></i>
+                        </div>
+                        <div class="mb-1">
+                            <span class="fw-bold text-success text-truncate d-inline-block" style="max-width: 200px;">${this.files[0].name}</span>
+                        </div>
+                        <div class="small fw-medium text-success">Ready to upload</div>
+                    `;
+                    dropArea.style.borderColor = '#10b981';
+                    dropArea.style.backgroundColor = '#ecfdf5';
+                } else {
+                    fileMsg.innerHTML = originalMsgHTML;
+                    dropArea.style.borderColor = '#cbd5e1';
+                    dropArea.style.backgroundColor = '#f8fafc';
+                }
+            });
+
+            fileInput.addEventListener('dragenter', function() {
+                dropArea.classList.add('dragover');
+            });
+            fileInput.addEventListener('dragleave', function() {
+                dropArea.classList.remove('dragover');
+            });
+            fileInput.addEventListener('drop', function() {
+                dropArea.classList.remove('dragover');
+            });
+
+            // Bind Events
+            requestType.addEventListener("change", updateTimeFields);
+            targetDateInput.addEventListener('change', calculateDuration);
+            startTimeInput.addEventListener('change', calculateDuration);
+            endTimeInput.addEventListener('change', calculateDuration);
+
+            // Init
+            updateTimeFields();
         });
     </script>
 </div>

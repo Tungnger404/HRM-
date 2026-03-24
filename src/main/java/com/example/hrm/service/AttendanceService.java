@@ -37,44 +37,48 @@ public class AttendanceService {
     public void checkIn(Integer empId) {
         LocalDate today = LocalDate.now();
 
-        if (attendanceLogRepository.findByEmployee_EmpIdAndWorkDate(empId, today).isPresent()) {
-            throw new RuntimeException("You have already checked in today.");
-        }
+        // if (attendanceLogRepository.findByEmployee_EmpIdAndWorkDate(empId, today).isPresent()) {
+        //     throw new RuntimeException("You have already checked in today.");
+        // }
 
         Employee employee = employeeRepository.findById(empId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        ShiftAssignment assignment = shiftAssignmentRepository.findByEmployee_EmpIdAndWorkDate(empId, today)
-                .orElseThrow(() -> new RuntimeException("No shift assignment for today."));
-
-        if (!"WORK".equalsIgnoreCase(assignment.getAssignmentType())) {
-            throw new RuntimeException("Today is not a working shift (" + assignment.getAssignmentType() + ").");
-        }
-
-        ShiftTemplate shift = assignment.getShiftTemplate();
-        if (shift == null) {
-            throw new RuntimeException("Shift is missing in assignment.");
-        }
-
-        ShiftAttendanceRule rule = shiftAttendanceRuleRepository
-                .findByShiftTemplate_ShiftIdAndIsActiveTrue(shift.getShiftId())
-                .orElseThrow(() -> new RuntimeException("Shift rule not found for " + shift.getShiftCode()));
-
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime scheduledStart = LocalDateTime.of(today, shift.getStartTime());
-        LocalDateTime scheduledEnd = LocalDateTime.of(today, shift.getEndTime());
+        
+        ShiftAssignment assignment = shiftAssignmentRepository.findByEmployee_EmpIdAndWorkDate(empId, today).orElse(null);
+        
+        Long assignmentId = null;
+        Integer shiftId = null;
+        LocalDateTime scheduledStart = null;
+        LocalDateTime scheduledEnd = null;
+        boolean isLate = false;
+        int lateMinutes = 0;
 
-        if (Boolean.TRUE.equals(shift.getIsOvernight()) || shift.getEndTime().isBefore(shift.getStartTime())) {
-            scheduledEnd = scheduledEnd.plusDays(1);
+        if (assignment != null && "WORK".equalsIgnoreCase(assignment.getAssignmentType()) && assignment.getShiftTemplate() != null) {
+            ShiftTemplate shift = assignment.getShiftTemplate();
+            assignmentId = assignment.getAssignmentId();
+            shiftId = shift.getShiftId();
+            
+            scheduledStart = LocalDateTime.of(today, shift.getStartTime());
+            scheduledEnd = LocalDateTime.of(today, shift.getEndTime());
+
+            if (Boolean.TRUE.equals(shift.getIsOvernight()) || shift.getEndTime().isBefore(shift.getStartTime())) {
+                scheduledEnd = scheduledEnd.plusDays(1);
+            }
+            
+            if (now.isAfter(scheduledStart)) {
+                lateMinutes = (int) Math.max(0, Duration.between(scheduledStart, now).toMinutes());
+                ShiftAttendanceRule rule = shiftAttendanceRuleRepository
+                    .findByShiftTemplate_ShiftIdAndIsActiveTrue(shift.getShiftId())
+                    .orElse(null);
+                if (rule != null) {
+                    isLate = lateMinutes > rule.getLateThresholdMinutes();
+                } else {
+                    isLate = lateMinutes > 0;
+                }
+            }
         }
-
-        LocalDateTime earliestCheckIn = scheduledStart.minusMinutes(rule.getEarlyCheckinMinutes());
-        if (now.isBefore(earliestCheckIn)) {
-            throw new RuntimeException("Too early to check in.");
-        }
-
-        int lateMinutes = (int) Math.max(0, Duration.between(scheduledStart, now).toMinutes());
-        boolean isLate = lateMinutes > rule.getLateThresholdMinutes();
 
         AttendanceLog log = AttendanceLog.builder()
                 .employee(employee)
@@ -82,8 +86,8 @@ public class AttendanceService {
                 .checkIn(now)
                 .status(isLate ? "LATE" : "ON_TIME")
                 .workType("WORK")
-                .assignmentId(assignment.getAssignmentId())
-                .shiftId(shift.getShiftId())
+                .assignmentId(assignmentId)
+                .shiftId(shiftId)
                 .scheduledStartAt(scheduledStart)
                 .scheduledEndAt(scheduledEnd)
                 .isLate(isLate)
@@ -105,6 +109,14 @@ public class AttendanceService {
         }
 
         LocalDateTime now = LocalDateTime.now();
+        
+        if (log.getCheckIn() != null) {
+            long minsElapsed = Duration.between(log.getCheckIn(), now).toMinutes();
+            if (minsElapsed < 5) {
+                throw new RuntimeException("You cannot check out within 5 minutes of checking in.");
+            }
+        }
+        
         log.setCheckOut(now);
 
         boolean earlyLeave = false;

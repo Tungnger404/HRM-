@@ -28,4 +28,6 @@ public interface LeaveOrOtRequestRepository extends JpaRepository<LeaveOrOtReque
     List<LeaveOrOtRequest> findByStatusAndProcessedAtIsNotNullOrderByProcessedAtDesc(RequestStatus status);
     List<LeaveOrOtRequest> findByEmpIdOrderByCreatedAtDesc(Integer empId);
     List<LeaveOrOtRequest> findByStatusInOrderByManagerDecidedAtDesc(List<RequestStatus> statuses);
+
+    List<LeaveOrOtRequest> findByEmpIdAndRequestTypeAndStatus(Integer empId, com.example.hrm.entity.RequestType requestType, com.example.hrm.entity.RequestStatus status);
 }
