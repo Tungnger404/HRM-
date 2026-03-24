@@ -61,11 +61,7 @@
             <div>
                 <h2 class="fw-bold text-dark mb-1">Interview Management</h2>
             </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-white border shadow-sm rounded-pill px-3">
-                    <i class="bi bi-filter me-2"></i>Filter
-                </button>
-            </div>
+
         </div>
 
         <div class="row mb-4" th:if="${!#lists.isEmpty(interviews)}">
@@ -134,9 +130,16 @@
                             </td>
 
                             <td class="text-end pe-4">
-                                <a th:href="@{/interview/evaluation/{id}(id=${i.candidate.candidateId})}"
+                                <a th:if="${i.candidate.status.name() == 'INTERVIEW_SCHEDULED' or (i.candidate.status.name() == 'INTERVIEWED' and #authorization.expression('hasRole(''MANAGER'')'))}"
+                                   th:href="@{/interview/evaluation/{id}(id=${i.candidate.candidateId})}"
                                    class="btn btn-primary btn-evaluate btn-sm shadow-sm">
                                     <i class="bi bi-pencil-square me-2"></i>Evaluate
+                                </a>
+
+                                <a th:unless="${i.candidate.status.name() == 'INTERVIEW_SCHEDULED' or (i.candidate.status.name() == 'INTERVIEWED' and #authorization.expression('hasRole(''MANAGER'')'))}"
+                                   th:href="@{/interview/evaluation/{id}(id=${i.candidate.candidateId})}"
+                                   class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-eye-fill me-1"></i> View Results
                                 </a>
                             </td>
                         </tr>
@@ -146,7 +149,6 @@
                                 <div class="empty-state text-center">
                                     <i class="bi bi-calendar-x fs-1 text-muted opacity-25 d-block mb-3"></i>
                                     <h5 class="text-muted">No interviews scheduled yet</h5>
-                                    <p class="small text-muted">When you assign interviews, they will appear here.</p>
                                 </div>
                             </td>
                         </tr>
