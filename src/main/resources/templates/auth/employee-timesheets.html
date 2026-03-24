@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>My Personal Timesheet</title>
+    <style>
+        .timesheet-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e2e8f0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .timesheet-header {
+            background-color: #ffffff;
+            text-align: center;
+            font-weight: 600;
+            color: #64748b;
+            padding: 12px 0;
+            font-size: 0.80rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .timesheet-cell {
+            background-color: #ffffff;
+            min-height: 110px;
+            padding: 12px;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        .timesheet-cell:hover {
+            background-color: #f8fafc;
+        }
+        .timesheet-cell.empty {
+            background-color: #f8fafc;
+        }
+        .timesheet-cell.day-off {
+            background-color: #f1f5f9;
+        }
+        .timesheet-cell.today {
+            background-color: #f0fdf4;
+            border: 1px solid #22c55e;
+            z-index: 1;
+        }
+        .date-number {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+        .time-range {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card { 
+            border-radius: 12px; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02); 
+            background: #ffffff;
+        }
+        .stat-label { 
+            font-size: 0.75rem; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            font-weight: 700; 
+            letter-spacing: 0.5px; 
+        }
+        .stat-value { 
+            font-size: 2rem; 
+            font-weight: 700; 
+            color: #0f172a; 
+            margin-top: 4px; 
+            line-height: 1;
+        }
+        
+        /* Legend */
+        .legend-item { display: inline-flex; align-items: center; margin-right: 18px; font-size: 0.85rem; color: #475569; font-weight: 500; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+    </style>
+</head>
+<body>
+<main layout:fragment="content">
+    <div class="container-fluid px-4 py-4">
+        
+        <!-- Top bar: Title & Nav -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+            <h3 class="m-0 fw-bold text-dark">My Personal Timesheet</h3>
+            
+            <!-- Month Navigation -->
+            <div class="d-flex align-items-center mt-3 mt-md-0 bg-white rounded-pill px-3 py-2 border shadow-sm">
+                <a th:href="@{/employee/timesheets(month=${prevMonth},year=${prevYear})}" class="text-decoration-none text-muted p-2">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <h5 class="m-0 fw-bold text-dark mx-3" style="width: 140px; text-align: center;" th:text="${monthName + ' ' + currentYear}">April 2026</h5>
+                <a th:href="@{/employee/timesheets(month=${nextMonth},year=${nextYear})}" class="text-decoration-none text-muted p-2">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-5">
+            <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+                <div class="stat-card p-4 h-100">
+                    <div class="stat-label">Actual Work</div>
+                    <div class="stat-value text-primary" th:text="${totalWorked}">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+                <div class="stat-card p-4 h-100">
+                    <div class="stat-label text-danger">Unpaid Absences</div>
+                    <div class="stat-value text-danger" th:text="${totalAbsent}">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card p-4 h-100">
+                    <div class="stat-label text-info">Paid Leave</div>
+                    <div class="stat-value text-info" th:text="${totalPaidLeave}">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card p-4 h-100">
+                    <div class="stat-label text-secondary">Holidays</div>
+                    <div class="stat-value text-secondary" th:text="${totalHoliday}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Section -->
+        <div class="card shadow-sm border-0 rounded-4 p-4 bg-white">
+            <div class="timesheet-grid mb-4">
+                <!-- Headers -->
+                <div class="timesheet-header">MON</div>
+                <div class="timesheet-header">TUE</div>
+                <div class="timesheet-header">WED</div>
+                <div class="timesheet-header">THU</div>
+                <div class="timesheet-header">FRI</div>
+                <div class="timesheet-header">SAT</div>
+                <div class="timesheet-header">SUN</div>
+
+                <!-- Days -->
+                <th:block th:each="week : ${weeks}">
+                    <div th:each="day : ${week}" th:class="'timesheet-cell ' + (${day.isEmpty} ? 'empty' : '') + (${day.isToday != null && day.isToday} ? ' today' : '') + (${day.status != null && day.status == 'DAY OFF'} ? ' day-off' : '')">
+                        <div th:if="${!day.isEmpty}">
+                            <div th:class="'date-number' + (${day.dayOfWeek == 'SATURDAY' or day.dayOfWeek == 'SUNDAY'} ? ' text-danger opacity-75' : '')" th:text="${day.dayNumber}">1</div>
+                            <div class="time-range" th:if="${day.timeRaw != ''}" th:text="${day.timeRaw}">08:00 - 17:30</div>
+                            <div class="d-flex align-items-center mt-2">
+                                <div class="status-dot" th:if="${day.dotColor != 'transparent'}" th:style="'background-color: ' + ${day.dotColor} + ';'" data-bs-toggle="tooltip" th:title="${day.status}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+
+            <!-- Legend -->
+            <div class="d-flex flex-wrap border-top pt-4">
+                <div class="legend-item"><div class="legend-dot" style="background-color: #198754;"></div> Present / Worked</div>
+                <div class="legend-item"><div class="legend-dot" style="background-color: #ffc107;"></div> Missing Log / Checkout</div>
+                <div class="legend-item"><div class="legend-dot" style="background-color: #0dcaf0;"></div> Paid Leave</div>
+                <div class="legend-item"><div class="legend-dot" style="background-color: #6c757d;"></div> Holiday</div>
+                <div class="legend-item"><div class="legend-dot" style="background-color: #dc3545;"></div> Unpaid Absence</div>
+                <div class="legend-item"><div class="legend-dot" style="background-color: #dee2e6;"></div> Scheduled Work</div>
+                <div class="legend-item"><div class="legend-dot" style="background-color: #e2e8f0;"></div> Day Off</div>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Initialize tooltips -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+</main>
+</body>
+</html>

@@ -27,4 +27,6 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
     Optional<AttendanceLog> findTopByEmployee_EmpIdAndCheckOutIsNullOrderByWorkDateDesc(Integer empId);
 
     List<AttendanceLog> findByEmployee_EmpIdOrderByWorkDateDesc(Integer empId);
+
+    List<AttendanceLog> findByEmployee_EmpIdAndWorkDateBetweenOrderByWorkDateAsc(Integer empId, LocalDate start, LocalDate end);
 }

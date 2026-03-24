@@ -5,111 +5,326 @@
       layout:decorate="~{layout/layout}">
 
 <div layout:fragment="content">
+    <style>
+        .page-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        .text-muted-custom {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .card-custom {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+            text-align: center;
+            border-right: 1px solid #e2e8f0;
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #10b981;
+            padding: 2px;
+            margin-bottom: 12px;
+            object-fit: cover;
+        }
+        .profile-avatar-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #10b981;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+        
+        .stat-card {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .stat-icon.orange { background: #ffedd5; color: #ea580c; }
+        .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+        .stat-icon.pink { background: #fce7f3; color: #db2777; }
+        .stat-icon.purple { background: #f3e8ff; color: #9333ea; }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-container {
+            padding: 24px;
+        }
+        .timeline-track {
+            height: 12px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            display: flex;
+            overflow: hidden;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .table-custom {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table-custom th {
+            background: #f8fafc;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+            text-transform: uppercase;
+        }
+        .table-custom td {
+            padding: 14px 16px;
+            font-size: 0.9rem;
+            color: #334155;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        .table-custom tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .badge-status::before {
+            content: "";
+            display: block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .badge-status.present { background: #f0fdf4; color: #166534; }
+        .badge-status.present::before { background: #16a34a; }
+        
+        .badge-status.absent { background: #fef2f2; color: #991b1b; }
+        .badge-status.absent::before { background: #dc2626; }
+        
+        .badge-status.late { background: #fffbeb; color: #92400e; }
+        .badge-status.late::before { background: #d97706; }
+        
+        .prod-hours {
+            background: #16a34a;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .prod-hours.danger {
+            background: #dc2626;
+        }
+        
+    </style>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Attendance</h5>
-        </div>
-
-        <div class="card-body">
-
-            <div th:if="${message}" class="alert alert-success">
-                <span th:text="${message}"></span>
-            </div>
-
-            <div th:if="${error}" class="alert alert-danger">
-                <span th:text="${error}"></span>
-            </div>
-
-            <div class="mb-3">
-                <h6 class="fw-bold">Current Time</h6>
-                <div id="clock" class="fs-4 text-primary fw-bold"></div>
-            </div>
-
-            <div class="mb-4 d-flex gap-2">
-                <form th:action="@{/employee/attendance/check-in}" method="post">
-                    <button type="submit" class="btn btn-success">Check In</button>
-                </form>
-
-                <form th:action="@{/employee/attendance/check-out}" method="post">
-                    <button type="submit" class="btn btn-danger">Check Out</button>
-                </form>
-            </div>
-
-            <hr>
-
-            <h6 class="fw-bold mb-3">Attendance History</h6>
-
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Check In</th>
-                        <th>Check Out</th>
-                        <th>Status</th>
-                        <th>Late (min)</th>
-                        <th>Early Leave (min)</th>
-                        <th>Work Type</th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    <tr th:each="log : ${logs}">
-                        <td th:text="${#temporals.format(log.workDate, 'dd/MM/yyyy')}"></td>
-                        <td th:text="${log.checkIn != null ? #temporals.format(log.checkIn, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
-                        <td th:text="${log.checkOut != null ? #temporals.format(log.checkOut, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="
-                                    ${log.status == 'ON_TIME' ? ' bg-success' :
-                                    (log.status == 'LATE' ? ' bg-warning text-dark' :
-                                    (log.status == 'EARLY_LEAVE' ? ' bg-info text-dark' :
-                                    (log.status == 'LATE_EARLY_LEAVE' ? ' bg-danger' :
-                                    (log.status == 'ABSENT' ? ' bg-dark' : ' bg-secondary'))))}"
-                                  th:text="${log.status}">
-                            </span>
-                        </td>
-                        <td th:text="${log.lateMinutes != null ? log.lateMinutes : 0}"></td>
-                        <td th:text="${log.earlyLeaveMinutes != null ? log.earlyLeaveMinutes : 0}"></td>
-                        <td>
-                            <span class="badge bg-secondary"
-                                  th:text="${log.workType != null ? log.workType : '-'}">
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr th:if="${#lists.isEmpty(logs)}">
-                        <td colspan="7" class="text-center text-muted">
-                            No attendance records found.
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
+    <div class="mb-4">
+        <h1 class="page-header">Employee Attendance</h1>
+        <div class="text-muted-custom">
+            <span class="text-primary cursor-pointer">Employee</span> / Employee Attendance
         </div>
     </div>
 
-    <script>
-        function updateClock() {
-            const now = new Date();
+    <!-- Top Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Profile Column -->
+        <div class="col-lg-3">
+            <div class="card-custom h-100 mb-0">
+                <div class="profile-section h-100 justify-content-center">
+                    <div class="text-muted-custom mb-1">
+                        <span class="fw-bold text-dark fs-5" th:text="${e != null ? e.fullName : (u != null ? u.username : 'User')}"></span>
+                    </div>
+                    <div class="fw-bold text-dark mb-3" th:text="${#dates.format(#dates.createNow(), 'dd MMM yyyy')}"></div>
+                    
+                    <img th:if="${u != null and u.avatarPath != null and !u.avatarPath.isEmpty()}" th:src="@{${u.avatarPath}}" class="profile-avatar" alt="Avatar"/>
+                    <div th:unless="${u != null and u.avatarPath != null and !u.avatarPath.isEmpty()}" class="profile-avatar-placeholder" th:text="${e != null ? e.fullName.substring(0,1) : 'U'}"></div>
+                    
+                    <div class="prod-hours mt-2 mb-2 d-inline-block px-3 py-1" style="background: #eaaa00; font-size: 0.85rem;" th:text="'Production : ' + ${hrsToday} + ' hrs'">Production : 0.00 hrs</div>
+                    <div class="text-muted-custom" style="font-size: 0.75rem;">
+                        <i class="fas fa-check-circle text-success me-1"></i> Checked In Today
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- KPI Analytics -->
+        <div class="col-lg-9">
+            <div class="row g-4 h-100">
+                <div class="col-md-3">
+                    <div class="card-custom h-100 mb-0">
+                        <div class="stat-card">
+                            <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                            <div class="stat-value"><span th:text="${hrsToday}">0.00</span> <span class="text-muted fw-normal" style="font-size: 1rem;">/ 9</span></div>
+                            <div class="stat-label">Total Hours Today</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-custom h-100 mb-0">
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i class="fas fa-calendar-week"></i></div>
+                            <div class="stat-value"><span th:text="${hrsWeek}">0.00</span> <span class="text-muted fw-normal" style="font-size: 1rem;">/ 40</span></div>
+                            <div class="stat-label">Total Hours Week</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-custom h-100 mb-0">
+                        <div class="stat-card">
+                            <div class="stat-icon pink"><i class="fas fa-calendar-alt"></i></div>
+                            <div class="stat-value"><span th:text="${hrsMonth}">0.00</span> <span class="text-muted fw-normal" style="font-size: 1rem;">/ 160</span></div>
+                            <div class="stat-label">Total Hours Month</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-custom h-100 mb-0">
+                        <div class="stat-card">
+                            <div class="stat-icon purple"><i class="fas fa-stopwatch"></i></div>
+                            <div class="stat-value" th:text="${otMonth} + ' / 20'">0.00 / 20</div>
+                            <div class="stat-label">Overtime this Month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Timeline Section -->
+    <div class="card-custom mb-4">
+        <div class="timeline-container">
+            <div class="row text-center mb-2">
+                <div class="col-md-4 text-start">
+                    <div class="text-muted-custom text-uppercase fw-bold" style="font-size: 0.7rem;"><span style="color:#10b981;">■</span> Total Working hours</div>
+                    <div class="fw-bold fs-5" th:text="${hrsMonth} + 'h'">0h</div>
+                </div>
+                <div class="col-md-4 border-start">
+                    <div class="text-muted-custom text-uppercase fw-bold" style="font-size: 0.7rem;"><span style="color:#eaaa00;">■</span> Monthly Overtime</div>
+                    <div class="fw-bold fs-5" th:text="${otMonth} + 'h'">0h</div>
+                </div>
+                <div class="col-md-4 border-start text-end">
+                    <div class="text-muted-custom text-uppercase fw-bold" style="font-size: 0.7rem;"><span style="color:#2563eb;">■</span> Today's Production</div>
+                    <div class="fw-bold fs-5" th:text="${hrsToday} + 'h'">0h</div>
+                </div>
+            </div>
+            
+            <div class="timeline-track">
+                <div class="bg-success h-100 transition-all opacity-75" style="width: 70%;"></div>
+                <div class="bg-warning h-100 transition-all opacity-75" style="width: 15%;"></div>
+                <div class="bg-primary h-100 transition-all opacity-75" style="width: 15%;"></div>
+            </div>
+        </div>
+    </div>
 
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-
-            const timeString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            document.getElementById("clock").innerText = timeString;
-        }
-
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
+    <!-- Attendance Table -->
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+            <h5 class="m-0 fw-bold fs-6">Attendance Log</h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" style="width: 150px;">
+                    <option>Select Status</option>
+                    <option>Present</option>
+                    <option>Absent</option>
+                </select>
+                <select class="form-select form-select-sm" style="width: 150px;">
+                    <option>Sort By: Last 30 Days</option>
+                </select>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Status</th>
+                    <th>Check Out</th>
+                    <th>Late</th>
+                    <th>Overtime</th>
+                    <th>Production Hours</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="log : ${logs}">
+                    <td th:text="${#temporals.format(log.workDate, 'dd MMM yyyy')}" class="fw-semibold"></td>
+                    <td th:text="${log.checkIn != null ? #temporals.format(log.checkIn, 'hh:mm a') : '-'}"></td>
+                    <td>
+                        <span class="badge-status" 
+                              th:classappend="${log.status == 'ABSENT'} ? 'absent' : (${log.status == 'LATE' or log.status == 'LATE_EARLY_LEAVE'} ? 'late' : 'present')"
+                              th:text="${log.status == 'ABSENT'} ? 'Absent' : (${log.status == 'LATE' or log.status == 'LATE_EARLY_LEAVE'} ? 'Late' : 'Present')">
+                        </span>
+                    </td>
+                    <td th:text="${log.checkOut != null ? #temporals.format(log.checkOut, 'hh:mm a') : '-'}"></td>
+                    <td th:text="${log.lateMinutes != null and log.lateMinutes > 0 ? log.lateMinutes + ' Min' : '-'}"></td>
+                    <td th:text="${log.checkOut != null and log.scheduledEndAt != null and log.checkOut.isAfter(log.scheduledEndAt) ? T(java.time.Duration).between(log.scheduledEndAt, log.checkOut).toMinutes() + ' Min' : '-'}"></td>
+                    <td>
+                        <span th:if="${log.checkIn != null and log.checkOut != null}" 
+                              class="prod-hours" 
+                              th:classappend="${T(java.time.Duration).between(log.checkIn, log.checkOut).toMinutes() < 480} ? 'danger' : ''"
+                              th:text="${T(java.lang.String).format('%.2f Hrs', T(java.time.Duration).between(log.checkIn, log.checkOut).toMinutes() / 60.0)}">
+                        </span>
+                        <span th:unless="${log.checkIn != null and log.checkOut != null}">-</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(logs)}">
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        No attendance records found.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 </html>

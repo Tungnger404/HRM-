@@ -12,4 +12,6 @@ public interface ShiftAssignmentRepository extends JpaRepository<ShiftAssignment
     Optional<ShiftAssignment> findByEmployee_EmpIdAndWorkDate(Integer empId, LocalDate workDate);
     Optional<ShiftAssignment> findTopByEmployee_EmpIdAndWorkDateLessThanEqualOrderByWorkDateDesc(Integer empId, LocalDate workDate);
     List<ShiftAssignment> findByWorkDateAndAssignmentType(LocalDate workDate, String assignmentType);
+
+    List<ShiftAssignment> findByEmployee_EmpIdAndWorkDateBetween(Integer empId, LocalDate start, LocalDate end);
 }
