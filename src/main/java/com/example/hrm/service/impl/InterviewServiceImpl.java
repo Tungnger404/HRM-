@@ -18,6 +18,7 @@ public class InterviewServiceImpl implements InterviewService {
     private final CandidateRepository candidateRepository;
 
     @Override
+    @Transactional
     public void submitEvaluation(Integer candidateId,
                                  Integer roundNumber,
                                  Integer score,
@@ -27,17 +28,19 @@ public class InterviewServiceImpl implements InterviewService {
         Candidate candidate = candidateRepository.findById(candidateId)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-        if (candidate.getStatus() == CandidateStatus.REJECTED) {
-            throw new RuntimeException("Candidate already rejected.");
+        if (candidate.getStatus() != CandidateStatus.INTERVIEW_SCHEDULED
+                && candidate.getStatus() != CandidateStatus.INTERVIEWED) {
+            throw new RuntimeException("Ứng viên hiện không trong trạng thái có thể đánh giá.");
         }
-
         Interview interview = interviewRepository
                 .findByCandidateCandidateIdAndRoundNumber(candidateId, roundNumber)
-                .orElseThrow(() -> new RuntimeException("Interview round not found"));
+                .orElseThrow(() -> new RuntimeException("Interview round " + roundNumber + " not found"));
+        if (interview.getResult() != null) {
+            throw new RuntimeException("Vòng phỏng vấn này đã được chấm điểm trước đó.");
+        }
 
-        // Manager round check
+
         if (roundNumber == 2) {
-
             Interview hrInterview = interviewRepository
                     .findByCandidateCandidateIdAndRoundNumber(candidateId, 1)
                     .orElseThrow(() -> new RuntimeException("HR interview not found"));
@@ -45,50 +48,35 @@ public class InterviewServiceImpl implements InterviewService {
             if (hrInterview.getResult() != InterviewResult.PASS) {
                 throw new RuntimeException("HR has not passed this candidate yet.");
             }
-
-            if (candidate.getStatus() != CandidateStatus.INTERVIEWED) {
-                throw new RuntimeException("Candidate not ready for manager evaluation.");
-            }
         }
 
-        // Save evaluation
+        InterviewResult finalResult = (score >= 5) ? InterviewResult.PASS : InterviewResult.FAIL;
         interview.setScore(score);
         interview.setFeedback(feedback);
-        interview.setResult(result);
+        interview.setResult(finalResult);
         interviewRepository.save(interview);
 
-        // =========================
-        // AUTO CREATE ROUND 2
-        // =========================
-        if (roundNumber == 1 && result == InterviewResult.PASS) {
 
-            boolean round2Exists = interviewRepository
-                    .existsByCandidateCandidateIdAndRoundNumber(candidateId, 2);
-
-            if (!round2Exists) {
-                Interview managerInterview = new Interview();
-                managerInterview.setCandidate(candidate);
-                managerInterview.setRoundNumber(2);
-                managerInterview.setScheduledTime(LocalDateTime.now().plusDays(2));
-                managerInterview.setLocation("Manager Interview");
-
-                interviewRepository.save(managerInterview);
-            }
-        }
-
-        // =========================
-        // UPDATE STATUS
-        // =========================
-        if (result == InterviewResult.FAIL) {
+        if (finalResult == InterviewResult.FAIL) {
             candidate.setStatus(CandidateStatus.REJECTED);
         } else {
             if (roundNumber == 1) {
                 candidate.setStatus(CandidateStatus.INTERVIEWED);
+                boolean round2Exists = interviewRepository
+                        .existsByCandidateCandidateIdAndRoundNumber(candidateId, 2);
+
+                if (!round2Exists) {
+                    Interview managerInterview = new Interview();
+                    managerInterview.setCandidate(candidate);
+                    managerInterview.setRoundNumber(2);
+                    managerInterview.setScheduledTime(LocalDateTime.now().plusDays(2));
+                    managerInterview.setLocation("Manager Office");
+                    interviewRepository.save(managerInterview);
+                }
             } else if (roundNumber == 2) {
                 candidate.setStatus(CandidateStatus.OFFERED);
             }
         }
-
         candidateRepository.save(candidate);
     }
     @Override

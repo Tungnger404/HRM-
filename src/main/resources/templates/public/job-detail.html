@@ -5,6 +5,15 @@
     <title th:text="${job.title + ' | Tuyển dụng doanh nghiệp'}">Job Detail</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <meta property="og:type" content="website" />
+    <meta property="og:url" th:content="${currentUrl}" />
+    <meta property="og:title" th:content="${'🔥 TUYỂN DỤNG: ' + job.title}" />
+    <meta property="og:description" th:content="${'📍 Địa điểm: ' + job.location + ' | 💰 Lương: ' + (job.recruitmentRequest.proposedSalary ?: 'Thỏa thuận') + ' | 📅 Hạn nộp: ' + #temporals.format(job.expiryDate,'dd/MM/yyyy') + '. Xem chi tiết và ứng tuyển ngay tại HRM Portal!'}" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" th:content="${job.title}" />
+    <meta name="twitter:description" th:content="${'Cơ hội nghề nghiệp tại bộ phận ' + job.recruitmentRequest.department.deptName}" />
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -140,7 +149,7 @@
 
         footer { background: white; padding: 60px 0; margin-top: 80px; border-top: 1px solid #e2e8f0; }
 
-        /* Toast thông báo nhẹ nhàng thay cho alert */
+        /* Toast thông báo */
         #copyToast {
             visibility: hidden;
             min-width: 250px;
@@ -283,16 +292,17 @@
 
 <script th:inline="javascript">
     const currentUrl = window.location.href;
-    const jobTitle = /*[[${job.title}]]*/ 'Tuyển dụng';
 
     function shareFacebook() {
+        // Facebook sẽ tự động quét nội dung từ các thẻ Meta (og:title, og:description) mà mình đã khai báo ở <head>
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
-        window.open(fbUrl, '_blank', 'width=600,height=400');
+        window.open(fbUrl, '_blank', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=600');
     }
 
     function shareLinkedIn() {
+        // Tương tự, LinkedIn sẽ tự tạo bài viết dựa trên thẻ Meta của URL được truyền vào
         const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`;
-        window.open(liUrl, '_blank', 'width=600,height=400');
+        window.open(liUrl, '_blank', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
     }
 
     function copyCurrentLink() {
@@ -302,7 +312,6 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }).catch(err => {
             console.error('Lỗi khi sao chép: ', err);
-            alert("Không thể sao chép liên kết. Vui lòng thử lại.");
         });
     }
 </script>

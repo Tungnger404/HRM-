@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class InterviewController {
 
         return "interview/list";
     }
+
     @GetMapping("/evaluation/{id}")
     public String viewEvaluation(@PathVariable Integer id,
                                  Model model) {
@@ -47,40 +49,52 @@ public class InterviewController {
         return "interview/evaluation";
     }
 
-
     @PreAuthorize("hasRole('HR')")
     @PostMapping("/submit-hr")
     public String submitHr(@RequestParam Integer candidateId,
                            @RequestParam Integer score,
                            @RequestParam String feedback,
-                           @RequestParam InterviewResult result) {
-
-        interviewService.submitEvaluation(
-                candidateId,
-                1,
-                score,
-                feedback,
-                result
-        );
+                           @RequestParam InterviewResult result,
+                           RedirectAttributes redirectAttributes) {
+        try {
+            interviewService.submitEvaluation(
+                    candidateId,
+                    1,
+                    score,
+                    feedback,
+                    result
+            );
+            // Thêm thông báo thành công
+            redirectAttributes.addFlashAttribute("successMessage", "HR Evaluation submitted successfully!");
+        } catch (RuntimeException e) {
+            // Bắt lỗi từ Service (lỗi check status != INTERVIEW_SCHEDULED)
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
 
         return "redirect:/interview/evaluation/" + candidateId;
     }
-
 
     @PreAuthorize("hasRole('MANAGER')")
     @PostMapping("/submit-manager")
     public String submitManager(@RequestParam Integer candidateId,
                                 @RequestParam Integer score,
                                 @RequestParam String feedback,
-                                @RequestParam InterviewResult result) {
-
-        interviewService.submitEvaluation(
-                candidateId,
-                2,
-                score,
-                feedback,
-                result
-        );
+                                @RequestParam InterviewResult result,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            interviewService.submitEvaluation(
+                    candidateId,
+                    2,
+                    score,
+                    feedback,
+                    result
+            );
+            // Thêm thông báo thành công
+            redirectAttributes.addFlashAttribute("successMessage", "Manager Evaluation submitted successfully!");
+        } catch (RuntimeException e) {
+            // Bắt lỗi nếu cố tình submit lại lần nữa
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
 
         return "redirect:/interview/evaluation/" + candidateId;
     }

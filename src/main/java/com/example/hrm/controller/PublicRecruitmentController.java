@@ -8,6 +8,7 @@ import com.example.hrm.repository.DepartmentRepository;
 import com.example.hrm.repository.JobPostingRepository;
 
 import com.example.hrm.service.CloudinaryService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.*;
@@ -101,18 +102,20 @@ public class PublicRecruitmentController {
     @GetMapping("/{slug}")
     public String jobDetail(
             @PathVariable String slug,
+            HttpServletRequest request, // Thêm tham số này để lấy URL
             Model model
     ) {
-
         JobPosting job = jobPostingRepository
                 .findBySlugAndIsPublicTrue(slug)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        // increase view
         job.setViewCount(job.getViewCount() + 1);
         jobPostingRepository.save(job);
 
+        String currentUrl = request.getRequestURL().toString();
+
         model.addAttribute("job", job);
+        model.addAttribute("currentUrl", currentUrl); // Truyền sang HTML
         model.addAttribute("activePage", "careers");
 
         return "public/job-detail";
