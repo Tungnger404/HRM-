@@ -89,28 +89,29 @@
         </div>
         <div class="card-body">
           
-          <div class="mb-3">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="check1">
-              <label class="form-check-label" for="check1">
-                Excel file belongs to this employee
-              </label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="check2">
-              <label class="form-check-label" for="check2">
-                Evidence files are valid and complete
-              </label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="check3">
-              <label class="form-check-label" for="check3">
-                No signs of fraud
-              </label>
-            </div>
-          </div>
+
 
           <form method="post" th:action="@{/hr/kpi/verify/{id}/approve(id=${assignment.assignmentId})}">
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="check1" name="verificationChecks" value="excel_owner_verified">
+                <label class="form-check-label" for="check1">
+                  Excel file belongs to this employee
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="check2" name="verificationChecks" value="evidence_complete_verified">
+                <label class="form-check-label" for="check2">
+                  Evidence files are valid and complete
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="check3" name="verificationChecks" value="no_fraud_signs_verified">
+                <label class="form-check-label" for="check3">
+                  No signs of fraud
+                </label>
+              </div>
+            </div>
             <div class="mb-3">
               <label class="form-label">HR Note (optional):</label>
               <textarea name="hrNote" class="form-control" rows="3"></textarea>

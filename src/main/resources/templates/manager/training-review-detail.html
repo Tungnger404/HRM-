@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Training Evidence Detail - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-3">
+            <div class="col-12 d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                <div>
+                    <h2 class="mb-1">Training Evidence Detail</h2>
+                    <p class="text-muted mb-0">Review uploaded evidence and confirm the final result.</p>
+                </div>
+                <a th:href="@{/manager/training/evidence-confirmations}" class="btn btn-secondary">
+                    <i class="fa fa-arrow-left"></i> Back to Pending Confirmations
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-xl-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <strong>Submission Information</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Employee:</strong></div>
+                            <div class="col-md-8" th:text="${employee.fullName}">Employee Name</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Course:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.programName != null ? assignment.programName : 'N/A'}">Course Name</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Submitted At:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.submittedAt != null ? #temporals.format(assignment.submittedAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">15/03/2024 10:30</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Completion Date:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.completionDate != null ? #temporals.format(assignment.completionDate, 'dd/MM/yyyy') : 'N/A'}">15/03/2024</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Completion Note:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.completionNote != null ? assignment.completionNote : 'N/A'}">Completion note</div>
+                        </div>
+                        <div class="row mb-3" th:if="${assignment.certificateCode != null and !#strings.isEmpty(assignment.certificateCode)}">
+                            <div class="col-md-4"><strong>Certificate Code:</strong></div>
+                            <div class="col-md-8" th:text="${assignment.certificateCode}">CERT-12345</div>
+                        </div>
+                        <div class="row mb-3" th:if="${assignment.reviewComment != null and !#strings.isEmpty(assignment.reviewComment)}">
+                            <div class="col-md-4"><strong>Last Review Comment:</strong></div>
+                            <div class="col-md-8 text-danger" th:text="${assignment.reviewComment}">Rejected reason</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Uploaded Evidence</strong>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${assignment.certificateFilePath != null and !#strings.isEmpty(assignment.certificateFilePath)}">
+                            <img th:if="${#strings.endsWith(#strings.toLowerCase(assignment.certificateFilePath), '.jpg') or #strings.endsWith(#strings.toLowerCase(assignment.certificateFilePath), '.jpeg') or #strings.endsWith(#strings.toLowerCase(assignment.certificateFilePath), '.png')}"
+                                 th:src="@{/uploads/hrm-docs/{path}(path=${assignment.certificateFilePath})}"
+                                 alt="Evidence preview"
+                                 class="img-fluid rounded border mb-3"
+                                 style="max-height: 520px; object-fit: contain;" />
+
+                            <a th:href="@{/uploads/hrm-docs/{path}(path=${assignment.certificateFilePath})}"
+                               target="_blank"
+                               class="btn btn-outline-primary">
+                                <i class="fa fa-download"></i> Open Evidence File
+                            </a>
+                        </div>
+
+                        <div class="alert alert-warning mb-0" th:if="${assignment.certificateFilePath == null or #strings.isEmpty(assignment.certificateFilePath)}">
+                            Employee did not upload an evidence file.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div class="card" th:if="${assignment.status.name() == 'PENDING_REVIEW'}">
+                    <div class="card-header">
+                        <strong>Review Actions</strong>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" th:action="@{/manager/training/review/{id}/approve(id=${assignment.assignId})}" class="mb-3">
+                            <th:block th:if="${_csrf != null}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            </th:block>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fa fa-check"></i> Approve
+                            </button>
+                        </form>
+
+                        <form method="post" th:action="@{/manager/training/review/{id}/reject(id=${assignment.assignId})}">
+                            <th:block th:if="${_csrf != null}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            </th:block>
+                            <div class="mb-2">
+                                <label for="reviewComment" class="form-label">Reject reason <span class="text-danger">*</span></label>
+                                <textarea id="reviewComment" name="reviewComment" class="form-control" rows="4"
+                                          placeholder="Explain what needs to be fixed before resubmission" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fa fa-times"></i> Reject and Request Resubmission
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card" th:if="${assignment.status.name() != 'PENDING_REVIEW'}">
+                    <div class="card-header">
+                        <strong>Status</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0 text-muted">
+                            This submission is already processed with status
+                            <strong th:text="${assignment.status}">COMPLETED</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
+

@@ -4,6 +4,9 @@ import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.KpiEvidence;
 import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.PerformanceRanking;
+import com.example.hrm.entity.Department;
+import com.example.hrm.entity.EvalCycle;
+import com.example.hrm.entity.JobPosition;
 import com.example.hrm.repository.KpiAssignmentRepository;
 import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.repository.PerformanceRankingRepository;
@@ -13,12 +16,11 @@ import com.example.hrm.service.NotificationService;
 import com.example.hrm.service.TrainingService;
 import com.example.hrm.service.KpiAssignmentWorkflowService;
 import com.example.hrm.service.EvaluationPolicyService;
-import com.example.hrm.entity.Department;
-import com.example.hrm.entity.EvalCycle;
-import com.example.hrm.entity.JobPosition;
 import com.example.hrm.repository.DepartmentRepository;
 import com.example.hrm.repository.EvalCycleRepository;
 import com.example.hrm.repository.JobPositionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,20 +28,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.OptionalDouble;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/manager/evaluation")
 public class ManagerEvaluationViewController {
+
+    private static final Logger log = LoggerFactory.getLogger(ManagerEvaluationViewController.class);
 
     @Autowired
     private KpiAssignmentRepository kpiAssignmentRepository;
@@ -131,47 +129,69 @@ public class ManagerEvaluationViewController {
                                          Principal principal,
                                          Model model) {
         Employee currentManager = currentEmployeeService.requireEmployee(principal);
-        System.out.println("DEBUG: showPerformanceRanking - Manager ID: " + currentManager.getEmpId() + ", CycleId: " + cycleId);
-        
         List<Employee> teamMembers = employeeRepository.findByDirectManagerId(currentManager.getEmpId());
-        System.out.println("DEBUG: Team members count: " + teamMembers.size());
-        teamMembers.forEach(e -> System.out.println("  - " + e.getEmpId() + " " + e.getFullName()));
-        
         List<Integer> teamEmpIds = teamMembers.stream().map(Employee::getEmpId).toList();
 
-        // Fetch từ PerformanceRanking table - đây là dữ liệu ranking chính thức
+        // Fetch ranking from official ranking table.
         List<PerformanceRanking> allRankings = performanceRankingRepository.findByCycleId(cycleId);
-        System.out.println("DEBUG: All rankings in cycle " + cycleId + ": " + allRankings.size());
-        allRankings.forEach(r -> System.out.println("  - EmpId: " + r.getEmpId() + ", CycleId: " + r.getCycleId() + ", Score: " + r.getFinalScore() + ", Classification: " + r.getClassification()));
 
-        // Lọc chỉ lấy ranking của team members của manager hiện tại
+        // Keep only rankings of current manager's direct reports.
         List<PerformanceRanking> teamRankings = allRankings.stream()
                 .filter(r -> teamEmpIds.contains(r.getEmpId()))
                 .collect(Collectors.toList());
-        System.out.println("DEBUG: Team rankings (filtered): " + teamRankings.size());
 
-        // Sort theo rank_overall (từ 1 tới n)
         teamRankings.sort(Comparator.comparing(PerformanceRanking::getRankOverall, 
                 Comparator.nullsLast(Comparator.naturalOrder())));
 
-        // Map empId to employee names
-        Map<Integer, String> empNames = employeeRepository.findAllById(
-                teamRankings.stream().map(PerformanceRanking::getEmpId).collect(Collectors.toSet())
-        ).stream()
-        .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
+        Map<Integer, Employee> employeeById = employeeRepository.findAllById(
+                        teamRankings.stream().map(PerformanceRanking::getEmpId).collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(Employee::getEmpId, e -> e));
+
+        Map<Integer, String> empNames = employeeById.values().stream()
+                .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
+
+        Map<Integer, String> deptNames = departmentRepository.findAllById(
+                        employeeById.values().stream().map(Employee::getDeptId).filter(id -> id != null).collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(Department::getDeptId, Department::getDeptName));
+
+        Map<Integer, String> positionNames = jobPositionRepository.findAllById(
+                        employeeById.values().stream().map(Employee::getJobId).filter(id -> id != null).collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(JobPosition::getJobId, JobPosition::getTitle));
+
+        Map<Integer, Integer> assignmentIds = teamRankings.stream().collect(Collectors.toMap(
+                PerformanceRanking::getEmpId,
+                r -> resolveLatestAssignmentId(r.getEmpId(), r.getCycleId()),
+                (first, second) -> first
+        ));
+
+        Map<Integer, String> empDeptNames = employeeById.values().stream().collect(Collectors.toMap(
+                Employee::getEmpId,
+                e -> e.getDeptId() != null ? deptNames.getOrDefault(e.getDeptId(), "-") : "-"
+        ));
+
+        Map<Integer, String> empPositionNames = employeeById.values().stream().collect(Collectors.toMap(
+                Employee::getEmpId,
+                e -> e.getJobId() != null ? positionNames.getOrDefault(e.getJobId(), "-") : "-"
+        ));
 
         // Count classifications
         long countA = teamRankings.stream().filter(r -> "A".equals(r.getClassification())).count();
         long countB = teamRankings.stream().filter(r -> "B".equals(r.getClassification())).count();
         long countC = teamRankings.stream().filter(r -> "C".equals(r.getClassification())).count();
         long countD = teamRankings.stream().filter(r -> "D".equals(r.getClassification())).count();
-        System.out.println("DEBUG: Classification counts - A: " + countA + ", B: " + countB + ", C: " + countC + ", D: " + countD);
+        log.info("Manager {} viewing ranking cycle {} with {} team rows", currentManager.getEmpId(), cycleId, teamRankings.size());
 
         // Get available cycles
         List<EvalCycle> cycles = evalCycleRepository.findAll();
 
         model.addAttribute("rankings", teamRankings);
         model.addAttribute("empNames", empNames);
+        model.addAttribute("empDeptNames", empDeptNames);
+        model.addAttribute("empPositionNames", empPositionNames);
+        model.addAttribute("assignmentIds", assignmentIds);
         model.addAttribute("cycleId", cycleId);
         model.addAttribute("cycles", cycles);
         model.addAttribute("countA", countA);
@@ -247,47 +267,22 @@ public class ManagerEvaluationViewController {
         return "evaluation/ranking";
     }
 
-    private String calculateClassification(Integer score) {
-        if (score == null) return "D";
-        if (score >= 85) return "A";
-        if (score >= 75) return "B";
-        if (score >= 60) return "C";
-        return "D";
-    }
-
     @GetMapping("/review/{assignmentId}")
-    public String showReviewPage(@PathVariable Integer assignmentId, Model model,
+    public String showReviewPage(@PathVariable Integer assignmentId,
+                                 Principal principal,
+                                 Model model,
                                  @ModelAttribute("msg") String msg,
                                  @ModelAttribute("err") String err,
                                  RedirectAttributes ra) {
-        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId).orElse(null);
-        
-        // Nếu không tìm thấy bằng assignmentId, có thể là rankId từ ranking page
-        // Thử tìm assignment từ PerformanceRanking
-        if (assignment == null) {
-            // assignmentId có thể là rankId, cần query khác cách
-            Optional<PerformanceRanking> ranking = performanceRankingRepository.findById(assignmentId);
-            if (ranking.isPresent()) {
-                PerformanceRanking perfRanking = ranking.get();
-                // Tìm KpiAssignment mới nhất cho employee này trong cycle này
-                List<KpiAssignment> assignments = kpiAssignmentRepository.findByEmpIdAndCycleId(
-                        perfRanking.getEmpId(), perfRanking.getCycleId());
-                
-                if (!assignments.isEmpty()) {
-                    // Lấy assignment mới nhất
-                    assignment = assignments.stream()
-                            .max(Comparator.comparing(KpiAssignment::getAssignmentId))
-                            .orElse(null);
-                }
-            }
-        }
-        
-        if (assignment == null) {
+        KpiAssignment assignment;
+        try {
+            assignment = requireManagedAssignment(principal, assignmentId);
+        } catch (Exception ex) {
             ra.addFlashAttribute("err", "Evaluation assignment not found.");
             return "redirect:/manager/evaluation/pending";
         }
 
-        List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignmentId);
+        List<KpiEvidence> evidences = kpiEvidenceService.getEvidencesByAssignment(assignment.getAssignmentId());
         Employee employee = employeeRepository.findById(assignment.getEmpId()).orElse(null);
 
         model.addAttribute("assignment", assignment);
@@ -310,9 +305,7 @@ public class ManagerEvaluationViewController {
 
         try {
             Employee currentManager = currentEmployeeService.requireEmployee(principal);
-
-            KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
-                    .orElseThrow(() -> new RuntimeException("Assignment not found"));
+            KpiAssignment assignment = requireManagedAssignment(principal, assignmentId);
 
             workflowService.managerApprove(
                     assignment,
@@ -335,13 +328,13 @@ public class ManagerEvaluationViewController {
 
     @PostMapping("/review/{assignmentId}/reject")
     public String rejectEvaluation(
+            Principal principal,
             @PathVariable Integer assignmentId,
             @RequestParam String rejectReason,
             RedirectAttributes ra) {
 
         try {
-            KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
-                    .orElseThrow(() -> new RuntimeException("Assignment not found"));
+            KpiAssignment assignment = requireManagedAssignment(principal, assignmentId);
 
             assignment.setStatus(KpiAssignment.AssignmentStatus.MANAGER_REJECTED);
             assignment.setManagerRejectionReason(rejectReason);
@@ -360,5 +353,27 @@ public class ManagerEvaluationViewController {
             ra.addFlashAttribute("err", "Error: " + e.getMessage());
             return "redirect:/manager/evaluation/review/" + assignmentId;
         }
+    }
+
+    private Integer resolveLatestAssignmentId(Integer empId, Integer cycleId) {
+        return kpiAssignmentRepository.findByEmpIdAndCycleId(empId, cycleId).stream()
+                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.COMPLETED
+                        || a.getStatus() == KpiAssignment.AssignmentStatus.HR_VERIFIED)
+                .max(Comparator.comparing(KpiAssignment::getAssignmentId))
+                .map(KpiAssignment::getAssignmentId)
+                .orElse(null);
+    }
+
+    private KpiAssignment requireManagedAssignment(Principal principal, Integer assignmentId) {
+        Employee manager = currentEmployeeService.requireEmployee(principal);
+        KpiAssignment assignment = kpiAssignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new RuntimeException("Assignment not found"));
+        Employee employee = employeeRepository.findById(assignment.getEmpId())
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        if (!manager.getEmpId().equals(employee.getDirectManagerId())) {
+            throw new RuntimeException("You can only review evaluations of employees in your team.");
+        }
+        return assignment;
     }
 }

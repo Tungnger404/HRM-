@@ -16,6 +16,18 @@
     </div>
   </div>
 
+  <div class="alert alert-success" th:if="${msg != null and !msg.isEmpty()}" th:text="${msg}">
+    Success message
+  </div>
+
+  <div class="alert alert-danger" th:if="${err != null and !err.isEmpty()}" th:text="${err}">
+    Error message
+  </div>
+
+  <div class="alert alert-warning d-none" id="formValidationAlert">
+    Please fill all required fields: Apply Scope, Evaluation Cycle, Excel file, and Comment.
+  </div>
+
   <div class="card mb-4">
     <div class="card-header">
       <strong>Send KPI Template</strong>
@@ -23,6 +35,7 @@
 
     <div class="card-body">
       <form method="post"
+            id="kpiConfigureForm"
             th:action="@{/hr/kpi/configure/upload}"
             enctype="multipart/form-data">
 
@@ -114,7 +127,7 @@
                     placeholder="Enter guidance or instructions for employees..."></textarea>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center">
           <button type="submit" class="btn btn-primary">
             <i class="cil-check"></i> Send KPI
           </button>
@@ -122,6 +135,7 @@
             View Pending Verification
           </a>
         </div>
+        <small class="text-muted d-block mt-2">* Required fields must be completed before sending.</small>
       </form>
     </div>
   </div>
@@ -141,6 +155,8 @@
     const previewRange = document.getElementById('previewRange');
 
     const allEmployeesCount = /*[[${allEmployeesCount}]]*/ 0;
+    const form = document.getElementById('kpiConfigureForm');
+    const formValidationAlert = document.getElementById('formValidationAlert');
 
     function updateScopeUI() {
       const scope = applyScope.value;
@@ -185,6 +201,20 @@
 
     applyScope.addEventListener('change', updateScopeUI);
     cycleSelect.addEventListener('change', updateCyclePreview);
+
+    form.addEventListener('submit', function (event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        formValidationAlert.classList.remove('d-none');
+
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) {
+          firstInvalid.focus();
+        }
+      } else {
+        formValidationAlert.classList.add('d-none');
+      }
+    });
 
     updateScopeUI();
     updateCyclePreview();

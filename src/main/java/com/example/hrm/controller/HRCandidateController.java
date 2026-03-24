@@ -59,27 +59,30 @@ public class HRCandidateController {
         return "candidate/list";
     }
 
-
     @PostMapping("/evaluate")
     public String evaluate(@Valid @ModelAttribute("candidate") CandidateEvaluateDTO dto,
                            BindingResult result,
                            Model model) {
 
-        // Nếu có lỗi validation (ví dụ điểm trống), quay lại trang Detail
-        // thay vì trang evaluate cũ (vì trang đó giờ bỏ rồi)
+        if (!result.hasFieldErrors("score")) {
+            if ("pass".equalsIgnoreCase(dto.getAction()) && dto.getScore() < 50) {
+                result.rejectValue("score", "error.score", "Điểm dưới 50 không thể PASS ứng viên.");
+            } else if ("reject".equalsIgnoreCase(dto.getAction()) && dto.getScore() >= 50) {
+                result.rejectValue("score", "error.score", "Ứng viên đạt từ 50 điểm trở lên không nên bị Reject.");
+            }
+        }
+
+
         if (result.hasErrors()) {
             Candidate candidate = service.findById(dto.getId());
             model.addAttribute("candidate", candidate);
             model.addAttribute("postingId", dto.getPostingId());
             return "candidate/detail";
         }
-
         service.evaluate(dto);
 
-        // Sau khi lưu, quay lại chính trang Detail của ứng viên đó
         return "redirect:/hr/candidates/detail/" + dto.getId() + "?postingId=" + dto.getPostingId();
     }
-
     @GetMapping("/detail/{id}")
     public String detail(@PathVariable Integer id,
                          @RequestParam Integer postingId,

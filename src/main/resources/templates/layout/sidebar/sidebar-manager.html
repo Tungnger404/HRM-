@@ -185,6 +185,14 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link" th:href="@{/manager/training/evidence-confirmations}"
+                       th:classappend="${#strings.contains(currentUri, '/manager/training/evidence-confirmations') or #strings.contains(currentUri, '/manager/training/review-submissions')} ? 'active' : ''">
+                        <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                        Confirm Training Evidence
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link" th:href="@{/manager/promotion}"
                        th:classappend="${currentUri == '/manager/promotion' or #strings.contains(currentUri, '/manager/promotion/recommendations')} ? 'active' : ''">
                         <span class="nav-icon"><span class="nav-icon-bullet"></span></span>

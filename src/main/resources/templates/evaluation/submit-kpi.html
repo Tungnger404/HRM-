@@ -33,6 +33,13 @@
     Error message
   </div>
 
+  <div class="alert alert-danger" th:if="${validationErrors != null and !#lists.isEmpty(validationErrors)}">
+    <div class="fw-bold mb-2">Please fix the following issues:</div>
+    <ul class="mb-0">
+      <li th:each="validationError : ${validationErrors}" th:text="${validationError}">Validation error</li>
+    </ul>
+  </div>
+
   <div class="row">
     <div class="col-lg-8">
       

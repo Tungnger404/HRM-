@@ -76,7 +76,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="reviewModalLabel">
-                        <i class="fa fa-user-check"></i> Employee Review
+                        <i class="fa fa-user-check"></i> Đánh giá nhân viên
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -91,10 +91,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">
-                        <i class="fa fa-times"></i> Close
+                        <i class="fa fa-times"></i> Đóng
                     </button>
                     <button type="button" class="btn btn-success" id="submitPromotionBtn" onclick="showPromotionForm()">
-                        <i class="fa fa-arrow-up"></i> Recommend for Promotion
+                        <i class="fa fa-arrow-up"></i> Đề xuất nâng cấp
                     </button>
                 </div>
             </div>
@@ -107,7 +107,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="promotionFormModalLabel">
-                        <i class="fa fa-arrow-up"></i> Submit Promotion Recommendation
+                        <i class="fa fa-arrow-up"></i> Gửi đề xuất nâng cấp
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -123,41 +123,54 @@
     let currentEmpData = {};
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
     const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
-    const positions = /*[[${positions}]]*/ [];
-    
+    const positions = /*[[${positionsJs}]]*/ [];
+
     function showReviewModal(button) {
         currentEmpData = {
             empId: button.getAttribute('data-emp-id'),
             empName: button.getAttribute('data-emp-name'),
             position: button.getAttribute('data-position'),
-            avgScore: button.getAttribute('data-avg-score'),
-            evalCount: button.getAttribute('data-eval-count')
+            avgScore: button.getAttribute('data-avg-score') || '0',
+            evalCount: button.getAttribute('data-eval-count') || '0'
         };
         
-        const modal = new coreui.Modal(document.getElementById('reviewModal'));
-        modal.show();
-        
+        const reviewModalElement = document.getElementById('reviewModal');
+        if (!reviewModalElement) {
+            console.error('❌ Modal element #reviewModal not found!');
+            showErrorToast('Lỗi: Không thể tải modal');
+            return;
+        }
+
+        let modalInstance = coreui.Modal.getInstance(reviewModalElement);
+        if (!modalInstance) {
+            modalInstance = new coreui.Modal(reviewModalElement);
+        }
+
         document.getElementById('modalContent').innerHTML = `
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-2">Loading employee data...</p>
+                <p class="mt-2">Đang tải thông tin nhân viên...</p>
             </div>
         `;
         
+        modalInstance.show();
+
         fetch('/manager/promotion/review/' + currentEmpData.empId)
             .then(response => {
-                if (!response.ok) throw new Error('Failed to load data');
+                if (!response.ok) throw new Error('Tải dữ liệu thất bại: ' + response.status);
                 return response.json();
             })
             .then(data => {
                 renderReviewContent(data);
             })
             .catch(error => {
+                console.error('Error loading review:', error);
                 document.getElementById('modalContent').innerHTML = `
                     <div class="alert alert-danger">
-                        <i class="fa fa-exclamation-circle"></i> Error: ${error.message}
+                        <i class="fa fa-exclamation-circle"></i>
+                        <strong>Lỗi:</strong> ${error.message}
                     </div>
                 `;
             });
@@ -283,49 +296,64 @@
     }
     
     function showPromotionForm() {
-        const reviewModal = coreui.Modal.getInstance(document.getElementById('reviewModal'));
-        if (reviewModal) {
-            reviewModal.hide();
+        const reviewModalElement = document.getElementById('reviewModal');
+        if (!reviewModalElement) {
+            console.error('❌ Modal element not found');
+            return;
+        }
+
+        let reviewModalInstance = coreui.Modal.getInstance(reviewModalElement);
+        if (reviewModalInstance) {
+            reviewModalInstance.hide();
+        }
+
+        if (!currentEmpData || !currentEmpData.empId) {
+            showErrorToast('Lỗi: Không có dữ liệu nhân viên');
+            return;
         }
         
-        let positionOptions = '<option value="">-- Select Position --</option>';
-        positions.forEach(pos => {
-            positionOptions += `<option value="${pos.jobId}">${pos.title}</option>`;
-        });
-        
+        let positionOptions = '<option value="">-- Chọn vị trí --</option>';
+        if (positions && positions.length > 0) {
+            positions.forEach(pos => {
+                positionOptions += `<option value="${pos.jobId}">${pos.title || pos.jobName || 'Position ' + pos.jobId}</option>`;
+            });
+        } else {
+            positionOptions += '<option disabled>Không có vị trí nào</option>';
+        }
+
         const formHtml = `
             <form id="promotionSubmitForm" method="post" action="/manager/promotion/submit">
                 <input type="hidden" name="empId" value="${currentEmpData.empId}">
                 <input type="hidden" name="${csrfParamName}" value="${csrfToken}">
                 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Employee:</strong></label>
+                    <label class="form-label"><strong>Nhân viên:</strong></label>
                     <p class="form-control-plaintext">${currentEmpData.empName} (ID: ${currentEmpData.empId})</p>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Proposed Position <span class="text-danger">*</span></label>
+                    <label class="form-label">Vị trí được đề xuất <span class="text-danger">*</span></label>
                     <select class="form-select" name="proposedPositionId" required>
                         ${positionOptions}
                     </select>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Reason for Promotion <span class="text-danger">*</span></label>
-                    <textarea class="form-control" name="reason" rows="5" required></textarea>
+                    <label class="form-label">Lý do nâng cấp <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="reason" rows="5" placeholder="Nhập lý do nâng cấp..." required></textarea>
                 </div>
                 
                 <div class="alert alert-info">
                     <i class="fa fa-info-circle"></i> 
-                    This recommendation will be sent to HR for final approval.
+                    Đề xuất nâng cấp này sẽ được gửi đến HR để phê duyệt cuối cùng.
                 </div>
                 
                 <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">
-                        <i class="fa fa-times"></i> Cancel
+                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal" onclick="closPromotionForm()">
+                        <i class="fa fa-times"></i> Hủy
                     </button>
                     <button type="submit" class="btn btn-success">
-                        <i class="fa fa-paper-plane"></i> Submit to HR
+                        <i class="fa fa-paper-plane"></i> Gửi tới HR
                     </button>
                 </div>
             </form>
@@ -333,8 +361,26 @@
         
         document.getElementById('promotionFormContent').innerHTML = formHtml;
         
-        const promotionModal = new coreui.Modal(document.getElementById('promotionFormModal'));
-        promotionModal.show();
+        const promotionFormModalElement = document.getElementById('promotionFormModal');
+        if (!promotionFormModalElement) {
+            console.error('❌ Modal #promotionFormModal not found');
+            return;
+        }
+
+        let promotionModalInstance = coreui.Modal.getInstance(promotionFormModalElement);
+        if (!promotionModalInstance) {
+            promotionModalInstance = new coreui.Modal(promotionFormModalElement);
+        }
+
+        promotionModalInstance.show();
+    }
+
+    function closPromotionForm() {
+        const promotionFormModalElement = document.getElementById('promotionFormModal');
+        let promotionModalInstance = coreui.Modal.getInstance(promotionFormModalElement);
+        if (promotionModalInstance) {
+            promotionModalInstance.hide();
+        }
     }
 </script>
 </div>

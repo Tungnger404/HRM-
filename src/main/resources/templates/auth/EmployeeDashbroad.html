@@ -10,7 +10,7 @@
 
 <body>
 <main layout:fragment="content">
-    
+
     <!-- Dashboard Content -->
     <!-- Flash Messages (toast style, floating top right) -->
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-lg position-fixed top-0 end-0 mt-5 me-4" style="z-index: 1050; min-width: 300px; padding-top: 1rem;" role="alert">
@@ -33,16 +33,16 @@
                 <div class="position-absolute end-0 bottom-0 opacity-25 pe-4 pb-2" style="transform: rotate(-15deg);">
                     <i class="bi bi-hourglass-split text-warning" style="font-size: 8rem;"></i>
                 </div>
-                
+
                 <div class="card-body p-4 position-relative z-1 d-flex flex-column justify-content-center">
                     <h2 class="fw-bold mb-1">Hello <span th:text="${e != null ? e.fullName : (u != null ? u.username : 'User')}">User</span></h2>
                     <p class="text-muted mb-4 fs-6">Here's your dashboard for today.</p>
-                    
+
                     <div class="d-flex align-items-center gap-4 bg-white rounded-4 p-3 border shadow-sm" style="max-width: fit-content; border-color: #fce0d3 !important;">
                         <div class="text-center pe-4 border-end">
                             <div id="liveTime" class="fw-bold text-primary" style="font-size: 2.2rem; font-variant-numeric: tabular-nums; letter-spacing: 1px;">00:00:00</div>
                         </div>
-                        
+
                         <div class="ps-2 pe-2">
                             <!-- Not checked in yet -->
                             <form th:if="${logToday == null || logToday.checkIn == null}" th:action="@{/employee/attendance/check-in}" method="post" class="m-0">
@@ -50,7 +50,7 @@
                                     <i class="bi bi-play-circle-fill fs-5"></i> Check In
                                 </button>
                             </form>
-                            
+
                             <!-- Checked in, not checked out -->
                             <div th:if="${logToday != null && logToday.checkIn != null && logToday.checkOut == null}" class="d-flex flex-column justify-content-center">
                                 <form th:action="@{/employee/attendance/check-out}" method="post" class="m-0">
@@ -81,17 +81,17 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Holidays Card -->
         <div class="col-md-5">
             <div class="card h-100 shadow-sm border-0" style="border-radius: 12px;">
                 <div class="card-body p-4 d-flex flex-column">
                     <div class="fw-bold text-uppercase text-dark mb-1" style="font-size: 0.85rem; letter-spacing: 0.5px;">UPCOMING HOLIDAYS AND TIME OFF</div>
-                    
+
                     <div th:if="${#lists.isEmpty(upcomingHolidays)}" class="mt-auto mb-auto text-center fw-medium pb-2" style="color: #cbd5e1; font-size: 1.1rem;">
                         No upcoming holidays
                     </div>
-                    
+
                     <div th:unless="${#lists.isEmpty(upcomingHolidays)}" class="mt-3 overflow-auto" style="max-height: 180px;">
                         <div th:each="h : ${upcomingHolidays}" class="d-flex align-items-center mb-3">
                             <div class="me-3 text-center bg-light rounded pt-1 pb-1 px-2 border" style="min-width: 55px;">
@@ -108,7 +108,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- TRACKED HOURS CARD (BOTTOM) -->
     <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
         <div class="card-body p-4">
@@ -116,7 +116,7 @@
                 <div class="fw-bold text-uppercase" style="letter-spacing: 1px; font-size: 0.9rem; color: #34495e;">TRACKED HOURS</div>
                 <a th:href="@{/employee/attendance}" class="text-decoration-none text-muted" style="font-size: 0.85rem;">Go to timesheets</a>
             </div>
-            
+
             <div class="row" id="dashboardTabContent">
                 <div class="col-md-3 py-3">
                     <ul class="list-unstyled d-flex flex-column gap-4 mb-0 pe-2">
@@ -146,10 +146,10 @@
                     </ul>
                     <div class="text-muted mt-5 pt-4" style="font-size: 0.65rem;">Does not include manually entered payroll hours</div>
                 </div>
-                
+
                 <div class="col-md-9 border-start border-1 ps-5 pe-4 position-relative py-3" style="min-height: 250px;">
                     <div id="dayChartContainer" class="position-relative w-100 h-100" style="margin-left: 10px;"
-                         th:data-worked="${workedMinsToday != null ? workedMinsToday : 0}" 
+                         th:data-worked="${workedMinsToday != null ? workedMinsToday : 0}"
                          th:data-ot="${otMinsToday != null ? otMinsToday : 0}">
                          <!-- Rendered by JS below -->
                     </div>
@@ -157,14 +157,14 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Clock Javascript -->
     <script>
         function updateClock() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-            
+
             const liveTimeEl = document.getElementById('liveTime');
             const liveDateEl = document.getElementById('liveDate');
             if (liveTimeEl) liveTimeEl.textContent = timeStr;
@@ -176,49 +176,49 @@
                 if (checkInTimeStr) {
                     const checkInDate = new Date(checkInTimeStr);
                     const diffMs = now - checkInDate;
-                    
+
                     if (diffMs > 0) {
                         const diffHrs = Math.floor(diffMs / 3600000);
                         const diffMins = Math.floor((diffMs % 3600000) / 60000);
                         const diffSecs = Math.floor((diffMs % 60000) / 1000);
-                        
-                        const formattedElapsed = String(diffHrs).padStart(2, '0') + ':' + 
-                                                 String(diffMins).padStart(2, '0') + ':' + 
+
+                        const formattedElapsed = String(diffHrs).padStart(2, '0') + ':' +
+                                                 String(diffMins).padStart(2, '0') + ':' +
                                                  String(diffSecs).padStart(2, '0');
-                                                 
+
                         const elapsedEl = document.getElementById('elapsedTimeDisplay');
                         if (elapsedEl) elapsedEl.textContent = formattedElapsed;
                     }
                 }
             }
         }
-        
+
         function renderDayChart() {
             const container = document.getElementById('dayChartContainer');
             if (!container) return;
-            
+
             let workedMins = parseInt(container.getAttribute('data-worked')) || 0;
             let otMins = parseInt(container.getAttribute('data-ot')) || 0;
-            
+
             let totalMins = workedMins + otMins;
             // Pad the top a little (1.11x)
             let maxLimit = totalMins > 0 ? (totalMins * 1.11) + 1 : 10;
-            
+
             container.innerHTML = '';
-            
+
             for (let i = 0; i <= 4; i++) {
                 let pct = i * 25;
                 let lineMins = (maxLimit * i) / 4;
-                
+
                 let m = Math.floor(lineMins);
                 let s = Math.round((lineMins - m) * 60);
                 if (s === 60) { m++; s = 0; }
-                
+
                 let label = m + 'm';
                 if (s > 0) label += ' ' + s + 's';
                 if (m === 0 && s > 0) label = s + 's';
                 if (lineMins === 0) label = '0s';
-                
+
                 let lineDiv = document.createElement('div');
                 lineDiv.className = 'position-absolute w-100 border-top';
                 lineDiv.style.bottom = pct + '%';
@@ -226,7 +226,7 @@
                 lineDiv.style.borderStyle = 'none !important';
                 lineDiv.style.borderTop = '1px solid #e2e8f0 !important';
                 lineDiv.style.zIndex = '0';
-                
+
                 let labelDiv = document.createElement('div');
                 labelDiv.className = 'position-absolute text-end';
                 labelDiv.style.bottom = '-8px';
@@ -235,15 +235,15 @@
                 labelDiv.style.fontSize = '0.65rem';
                 labelDiv.style.color = '#64748b';
                 labelDiv.textContent = label;
-                
+
                 lineDiv.appendChild(labelDiv);
                 container.appendChild(lineDiv);
             }
-            
+
             let workedPct = (workedMins / maxLimit) * 100;
             let otPct = (otMins / maxLimit) * 100;
             if (workedPct > 100) workedPct = 100;
-            
+
             if (totalMins > 0) {
                 let blockContainer = document.createElement('div');
                 blockContainer.className = 'position-absolute w-100';
@@ -251,7 +251,7 @@
                 blockContainer.style.left = '0';
                 blockContainer.style.height = (workedPct + otPct) + '%';
                 blockContainer.style.zIndex = '1';
-                
+
                 if (otPct > 0) {
                     let otBlock = document.createElement('div');
                     otBlock.className = 'bg-danger w-100';
@@ -259,22 +259,22 @@
                     otBlock.style.opacity = '0.85';
                     blockContainer.appendChild(otBlock);
                 }
-                
+
                 let workedBlock = document.createElement('div');
                 workedBlock.className = 'bg-success w-100';
                 workedBlock.style.height = ((workedPct) / (workedPct + otPct) * 100) + '%';
                 // Use a light orange for the top bar
                 if (workedPct > 0) workedBlock.style.borderTop = '4px solid #fb923c';
-                
+
                 blockContainer.appendChild(workedBlock);
                 container.appendChild(blockContainer);
             }
         }
-        
+
         setInterval(updateClock, 1000);
         updateClock();
         renderDayChart();
-        
+
         // Auto-hide flash messages after 5 seconds
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');

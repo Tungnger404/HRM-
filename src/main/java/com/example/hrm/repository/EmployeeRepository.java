@@ -62,6 +62,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
         JOIN UserAccount u ON e.userId = u.id
         JOIN Role r ON u.role.id = r.id
         WHERE r.roleName = 'EMPLOYEE'
+          AND e.deptId = :deptId
+        ORDER BY e.empId ASC
+    """)
+    List<Employee> findEmployeesOnlyByDeptId(@Param("deptId") Integer deptId);
+
+    @Query("""
+        SELECT e FROM Employee e
+        JOIN UserAccount u ON e.userId = u.id
+        JOIN Role r ON u.role.id = r.id
+        WHERE r.roleName = 'EMPLOYEE'
         ORDER BY e.empId ASC
     """)
     List<Employee> findAllEmployeesOnly();

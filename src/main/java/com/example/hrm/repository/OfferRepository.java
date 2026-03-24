@@ -11,4 +11,5 @@ public interface OfferRepository extends JpaRepository<Offer, Integer> {
     boolean existsByCandidate(Candidate candidate);
     List<Offer> findByCandidate_FullNameContainingIgnoreCase(String name);
     Optional<Offer> findByResponseToken(String token);
+    Optional<Offer> findByCandidate(Candidate candidate);
 }

@@ -91,6 +91,14 @@ public class TrainingServiceImpl implements TrainingService {
         TrainingProgram program = trainingProgramRepository.findById(programId)
                 .orElseThrow(() -> new RuntimeException("Training program not found"));
 
+        LocalDate effectiveStartDate = startDate != null ? startDate : LocalDate.now();
+        if (endDate == null) {
+            throw new RuntimeException("Deadline is required for direct training assignment");
+        }
+        if (endDate.isBefore(effectiveStartDate)) {
+            throw new RuntimeException("Deadline must be on or after assigned date");
+        }
+
         TrainingAssignment assignment = new TrainingAssignment();
         assignment.setEmpId(empId);
         assignment.setProgramId(programId);
@@ -99,7 +107,7 @@ public class TrainingServiceImpl implements TrainingService {
         assignment.setObjective(objective);
         assignment.setTrainingType("COURSE");
         assignment.setStatus(AssignmentStatus.ASSIGNED);
-        assignment.setStartDate(startDate != null ? startDate : LocalDate.now());
+        assignment.setStartDate(effectiveStartDate);
         assignment.setEndDate(endDate);
         assignment.setAssignedAt(LocalDateTime.now());
         assignment = trainingAssignmentRepository.save(assignment);
@@ -110,7 +118,7 @@ public class TrainingServiceImpl implements TrainingService {
         progress.setEmpId(empId);
         progress.setProgramId(programId);
         progress.setEnrollmentDate(LocalDate.now());
-        progress.setStartDate(startDate != null ? startDate : LocalDate.now());
+        progress.setStartDate(effectiveStartDate);
         progress.setStatus(ProgressStatus.NOT_STARTED);
         progress.setCompletionPercentage(BigDecimal.ZERO);
         progress.setUpdatedAt(LocalDateTime.now());

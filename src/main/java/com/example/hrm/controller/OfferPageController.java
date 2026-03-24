@@ -90,15 +90,38 @@ public class OfferPageController {
     }
 
     @GetMapping("/accept/{offerId}")
-    public String acceptOffer(@PathVariable Integer offerId) {
-        offerService.acceptOffer(offerId);
+    public String acceptOffer(@PathVariable Integer offerId, Model model) {
         Offer offer = offerRepository.findById(offerId)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
+        if (offer.getStatus() == OfferStatus.ACCEPTED) {
+            model.addAttribute("message", "Bạn đã chấp nhận lời mời này rồi.");
+            return "offer/already-processed";
+        }
+        if (offer.getStatus() == OfferStatus.REJECTED) {
+            model.addAttribute("message", "Bạn đã từ chối lời mời này trước đó.");
+            return "offer/already-processed";
+        }
         return "redirect:/offer/onboarding/" + offer.getCandidate().getCandidateId();
     }
 
     @GetMapping("/reject/{offerId}")
-    public String rejectOffer(@PathVariable Integer offerId) {
+    public String rejectOffer(@PathVariable Integer offerId,
+                              @RequestParam(required = false, defaultValue = "false") boolean confirmed,
+                              Model model) {
+        Offer offer = offerRepository.findById(offerId)
+                .orElseThrow(() -> new RuntimeException("Offer not found"));
+        if (offer.getStatus() == OfferStatus.ACCEPTED) {
+            model.addAttribute("message", "Bạn đã chấp nhận lời mời này rồi, không thể từ chối nữa.");
+            return "offer/already-processed";
+        }
+        if (offer.getStatus() == OfferStatus.REJECTED) {
+            model.addAttribute("message", "Bạn đã từ chối lời mời này rồi.");
+            return "offer/already-processed";
+        }
+        if (!confirmed) {
+            model.addAttribute("offer", offer);
+            return "offer/reject-confirm-page";
+        }
         offerService.rejectOffer(offerId);
         return "offer/reject-success";
     }
@@ -118,7 +141,6 @@ public class OfferPageController {
         model.addAttribute("candidate", candidate);
         return "onboarding/form";
     }
-
     @PostMapping("/onboarding/complete")
     public String completeOnboarding(@RequestParam Integer candidateId,
                                      @RequestParam String identityCard,
@@ -128,6 +150,14 @@ public class OfferPageController {
                 ? LocalDate.parse(joinDateStr) : LocalDate.now();
         Candidate candidate = candidateRepository.findById(candidateId)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
+        Offer offer = offerRepository.findByCandidate(candidate)
+                .orElseThrow(() -> new RuntimeException("Offer not found for this candidate"));
+
+        offer.setStatus(OfferStatus.ACCEPTED);
+        offerRepository.save(offer);
+
+        candidate.setStatus(CandidateStatus.OFFER_ACCEPTED);
+        candidateRepository.save(candidate);
         RecruitmentRequest req = candidate.getJobPosting().getRecruitmentRequest();
         employeeService.createEmployeeFromCandidate(
                 candidateId,
@@ -140,6 +170,7 @@ public class OfferPageController {
 
         return "redirect:/offer/onboarding-success";
     }
+
     @GetMapping("/onboarding-success")
     public String showSuccessPage() {
         return "onboarding/success";

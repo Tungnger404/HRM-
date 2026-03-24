@@ -508,8 +508,8 @@
 
 <script th:inline="javascript">
     document.addEventListener("DOMContentLoaded", function () {
-        const successMsg = /*[[${success}]]*/ null;
-        const errorMsg = /*[[${err}]]*/ null;
+        const successMsg = /*[[${toastSuccess != null ? toastSuccess : (success != null ? success : msg)}]]*/ null;
+        const errorMsg = /*[[${toastError != null ? toastError : (error != null ? error : err)}]]*/ null;
 
         if (successMsg) {
             document.getElementById("successToastMessage").textContent = successMsg;
