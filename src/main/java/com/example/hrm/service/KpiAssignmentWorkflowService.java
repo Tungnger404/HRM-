@@ -28,10 +28,6 @@ public class KpiAssignmentWorkflowService {
             boolean recommendTraining,
             String trainingRecommendation) {
 
-        System.out.println("DEBUG: managerApprove called - assignmentId: " + assignment.getAssignmentId() 
-            + ", cycleId: " + assignment.getCycleId() + ", empId: " + assignment.getEmpId()
-            + ", managerScore: " + managerScore);
-
         assignment.setManagerScore(managerScore);
         assignment.setManagerComment(managerComment);
         assignment.setManagerReviewedAt(LocalDateTime.now());
@@ -50,12 +46,9 @@ public class KpiAssignmentWorkflowService {
         assignment.setStatus(KpiAssignment.AssignmentStatus.COMPLETED);
         kpiAssignmentRepository.save(assignment);
 
-        System.out.println("DEBUG: Assignment saved - status set to COMPLETED");
-
-        // Auto-calculate performance ranking for this cycle
-        System.out.println("DEBUG: Calling calculateRankingsForCycle with cycleId: " + assignment.getCycleId());
+        // Recompute ranking and promotion eligibility from the same manager-scored source.
         performanceRankingService.calculateRankingsForCycle(assignment.getCycleId());
-        System.out.println("DEBUG: calculateRankingsForCycle completed");
+        performanceRankingService.markPromotionEligibility(assignment.getCycleId());
 
         notificationService.createEvaluationCompletedNotification(
                 assignment.getEmpId(),
@@ -71,11 +64,6 @@ public class KpiAssignmentWorkflowService {
                     trainingRecommendation,
                     managerScore < 70 ? "HIGH" : "MEDIUM",
                     managerId
-            );
-
-            notificationService.createTrainingRecommendationNotification(
-                    assignment.getEmpId(),
-                    trainingRecommendation
             );
         }
     }

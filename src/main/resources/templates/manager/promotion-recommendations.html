@@ -45,15 +45,13 @@
                                         <td th:text="${emp.empId}">001</td>
                                         <td th:text="${emp.fullName}">Nguyen Van A</td>
                                         <td>
-                                            <span th:if="${emp.currentPosition != null}" 
-                                                  th:text="'Position ID: ' + ${emp.currentPosition}">Position ID: 1</span>
-                                            <span th:unless="${emp.currentPosition != null}" class="text-muted">N/A</span>
+                                            <span th:text="${emp.currentPositionTitle != null ? emp.currentPositionTitle : 'N/A'}">N/A</span>
                                         </td>
                                         <td>
                                             <button type="button" 
                                                     class="btn btn-sm btn-info"
                                                     onclick="showReviewModal(this)"
-                                                    th:attr="data-emp-id=${emp.empId}, data-emp-name=${emp.fullName}, data-position=${emp.currentPosition}">
+                                                    th:attr="data-emp-id=${emp.empId}, data-emp-name=${emp.fullName}, data-position=${emp.currentPosition}, data-current-level=${emp.currentPositionLevel}">
                                                 <i class="fa fa-eye"></i> Review
                                             </button>
                                         </td>
@@ -116,29 +114,36 @@
             </div>
         </div>
     </div>
+
+    <!-- Server-rendered options template to avoid JS inline serialization issues -->
+    <select id="positionOptionsTemplate" class="d-none" aria-hidden="true" tabindex="-1">
+        <option th:each="pos : ${positions}"
+                th:value="${pos.jobId}"
+                th:attr="data-level=${pos.jobLevel}"
+                th:text="${pos.title != null ? pos.title : ('Position ' + pos.jobId)}">
+            Position
+        </option>
+    </select>
 </div>
 
-<div layout:fragment="scripts">
+<div layout:fragment="script">
 <script th:inline="javascript">
     let currentEmpData = {};
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
     const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
-    const positions = /*[[${positionsJs}]]*/ [];
 
     function showReviewModal(button) {
         currentEmpData = {
             empId: button.getAttribute('data-emp-id'),
             empName: button.getAttribute('data-emp-name'),
             position: button.getAttribute('data-position'),
-            avgScore: button.getAttribute('data-avg-score') || '0',
-            evalCount: button.getAttribute('data-eval-count') || '0'
-        };
-        
+            currentLevel: button.getAttribute('data-current-level')
+         };
+
         const reviewModalElement = document.getElementById('reviewModal');
         if (!reviewModalElement) {
             console.error('❌ Modal element #reviewModal not found!');
-            showErrorToast('Lỗi: Không thể tải modal');
-            return;
+             return;
         }
 
         let modalInstance = coreui.Modal.getInstance(reviewModalElement);
@@ -177,16 +182,14 @@
     }
     
     function renderReviewContent(data) {
-        const employee = data.employee;
+        const employee = data.employee || {};
         const evaluations = data.evaluations || [];
-        const avgScore = data.avgScore || 0;
-        const evalCount = data.evaluationCount || 0;
-        
-        // Phần 2: Evaluation History
+        const emptyMessage = data.emptyMessage || 'No evaluation information available for this employee.';
+
         let evaluationRows = '';
-        evaluations.forEach((eval, index) => {
+        evaluations.forEach((eval) => {
             const cycleInfo = eval.cycleId ? `Cycle ${eval.cycleId}` : 'N/A';
-            const score = eval.managerScore ? eval.managerScore + ' / 100' : 'N/A';
+            const score = eval.managerScore != null ? eval.managerScore + ' / 100' : 'N/A';
             const classification = eval.classification || 'N/A';
             
             evaluationRows += `
@@ -198,30 +201,8 @@
             `;
         });
         
-        if (evaluationRows === '') {
-            evaluationRows = '<tr><td colspan="3" class="text-center text-muted">No evaluation records</td></tr>';
-        }
-        
-        // Phần 3: KPI Progress
-        let kpiProgressRows = '';
-        evaluations.forEach((eval, index) => {
-            const cycleInfo = eval.cycleId ? `Cycle ${eval.cycleId}` : 'N/A';
-            const selfScore = eval.selfScore ? eval.selfScore + ' / 100' : 'N/A';
-            const managerScore = eval.managerScore ? eval.managerScore + ' / 100' : 'N/A';
-            const status = eval.status || 'N/A';
-            
-            kpiProgressRows += `
-                <tr>
-                    <td>${cycleInfo}</td>
-                    <td><span class="badge bg-info">${selfScore}</span></td>
-                    <td><span class="badge bg-primary">${managerScore}</span></td>
-                    <td><span class="badge bg-secondary">${status}</span></td>
-                </tr>
-            `;
-        });
-        
-        if (kpiProgressRows === '') {
-            kpiProgressRows = '<tr><td colspan="4" class="text-center text-muted">No KPI progress records</td></tr>';
+        if (!data.hasEvaluations || evaluationRows === '') {
+            evaluationRows = `<tr><td colspan="3" class="text-center text-muted">${emptyMessage}</td></tr>`;
         }
         
         const html = `
@@ -232,14 +213,15 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-4">
-                            <p class="mb-2"><strong>ID:</strong> ${employee.empId}</p>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>ID:</strong> ${employee.empId || 'N/A'}</p>
+                            <p class="mb-2"><strong>Name:</strong> ${employee.fullName || 'N/A'}</p>
+                            <p class="mb-2"><strong>Department:</strong> ${employee.department || 'N/A'}</p>
                         </div>
-                        <div class="col-md-4">
-                            <p class="mb-2"><strong>Name:</strong> ${employee.fullName}</p>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-2"><strong>Position:</strong> Position ID ${employee.jobId || 'N/A'}</p>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Current Position:</strong> ${employee.jobTitle || 'N/A'}</p>
+                            <p class="mb-2"><strong>Direct Manager:</strong> ${employee.directManager || 'N/A'}</p>
+                            <p class="mb-2"><strong>Completed Cycles:</strong> ${data.evaluationCount || 0}</p>
                         </div>
                     </div>
                 </div>
@@ -248,7 +230,7 @@
             <!-- Phần 2: Evaluation History -->
             <div class="card border-info mb-3">
                 <div class="card-header bg-info text-white">
-                    <strong><i class="fa fa-star"></i> Evaluation History</strong>
+                    <strong><i class="fa fa-star"></i> Completed Evaluation Cycles</strong>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -256,35 +238,12 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Evaluation Period</th>
-                                    <th>Score</th>
+                                    <th>Final Score (Manager)</th>
                                     <th>Classification</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${evaluationRows}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card border-success">
-                <div class="card-header bg-success text-white">
-                    <strong><i class="fa fa-tasks"></i> KPI Progress</strong>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>KPI Progress by Evaluation Period</th>
-                                    <th>Self Score</th>
-                                    <th>Manager Score</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${kpiProgressRows}
                             </tbody>
                         </table>
                     </div>
@@ -308,18 +267,72 @@
         }
 
         if (!currentEmpData || !currentEmpData.empId) {
-            showErrorToast('Lỗi: Không có dữ liệu nhân viên');
+            console.error('❌ Missing current employee data for promotion form');
             return;
         }
         
         let positionOptions = '<option value="">-- Chọn vị trí --</option>';
-        if (positions && positions.length > 0) {
-            positions.forEach(pos => {
-                positionOptions += `<option value="${pos.jobId}">${pos.title || pos.jobName || 'Position ' + pos.jobId}</option>`;
+        const positionTemplate = document.getElementById('positionOptionsTemplate');
+        const currentJobId = Number.parseInt(currentEmpData.position, 10);
+        const currentLevelRaw = currentEmpData.currentLevel;
+        const currentLevel = currentLevelRaw !== null && currentLevelRaw !== ''
+            ? Number.parseInt(currentLevelRaw, 10)
+            : null;
+        let validOptionCount = 0;
+        let usedFallbackOptions = false;
+
+        if (positionTemplate && positionTemplate.options.length > 0) {
+            const allOtherOptions = [];
+            const strictHigherLevelOptions = [];
+
+            Array.from(positionTemplate.options).forEach(option => {
+                const optionJobId = Number.parseInt(option.value, 10);
+                if (!Number.isNaN(currentJobId) && optionJobId === currentJobId) {
+                    return;
+                }
+
+                allOtherOptions.push(option);
+
+                const optionLevelRaw = option.getAttribute('data-level');
+                const optionLevel = optionLevelRaw !== null && optionLevelRaw !== ''
+                    ? Number.parseInt(optionLevelRaw, 10)
+                    : null;
+
+                if (currentLevel !== null
+                    && !Number.isNaN(currentLevel)
+                    && optionLevel !== null
+                    && !Number.isNaN(optionLevel)
+                    && optionLevel <= currentLevel) {
+                    return;
+                }
+
+                strictHigherLevelOptions.push(option);
+            });
+
+            const selectedOptions = strictHigherLevelOptions.length > 0
+                ? strictHigherLevelOptions
+                : allOtherOptions;
+
+            usedFallbackOptions = strictHigherLevelOptions.length === 0 && allOtherOptions.length > 0;
+
+            selectedOptions.forEach(option => {
+                validOptionCount += 1;
+                positionOptions += `<option value="${option.value}">${option.text}</option>`;
             });
         } else {
             positionOptions += '<option disabled>Không có vị trí nào</option>';
         }
+
+        if (validOptionCount === 0) {
+            positionOptions += '<option disabled>Không có vị trí cao hơn khả dụng</option>';
+        }
+
+        const noHigherLevelAlert = validOptionCount === 0
+            ? `<div class="alert alert-warning">Không tìm thấy vị trí đề xuất khả dụng.</div>`
+            : (usedFallbackOptions
+                ? `<div class="alert alert-warning">Không tìm thấy vị trí có cấp bậc cao hơn theo dữ liệu level hiện tại. Hệ thống hiển thị các vị trí khác để bạn chọn, nhưng khi gửi vẫn sẽ kiểm tra điều kiện ở backend.</div>`
+                : '');
+        const submitDisabled = validOptionCount === 0 ? 'disabled' : '';
 
         const formHtml = `
             <form id="promotionSubmitForm" method="post" action="/manager/promotion/submit">
@@ -337,7 +350,8 @@
                         ${positionOptions}
                     </select>
                 </div>
-                
+                ${noHigherLevelAlert}
+
                 <div class="mb-3">
                     <label class="form-label">Lý do nâng cấp <span class="text-danger">*</span></label>
                     <textarea class="form-control" name="reason" rows="5" placeholder="Nhập lý do nâng cấp..." required></textarea>
@@ -352,7 +366,7 @@
                     <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal" onclick="closPromotionForm()">
                         <i class="fa fa-times"></i> Hủy
                     </button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-success" ${submitDisabled}>
                         <i class="fa fa-paper-plane"></i> Gửi tới HR
                     </button>
                 </div>

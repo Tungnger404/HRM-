@@ -42,61 +42,54 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
     @Override
     @Transactional
     public void calculateRankingsForCycle(Integer cycleId) {
-        System.out.println("DEBUG: calculateRankingsForCycle called for cycle " + cycleId);
         
-        // Get all completed KPI assignments in this cycle
-        List<KpiAssignment> assignments = kpiAssignmentRepository.findByCycleId(cycleId).stream()
-                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.COMPLETED)
-                .collect(Collectors.toList());
+         // Get all completed KPI assignments in this cycle
+         List<KpiAssignment> assignments = kpiAssignmentRepository.findByCycleId(cycleId).stream()
+                 .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.COMPLETED)
+                 .collect(Collectors.toList());
 
-        System.out.println("DEBUG: Found " + assignments.size() + " completed assignments for cycle " + cycleId);
+         if (assignments.isEmpty()) {
+             return;
+         }
 
-        if (assignments.isEmpty()) {
-            System.out.println("DEBUG: No completed assignments found, returning");
-            return;
-        }
+         // Sort by manager_score DESC
+         assignments.sort(Comparator.comparing(KpiAssignment::getManagerScore,
+                 Comparator.nullsLast(Comparator.reverseOrder())));
 
-        // Sort by manager_score DESC
-        assignments.sort(Comparator.comparing(KpiAssignment::getManagerScore,
-                Comparator.nullsLast(Comparator.reverseOrder())));
+         int totalEmployees = assignments.size();
 
-        int totalEmployees = assignments.size();
+         // Calculate rank for each employee
+         for (int i = 0; i < assignments.size(); i++) {
+             KpiAssignment assignment = assignments.get(i);
 
-        // Calculate rank for each employee
-        for (int i = 0; i < assignments.size(); i++) {
-            KpiAssignment assignment = assignments.get(i);
+             // Check if ranking already exists
+             PerformanceRanking ranking = performanceRankingRepository
+                     .findByCycleIdAndEmpId(cycleId, assignment.getEmpId())
+                     .orElse(new PerformanceRanking());
 
-            // Check if ranking already exists
-            PerformanceRanking ranking = performanceRankingRepository
-                    .findByCycleIdAndEmpId(cycleId, assignment.getEmpId())
-                    .orElse(new PerformanceRanking());
+             ranking.setCycleId(cycleId);
+             ranking.setEmpId(assignment.getEmpId());
+             ranking.setFinalScore(assignment.getManagerScore() != null ? 
+                     BigDecimal.valueOf(assignment.getManagerScore()) : BigDecimal.ZERO);
+             ranking.setRankOverall(i + 1);
+             ranking.setClassification(assignment.getClassification());
 
-            ranking.setCycleId(cycleId);
-            ranking.setEmpId(assignment.getEmpId());
-            ranking.setFinalScore(assignment.getManagerScore() != null ? 
-                    BigDecimal.valueOf(assignment.getManagerScore()) : BigDecimal.ZERO);
-            ranking.setRankOverall(i + 1);
-            ranking.setClassification(assignment.getClassification());
+             // Calculate percentile
+             BigDecimal percentile = BigDecimal.valueOf((totalEmployees - i) * 100.0 / totalEmployees)
+                     .setScale(2, RoundingMode.HALF_UP);
+             ranking.setPercentile(percentile);
 
-            // Calculate percentile
-            BigDecimal percentile = BigDecimal.valueOf((totalEmployees - i) * 100.0 / totalEmployees)
-                    .setScale(2, RoundingMode.HALF_UP);
-            ranking.setPercentile(percentile);
+             // Determine if training required (C or D)
+             boolean needTraining = "C".equals(assignment.getClassification()) || "D".equals(assignment.getClassification());
+             ranking.setIsTrainingRequired(needTraining);
 
-            // Determine if training required (C or D)
-            boolean needTraining = "C".equals(assignment.getClassification()) || "D".equals(assignment.getClassification());
-            ranking.setIsTrainingRequired(needTraining);
-
-            if (ranking.getCreatedAt() == null) {
-                ranking.setCreatedAt(LocalDateTime.now());
-            }
-
-            performanceRankingRepository.save(ranking);
-            System.out.println("DEBUG: Saved ranking for emp " + assignment.getEmpId() + " with rank " + (i + 1));
-        }
-        
-        System.out.println("DEBUG: Completed calculating rankings for cycle " + cycleId);
-    }
+             if (ranking.getCreatedAt() == null) {
+                 ranking.setCreatedAt(LocalDateTime.now());
+             }
+ 
+             performanceRankingRepository.save(ranking);
+         }
+     }
 
     @Override
     @Transactional

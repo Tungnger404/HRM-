@@ -29,5 +29,7 @@ public interface KpiAssignmentRepository extends JpaRepository<KpiAssignment, In
 
     List<KpiAssignment> findByEmpIdAndStatus(Integer empId, KpiAssignment.AssignmentStatus status);
 
+    List<KpiAssignment> findByEmpIdAndStatusOrderByManagerReviewedAtDesc(Integer empId, KpiAssignment.AssignmentStatus status);
+
     List<KpiAssignment> findByStatusOrderByManagerReviewedAtDesc(KpiAssignment.AssignmentStatus status);
 }

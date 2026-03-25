@@ -158,6 +158,14 @@ public class HrKpiViewController {
                 return "redirect:/hr/kpi/configure";
             }
 
+            Integer defaultKpiId;
+            try {
+                defaultKpiId = resolveDefaultKpiId();
+            } catch (RuntimeException ex) {
+                ra.addFlashAttribute("toastError", "Cannot send KPI because no KPI template exists. Please create at least one KPI template first.");
+                return "redirect:/hr/kpi/configure";
+            }
+
             int successCount = 0;
 
             for (Employee emp : targetEmployees) {
@@ -184,7 +192,7 @@ public class HrKpiViewController {
                         log.info("Creating new assignment for emp_id: {}", emp.getEmpId());
                         assignment = new KpiAssignment();
                         assignment.setCycleId(cycleId);
-                        assignment.setKpiId(resolveDefaultKpiId());
+                        assignment.setKpiId(defaultKpiId);
                         assignment.setEmpId(emp.getEmpId());
                         assignment.setDeptId("EMPLOYEE".equals(applyScope) ? null : emp.getDeptId());
                         assignment.setHrExcelTemplatePath(storedPath);
@@ -207,6 +215,18 @@ public class HrKpiViewController {
                 } catch (Exception e) {
                     log.error("Failed to assign KPI to emp_id: {}, error: {}", emp.getEmpId(), e.getMessage());
                 }
+            }
+
+            if (successCount > 0) {
+                int failedCount = targetEmployees.size() - successCount;
+                if (failedCount > 0) {
+                    ra.addFlashAttribute("toastSuccess", "KPI template sent to " + successCount + " employee(s). "
+                            + failedCount + " failed.");
+                } else {
+                    ra.addFlashAttribute("toastSuccess", "KPI template sent successfully to " + successCount + " employee(s).");
+                }
+            } else {
+                ra.addFlashAttribute("toastError", "Failed to send KPI template to all selected employees.");
             }
 
             return "redirect:/hr/kpi/pending-verification";
@@ -257,6 +277,7 @@ public class HrKpiViewController {
     public String approveKpi(@PathVariable Integer assignmentId,
                              @RequestParam(required = false) List<String> verificationChecks,
                              @RequestParam(required = false) String hrNote,
+                             Principal principal,
                              RedirectAttributes ra) {
         try {
             if (verificationChecks == null || verificationChecks.isEmpty()) {
@@ -277,6 +298,7 @@ public class HrKpiViewController {
 
             assignment.setStatus(KpiAssignment.AssignmentStatus.HR_VERIFIED);
             assignment.setHrVerifiedAt(LocalDateTime.now());
+            assignment.setHrVerifiedBy(currentEmployeeService.requireCurrentEmpId(principal));
             assignment.setHrVerificationNote(hrNote);
             kpiAssignmentRepository.save(assignment);
 
@@ -388,3 +410,4 @@ public class HrKpiViewController {
         }
     }
 }
+

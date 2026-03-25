@@ -14,4 +14,6 @@ public interface PromotionRequestRepository extends JpaRepository<PromotionReque
     List<PromotionRequest> findByRequestedByOrderByRequestedAtDesc(Integer requestedBy);
     
     List<PromotionRequest> findByEmpIdOrderByRequestedAtDesc(Integer empId);
+
+    boolean existsByEmpIdAndStatus(Integer empId, PromotionRequest.RequestStatus status);
 }

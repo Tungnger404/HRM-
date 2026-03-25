@@ -7,6 +7,7 @@ import com.example.hrm.repository.TrainingAssignmentRepository;
 import com.example.hrm.repository.TrainingProgramRepository;
 import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
+import com.example.hrm.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +29,7 @@ public class EmployeeTrainingController {
     private final TrainingProgramRepository programRepository;
     private final CurrentEmployeeService currentEmployeeService;
     private final DocumentStorageService documentStorageService;
+    private final NotificationService notificationService;
 
     @GetMapping("/my-training")
     public String showMyTraining(Principal principal, Model model) {
@@ -124,6 +126,29 @@ public class EmployeeTrainingController {
             }
 
             assignmentRepository.save(assignment);
+
+            Integer managerId = assignment.getAssignedBy() != null
+                    ? assignment.getAssignedBy()
+                    : employee.getDirectManagerId();
+            if (managerId != null) {
+                String courseName = assignment.getProgramName();
+                if ((courseName == null || courseName.isBlank()) && assignment.getProgramId() != null) {
+                    courseName = programRepository.findById(assignment.getProgramId())
+                            .map(TrainingProgram::getProgramName)
+                            .orElse("assigned training");
+                }
+                if (courseName == null || courseName.isBlank()) {
+                    courseName = "assigned training";
+                }
+
+                notificationService.create(
+                        managerId,
+                        "TRAINING_EVIDENCE_SUBMITTED",
+                        "Training evidence submitted",
+                        employee.getFullName() + " submitted evidence for \"" + courseName + "\".",
+                        "/manager/training/evidence-confirmations/" + assignment.getAssignId()
+                );
+            }
 
             ra.addFlashAttribute("toastSuccess", "Evidence submitted successfully! Waiting for manager confirmation.");
             return "redirect:/employee/training/detail/" + id;

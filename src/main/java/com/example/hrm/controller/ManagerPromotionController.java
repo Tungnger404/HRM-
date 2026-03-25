@@ -1,5 +1,6 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.dto.PromotionReviewDTO;
 import com.example.hrm.entity.Employee;
 import com.example.hrm.entity.JobPosition;
 import com.example.hrm.entity.User;
@@ -48,6 +49,7 @@ public class ManagerPromotionController {
 
         model.addAttribute("employees", eligibleEmployees);
         model.addAttribute("positions", allPositions);
+        model.addAttribute("positionsJs", allPositions);
         model.addAttribute("pageTitle", "Promotion Recommendations");
 
         return "manager/promotion-recommendations";
@@ -55,8 +57,8 @@ public class ManagerPromotionController {
 
     @GetMapping("/review/{empId}")
     @ResponseBody
-    public Map<String, Object> getEmployeeEvaluationHistory(@PathVariable Integer empId,
-                                                            Authentication auth) {
+    public PromotionReviewDTO getEmployeeEvaluationHistory(@PathVariable Integer empId,
+                                                           Authentication auth) {
         Employee currentManager = getCurrentManager(auth);
 
         Employee employee = employeeRepository.findById(empId)

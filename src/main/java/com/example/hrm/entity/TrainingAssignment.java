@@ -81,6 +81,9 @@ public class TrainingAssignment {
     @Column(name = "review_comment", columnDefinition = "NVARCHAR(MAX)")
     private String reviewComment;
 
+    @Column(name = "recommendation_id")
+    private Integer recommendationId;
+
     @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
 
@@ -243,6 +246,14 @@ public class TrainingAssignment {
 
     public void setReviewComment(String reviewComment) {
         this.reviewComment = reviewComment;
+    }
+
+    public Integer getRecommendationId() {
+        return recommendationId;
+    }
+
+    public void setRecommendationId(Integer recommendationId) {
+        this.recommendationId = recommendationId;
     }
 
     public LocalDateTime getAssignedAt() {

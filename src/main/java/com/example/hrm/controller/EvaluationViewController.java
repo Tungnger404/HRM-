@@ -81,18 +81,29 @@ public class EvaluationViewController {
     @GetMapping("/submit-kpi")
     public String showKpiSubmissionForm(Principal principal,
                                        Model model,
+                                       @RequestParam(required = false) Integer assignmentId,
                                        @ModelAttribute("msg") String msg,
                                        @ModelAttribute("err") String err) {
         Integer employeeId = currentEmployeeService.requireCurrentEmpId(principal);
         
         java.util.List<KpiAssignment> allAssignments = kpiAssignmentRepository
                 .findByEmpIdOrderByAssignedAtDesc(employeeId);
-        
-        KpiAssignment assignment = allAssignments.stream()
-                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.ASSIGNED 
-                          || a.getStatus() == KpiAssignment.AssignmentStatus.DRAFT)
-                .findFirst()
-                .orElse(null);
+
+        KpiAssignment assignment = null;
+        if (assignmentId != null) {
+            assignment = allAssignments.stream()
+                    .filter(a -> a.getAssignmentId().equals(assignmentId))
+                    .filter(this::isEditableByEmployee)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (assignment == null) {
+            assignment = allAssignments.stream()
+                    .filter(this::isEditableByEmployee)
+                    .findFirst()
+                    .orElse(null);
+        }
         
         Integer cycleId = assignment != null ? assignment.getCycleId() : 1;
         
@@ -133,8 +144,7 @@ public class EvaluationViewController {
                 return "redirect:/evaluation/submit-kpi";
             }
             
-            if (assignment.getStatus() != KpiAssignment.AssignmentStatus.ASSIGNED
-                && assignment.getStatus() != KpiAssignment.AssignmentStatus.DRAFT) {
+            if (!isEditableByEmployee(assignment)) {
                 ra.addFlashAttribute("err", "This KPI assignment cannot be edited in its current status.");
                 return "redirect:/evaluation/submit-kpi";
             }
@@ -181,6 +191,14 @@ public class EvaluationViewController {
             ra.addFlashAttribute("err", "Error: " + e.getMessage());
             return "redirect:/evaluation/submit-kpi";
         }
+    }
+
+    private boolean isEditableByEmployee(KpiAssignment assignment) {
+        KpiAssignment.AssignmentStatus status = assignment.getStatus();
+        return status == KpiAssignment.AssignmentStatus.ASSIGNED
+                || status == KpiAssignment.AssignmentStatus.DRAFT
+                || status == KpiAssignment.AssignmentStatus.HR_REJECTED
+                || status == KpiAssignment.AssignmentStatus.MANAGER_REJECTED;
     }
 
     /**
@@ -358,10 +376,8 @@ public class EvaluationViewController {
 
     @GetMapping("/promotion-recommendations/{cycleId}")
     public String showPromotionRecommendations(@PathVariable Integer cycleId, Model model) {
-        model.addAttribute("cycleId", cycleId);
-        model.addAttribute("pageTitle", "Promotion Recommendations");
-        return "evaluation/promotion-recommendations";
-    }
+        return "redirect:/manager/promotion";
+     }
 
     /**
      * Show employee's evaluation history

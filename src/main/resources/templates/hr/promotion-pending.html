@@ -49,10 +49,10 @@
                                     <tr th:each="req : ${requests}">
                                         <td th:text="${req.requestId}">1</td>
                                         <td>
-                                            <strong th:text="'EMP-' + ${req.empId}">EMP-001</strong>
+                                            <strong th:text="${employeeNames.get(req.empId) != null ? employeeNames.get(req.empId) : 'EMP-' + req.empId}">EMP-001</strong>
                                         </td>
-                                        <td th:text="'Position ID: ' + ${req.currentPositionId}">Position ID: 1</td>
-                                        <td th:text="'Position ID: ' + ${req.proposedPositionId}">Position ID: 2</td>
+                                        <td th:text="${positionTitles.get(req.currentPositionId) != null ? positionTitles.get(req.currentPositionId) : 'N/A'}">N/A</td>
+                                        <td th:text="${positionTitles.get(req.proposedPositionId) != null ? positionTitles.get(req.proposedPositionId) : 'N/A'}">N/A</td>
                                         <td>
                                             <span class="badge" 
                                                   th:classappend="${req.avgScore >= 85} ? 'bg-success' : 'bg-primary'"
@@ -104,12 +104,14 @@
     </div>
 </div>
 
-<div layout:fragment="scripts">
-<script th:inline="javascript">
-    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || '';
-    const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
-    
+<div layout:fragment="script">
+ <script th:inline="javascript">
+     const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || '';
+     const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
+     const positionTitles = /*[[${positionTitles}]]*/ {};
+     const employeeNames = /*[[${employeeNames}]]*/ {};
+
     function showRequestDetail(button) {
         const requestId = button.getAttribute('data-request-id');
         const modal = new coreui.Modal(document.getElementById('requestDetailModal'));
@@ -131,9 +133,9 @@
                     <h6 class="mb-3"><strong>Request Information</strong></h6>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <p class="mb-1"><strong>Employee ID:</strong> ${selectedRequest.empId}</p>
-                            <p class="mb-1"><strong>Current Position:</strong> Position ID ${selectedRequest.currentPositionId}</p>
-                            <p class="mb-1"><strong>Proposed Position:</strong> Position ID ${selectedRequest.proposedPositionId}</p>
+                            <p class="mb-1"><strong>Employee:</strong> ${employeeNames[selectedRequest.empId] || ('EMP-' + selectedRequest.empId)}</p>
+                            <p class="mb-1"><strong>Current Position:</strong> ${positionTitles[selectedRequest.currentPositionId] || 'N/A'}</p>
+                            <p class="mb-1"><strong>Proposed Position:</strong> ${positionTitles[selectedRequest.proposedPositionId] || 'N/A'}</p>
                         </div>
                         <div class="col-md-6">
                             <p class="mb-1"><strong>Average Score:</strong> <span class="badge bg-primary">${selectedRequest.avgScore} / 100</span></p>

@@ -18,8 +18,8 @@ import java.security.Principal;
 import java.util.List;
 
 /**
- * Controller for Training web pages (Thymeleaf views)
- * Using mock data in templates - no service dependencies needed yet
+ * Legacy compatibility controller.
+ * Active demo training flow uses /employee/training and /manager/training based on TrainingAssignment.
  */
 @Controller
 @RequestMapping("/training")
@@ -95,14 +95,7 @@ public class TrainingViewController {
      */
     @GetMapping("/submit-evidence/{progressId}")
     public String showEvidenceSubmissionForm(@PathVariable Integer progressId, Model model) {
-        try {
-            model.addAttribute("progressId", progressId);
-            model.addAttribute("pageTitle", "Submit Training Evidence");
-            return "training/submit-evidence";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Training progress not found");
-            return "error/404";
-        }
+        return "redirect:/employee/training/my-training";
     }
 
     /**
@@ -119,26 +112,8 @@ public class TrainingViewController {
             @RequestParam("certificateFile") MultipartFile certificateFile,
             RedirectAttributes redirectAttributes
     ) {
-        try {
-            // Validate file
-            if (certificateFile.isEmpty()) {
-                redirectAttributes.addFlashAttribute("err", "Please upload a certificate file");
-                return "redirect:/training/submit-evidence/" + progressId;
-            }
-
-            // Validate file size (max 5MB)
-            if (certificateFile.getSize() > 5 * 1024 * 1024) {
-                redirectAttributes.addFlashAttribute("err", "File size exceeds 5MB");
-                return "redirect:/training/submit-evidence/" + progressId;
-            }
-
-            redirectAttributes.addFlashAttribute("msg",
-                "Training evidence submitted successfully! Your manager will review it soon.");
-            return "redirect:/training/my-progress";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("err", "Failed to submit evidence: " + e.getMessage());
-            return "redirect:/training/submit-evidence/" + progressId;
-        }
+        redirectAttributes.addFlashAttribute("err", "This route is deprecated. Please submit evidence from your active training assignment screen.");
+        return "redirect:/employee/training/my-training";
     }
 
     /**

@@ -8,9 +8,11 @@ import com.example.hrm.entity.Department;
 import com.example.hrm.entity.EvalCycle;
 import com.example.hrm.entity.JobPosition;
 import com.example.hrm.repository.KpiAssignmentRepository;
+import com.example.hrm.repository.KpiEvidenceRepository;
 import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.repository.PerformanceRankingRepository;
 import com.example.hrm.service.CurrentEmployeeService;
+import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.KpiEvidenceService;
 import com.example.hrm.service.NotificationService;
 import com.example.hrm.service.TrainingService;
@@ -23,12 +25,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,10 +52,16 @@ public class ManagerEvaluationViewController {
     private KpiAssignmentRepository kpiAssignmentRepository;
 
     @Autowired
+    private KpiEvidenceRepository kpiEvidenceRepository;
+
+    @Autowired
     private PerformanceRankingRepository performanceRankingRepository;
 
     @Autowired
     private KpiEvidenceService kpiEvidenceService;
+
+    @Autowired
+    private DocumentStorageService documentStorageService;
 
     @Autowired
     private NotificationService notificationService;
@@ -161,11 +176,14 @@ public class ManagerEvaluationViewController {
                 .stream()
                 .collect(Collectors.toMap(JobPosition::getJobId, JobPosition::getTitle));
 
-        Map<Integer, Integer> assignmentIds = teamRankings.stream().collect(Collectors.toMap(
-                PerformanceRanking::getEmpId,
-                r -> resolveLatestAssignmentId(r.getEmpId(), r.getCycleId()),
-                (first, second) -> first
-        ));
+        // Collectors.toMap does not accept null values; some employees may have no assignment yet.
+        Map<Integer, Integer> assignmentIds = new HashMap<>();
+        for (PerformanceRanking ranking : teamRankings) {
+            assignmentIds.putIfAbsent(
+                    ranking.getEmpId(),
+                    resolveLatestAssignmentId(ranking.getEmpId(), ranking.getCycleId())
+            );
+        }
 
         Map<Integer, String> empDeptNames = employeeById.values().stream().collect(Collectors.toMap(
                 Employee::getEmpId,
@@ -206,38 +224,19 @@ public class ManagerEvaluationViewController {
     public String showPerformanceRankingDebug(@PathVariable Integer cycleId,
                                                Principal principal,
                                                Model model) {
-        System.out.println("\n=== DEBUG RANKING PAGE ===");
         Employee currentManager = currentEmployeeService.requireEmployee(principal);
-        System.out.println("Current Manager: " + currentManager.getEmpId() + " - " + currentManager.getFullName());
         
         // Show ALL rankings (no filter)
         List<PerformanceRanking> allRankings = performanceRankingRepository.findByCycleId(cycleId);
-        System.out.println("ALL Rankings in cycle " + cycleId + ": " + allRankings.size());
-        allRankings.forEach(r -> {
-            System.out.println("  - EmpId: " + r.getEmpId() + 
-                    ", Score: " + r.getFinalScore() + 
-                    ", Classification: " + r.getClassification() + 
-                    ", Rank: " + r.getRankOverall());
-        });
         
         // Show manager's team
         List<Employee> teamMembers = employeeRepository.findByDirectManagerId(currentManager.getEmpId());
-        System.out.println("Manager's team members: " + teamMembers.size());
-        teamMembers.forEach(e -> System.out.println("  - " + e.getEmpId() + " " + e.getFullName()));
         
         // Show completed assignments in this cycle
         List<KpiAssignment> assignments = kpiAssignmentRepository.findByCycleId(cycleId);
         List<KpiAssignment> completed = assignments.stream()
                 .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.COMPLETED)
                 .toList();
-        System.out.println("Completed assignments: " + completed.size());
-        completed.forEach(a -> {
-            System.out.println("  - EmpId: " + a.getEmpId() + 
-                    ", ManagerScore: " + a.getManagerScore() + 
-                    ", Classification: " + a.getClassification());
-        });
-        
-        System.out.println("=== END DEBUG ===\n");
         
         // Show all rankings
         allRankings.sort(Comparator.comparing(PerformanceRanking::getRankOverall, 
@@ -352,6 +351,51 @@ public class ManagerEvaluationViewController {
         } catch (Exception e) {
             ra.addFlashAttribute("err", "Error: " + e.getMessage());
             return "redirect:/manager/evaluation/review/" + assignmentId;
+        }
+    }
+
+    @GetMapping("/download-employee/{assignmentId}")
+    public ResponseEntity<Resource> downloadEmployeeSubmission(@PathVariable Integer assignmentId,
+                                                               Principal principal) {
+        try {
+            KpiAssignment assignment = requireManagedAssignment(principal, assignmentId);
+            if (assignment.getEmployeeExcelPath() == null || assignment.getEmployeeExcelPath().isBlank()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = documentStorageService.loadAsResource(assignment.getEmployeeExcelPath().trim());
+            String filename = "KPI_Employee_" + assignment.getEmpId() + ".xlsx";
+            String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @GetMapping("/download-evidence/{evidenceId}")
+    public ResponseEntity<Resource> downloadEvidence(@PathVariable Integer evidenceId,
+                                                     Principal principal) {
+        try {
+            KpiEvidence evidence = kpiEvidenceRepository.findById(evidenceId)
+                    .orElseThrow(() -> new RuntimeException("Evidence not found"));
+            requireManagedAssignment(principal, evidence.getAssignmentId());
+
+            if (evidence.getStoredPath() == null || evidence.getStoredPath().isBlank()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = documentStorageService.loadAsResource(evidence.getStoredPath());
+            String filename = evidence.getFileName() != null ? evidence.getFileName() : "evidence_" + evidenceId;
+            String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 

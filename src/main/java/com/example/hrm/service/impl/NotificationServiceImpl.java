@@ -63,7 +63,7 @@ public class NotificationServiceImpl implements NotificationService {
         create(empId, "KPI_ASSIGNED",
                 "You have a new KPI assignment",
                 hrComment,
-                "/evaluation/submit-kpi");
+                "/evaluation/submit-kpi?assignmentId=" + assignmentId);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class NotificationServiceImpl implements NotificationService {
         create(empId, "KPI_REJECTED",
                 "Your KPI submission needs revision",
                 reason,
-                "/evaluation/submit-kpi");
+                "/evaluation/submit-kpi?assignmentId=" + assignmentId);
     }
 
     @Override
