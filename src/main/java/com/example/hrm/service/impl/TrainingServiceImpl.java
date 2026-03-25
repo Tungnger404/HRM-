@@ -110,21 +110,7 @@ public class TrainingServiceImpl implements TrainingService {
         assignment.setStartDate(effectiveStartDate);
         assignment.setEndDate(endDate);
         assignment.setAssignedAt(LocalDateTime.now());
-        assignment = trainingAssignmentRepository.save(assignment);
-
-        // Auto-create progress record
-        TrainingProgress progress = new TrainingProgress();
-        progress.setAssignId(assignment.getAssignId());
-        progress.setEmpId(empId);
-        progress.setProgramId(programId);
-        progress.setEnrollmentDate(LocalDate.now());
-        progress.setStartDate(effectiveStartDate);
-        progress.setStatus(ProgressStatus.NOT_STARTED);
-        progress.setCompletionPercentage(BigDecimal.ZERO);
-        progress.setUpdatedAt(LocalDateTime.now());
-        trainingProgressRepository.save(progress);
-
-        return assignment;
+        return trainingAssignmentRepository.save(assignment);
     }
 
     @Override
@@ -280,7 +266,7 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     @Transactional
     public TrainingCertificate verifyCertificate(Integer certId, Boolean isValid,
-                                                 Integer verifiedBy, String verificationNote) {
+                                                  Integer verifiedBy, String verificationNote) {
         TrainingCertificate cert = trainingCertificateRepository.findById(certId)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
 
@@ -289,18 +275,6 @@ public class TrainingServiceImpl implements TrainingService {
         cert.setVerificationNote(verificationNote);
         cert.setStatus(isValid ? CertificateStatus.VERIFIED : CertificateStatus.REJECTED);
 
-        // Auto-complete progress if verified
-        if (isValid && cert.getProgramId() != null) {
-            Optional<TrainingProgress> progressOpt =
-                    trainingProgressRepository.findByEmpIdAndProgramId(cert.getEmpId(), cert.getProgramId());
-            if (progressOpt.isPresent()) {
-                TrainingProgress progress = progressOpt.get();
-                progress.setStatus(ProgressStatus.COMPLETED);
-                progress.setCompletionPercentage(new BigDecimal(100));
-                progress.setCompletionDate(LocalDate.now());
-                trainingProgressRepository.save(progress);
-            }
-        }
 
         return trainingCertificateRepository.save(cert);
     }

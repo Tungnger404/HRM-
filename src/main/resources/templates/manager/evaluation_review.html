@@ -80,7 +80,7 @@
                     <div class="mb-3">
                         <label class="fw-bold">KPI Excel:</label>
                         <div>
-                            <a th:href="@{/hr/kpi/download-employee/{id}(id=${assignment.assignmentId})}"
+                            <a th:href="@{/manager/evaluation/download-employee/{id}(id=${assignment.assignmentId})}"
                                class="btn btn-sm btn-success">
                                 <i class="cil-cloud-download"></i> Download KPI Excel
                             </a>
@@ -99,7 +99,7 @@
                                                 th:text="${#numbers.formatDecimal(ev.fileSize / 1024 / 1024, 1, 1)}"></span>
                                             MB)</small>
                                     </div>
-                                    <a th:href="@{/hr/kpi/download-evidence/{id}(id=${ev.evidenceId})}"
+                                    <a th:href="@{/manager/evaluation/download-evidence/{id}(id=${ev.evidenceId})}"
                                        class="btn btn-sm btn-outline-primary">
                                         Download
                                     </a>

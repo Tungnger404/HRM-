@@ -1,9 +1,13 @@
 package com.example.hrm.service.impl;
 
+import com.example.hrm.dto.PromotionReviewDTO;
 import com.example.hrm.entity.Employee;
+import com.example.hrm.entity.JobPosition;
 import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.PromotionRequest;
+import com.example.hrm.repository.DepartmentRepository;
 import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.repository.JobPositionRepository;
 import com.example.hrm.repository.KpiAssignmentRepository;
 import com.example.hrm.repository.PromotionRequestRepository;
 import com.example.hrm.service.NotificationService;
@@ -20,7 +24,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PromotionServiceImpl implements PromotionService {
 
+    private static final double ELIGIBLE_MIN_FINAL_SCORE = 80.0;
+    private static final int ELIGIBLE_MIN_EVALUATION_COUNT = 2;
+
     private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
+    private final JobPositionRepository jobPositionRepository;
     private final KpiAssignmentRepository kpiAssignmentRepository;
     private final PromotionRequestRepository promotionRequestRepository;
     private final NotificationService notificationService;
@@ -31,9 +40,7 @@ public class PromotionServiceImpl implements PromotionService {
 
         return allEmployees.stream()
                 .filter(emp -> !emp.getEmpId().equals(requesterId))
-                .filter(emp -> "OFFICIAL".equalsIgnoreCase(emp.getStatus())
-                        || "ACTIVE".equalsIgnoreCase(emp.getStatus())
-                        || "WORKING".equalsIgnoreCase(emp.getStatus()))
+                .filter(emp -> !isInactiveForPromotion(emp.getStatus()))
                 .map(emp -> {
                     List<KpiAssignment> completedEvals = kpiAssignmentRepository.findByEmpId(emp.getEmpId())
                             .stream()
@@ -51,9 +58,11 @@ public class PromotionServiceImpl implements PromotionService {
                     result.put("empId", emp.getEmpId());
                     result.put("fullName", emp.getFullName());
                     result.put("currentPosition", emp.getJobId());
+                    result.put("currentPositionTitle", resolvePositionTitle(emp.getJobId()));
+                    result.put("currentPositionLevel", resolvePositionLevel(emp.getJobId()));
                     result.put("avgScore", Math.round(avgScore * 10.0) / 10.0);
                     result.put("evaluationCount", completedEvals.size());
-                    result.put("isEligible", avgScore >= 80.0 && completedEvals.size() >= 2);
+                    result.put("isEligible", isEligible(avgScore, completedEvals.size()));
 
                     return result;
                 })
@@ -62,18 +71,14 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
-    public Map<String, Object> getEmployeeEvaluationHistory(Integer empId) {
+    public PromotionReviewDTO getEmployeeEvaluationHistory(Integer empId) {
         Employee employee = employeeRepository.findById(empId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        List<KpiAssignment> completedEvals = kpiAssignmentRepository.findByEmpId(empId)
+        List<KpiAssignment> completedEvals = kpiAssignmentRepository
+                .findByEmpIdAndStatusOrderByManagerReviewedAtDesc(empId, KpiAssignment.AssignmentStatus.COMPLETED)
                 .stream()
-                .filter(a -> a.getStatus() == KpiAssignment.AssignmentStatus.COMPLETED)
                 .filter(a -> a.getManagerScore() != null)
-                .sorted(Comparator.comparing(
-                        KpiAssignment::getManagerReviewedAt,
-                        Comparator.nullsLast(Comparator.reverseOrder())
-                ))
                 .limit(12)
                 .toList();
 
@@ -83,13 +88,33 @@ public class PromotionServiceImpl implements PromotionService {
                         .average()
                         .orElse(0.0);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("employee", employee);
-        result.put("evaluations", completedEvals);
-        result.put("avgScore", Math.round(avgScore * 10.0) / 10.0);
-        result.put("evaluationCount", completedEvals.size());
+        List<PromotionReviewDTO.EvaluationRow> evalRows = completedEvals.stream()
+                .map(eval -> PromotionReviewDTO.EvaluationRow.builder()
+                        .cycleId(eval.getCycleId())
+                        .managerScore(eval.getManagerScore())
+                        .finalScore(eval.getManagerScore())
+                        .classification(eval.getClassification())
+                        .status(eval.getStatus() != null ? eval.getStatus().name() : "N/A")
+                        .reviewedAt(eval.getManagerReviewedAt())
+                        .build())
+                .toList();
 
-        return result;
+        return PromotionReviewDTO.builder()
+                .employee(PromotionReviewDTO.EmployeeInfo.builder()
+                        .empId(employee.getEmpId())
+                        .fullName(employee.getFullName())
+                        .department(resolveDepartmentName(employee.getDeptId()))
+                        .jobTitle(resolvePositionTitle(employee.getJobId()))
+                        .directManager(resolveManagerName(employee.getDirectManagerId()))
+                        .build())
+                .evaluations(evalRows)
+                .avgScore(Math.round(avgScore * 10.0) / 10.0)
+                .evaluationCount(completedEvals.size())
+                .hasEvaluations(!completedEvals.isEmpty())
+                .emptyMessage(completedEvals.isEmpty()
+                        ? "No evaluation information available for this employee."
+                        : null)
+                .build();
     }
 
     @Override
@@ -98,6 +123,32 @@ public class PromotionServiceImpl implements PromotionService {
                                                    String reason, Integer requestedBy) {
         Employee employee = employeeRepository.findById(empId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        if (proposedPositionId == null) {
+            throw new RuntimeException("Proposed position is required");
+        }
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Reason is required");
+        }
+        if (Objects.equals(employee.getJobId(), proposedPositionId)) {
+            throw new RuntimeException("Proposed position must be different from current position");
+        }
+        if (promotionRequestRepository.existsByEmpIdAndStatus(empId, PromotionRequest.RequestStatus.PENDING)) {
+            throw new RuntimeException("Employee already has a pending promotion request");
+        }
+
+        JobPosition currentPosition = employee.getJobId() != null
+                ? jobPositionRepository.findById(employee.getJobId()).orElse(null)
+                : null;
+        JobPosition proposedPosition = jobPositionRepository.findById(proposedPositionId)
+                .orElseThrow(() -> new RuntimeException("Proposed position not found"));
+
+        if (currentPosition != null
+                && currentPosition.getJobLevel() != null
+                && proposedPosition.getJobLevel() != null
+                && proposedPosition.getJobLevel() <= currentPosition.getJobLevel()) {
+            throw new RuntimeException("Proposed position level must be higher than current position level");
+        }
 
         List<KpiAssignment> completedEvals = kpiAssignmentRepository.findByEmpId(empId)
                 .stream()
@@ -111,8 +162,12 @@ public class PromotionServiceImpl implements PromotionService {
                         .average()
                         .orElse(0.0);
 
+        if (!isEligible(avgScore, completedEvals.size())) {
+            throw new RuntimeException("Employee is not eligible for promotion yet (minimum 2 completed manager evaluations and average final score >= 80)");
+        }
+
         String evalSummary = String.format(
-                "Average Score: %.1f/100 | Total Evaluations: %d | Recent Classifications: %s",
+                "Average Final Score (manager): %.1f/100 | Total Evaluations: %d | Recent Classifications: %s",
                 avgScore,
                 completedEvals.size(),
                 completedEvals.stream()
@@ -137,14 +192,15 @@ public class PromotionServiceImpl implements PromotionService {
 
         PromotionRequest saved = promotionRequestRepository.save(request);
 
-        // Tạm hardcode HR emp_id để test, sau này đổi sang tìm theo role HR
-        notificationService.create(
-                104,
-                "PROMOTION_REQUEST",
-                "New Promotion Request",
-                employee.getFullName() + " has been recommended for promotion",
-                "/hr/promotions/pending"
-        );
+        for (Employee hrStaff : employeeRepository.findHrStaff()) {
+            notificationService.create(
+                    hrStaff.getEmpId(),
+                    "PROMOTION_REQUEST",
+                    "New Promotion Request",
+                    employee.getFullName() + " has been recommended for promotion",
+                    "/hr/promotions/pending"
+            );
+        }
 
         return saved;
     }
@@ -214,4 +270,57 @@ public class PromotionServiceImpl implements PromotionService {
     public List<PromotionRequest> getMyPromotionRequests(Integer requestedBy) {
         return promotionRequestRepository.findByRequestedByOrderByRequestedAtDesc(requestedBy);
     }
+
+    private boolean isEligible(double avgScore, int evaluationCount) {
+        return avgScore >= ELIGIBLE_MIN_FINAL_SCORE && evaluationCount >= ELIGIBLE_MIN_EVALUATION_COUNT;
+    }
+
+    private String resolveDepartmentName(Integer deptId) {
+        if (deptId == null) {
+            return "N/A";
+        }
+        return departmentRepository.findById(deptId)
+                .map(d -> d.getDeptName())
+                .orElse("N/A");
+    }
+
+    private String resolvePositionTitle(Integer jobId) {
+        if (jobId == null) {
+            return "N/A";
+        }
+        return jobPositionRepository.findById(jobId)
+                .map(JobPosition::getTitle)
+                .orElse("N/A");
+    }
+
+    private Integer resolvePositionLevel(Integer jobId) {
+        if (jobId == null) {
+            return null;
+        }
+        return jobPositionRepository.findById(jobId)
+                .map(JobPosition::getJobLevel)
+                .orElse(null);
+    }
+
+    private boolean isInactiveForPromotion(String status) {
+        if (status == null) {
+            return false;
+        }
+        String normalized = status.trim().toUpperCase(Locale.ROOT);
+        return normalized.contains("TERMIN")
+                || normalized.contains("RESIGN")
+                || normalized.equals("INACTIVE")
+                || normalized.equals("QUIT");
+    }
+
+    private String resolveManagerName(Integer managerId) {
+        if (managerId == null) {
+            return "N/A";
+        }
+        return employeeRepository.findById(managerId)
+                .map(Employee::getFullName)
+                .orElse("N/A");
+    }
 }
+
+

@@ -93,6 +93,17 @@ public class ManagerTrainingViewController {
                     dueDate
             );
 
+            String courseName = trainingProgramRepository.findById(programId)
+                    .map(TrainingProgram::getProgramName)
+                    .orElse("assigned training");
+            notificationService.create(
+                    empId,
+                    "TRAINING_ASSIGNED",
+                    "New training assigned",
+                    "You have been assigned training: " + courseName,
+                    "/employee/training/detail/" + assignment.getAssignId()
+            );
+
             ra.addFlashAttribute(
                     "msg",
                     "Assigned training #" + assignment.getAssignId() + " to " + employee.getFullName() + "."
@@ -193,6 +204,17 @@ public class ManagerTrainingViewController {
             assignment = assignmentRepository.save(assignment);
             recommendation.setStatus(TrainingRecommendation.RecommendationStatus.ASSIGNED);
             recommendationRepository.save(recommendation);
+
+            assignment.setRecommendationId(recommendation.getRecommendationId());
+            assignment = assignmentRepository.save(assignment);
+
+            notificationService.create(
+                    assignment.getEmpId(),
+                    "TRAINING_ASSIGNED",
+                    "New training assigned",
+                    "You have been assigned training: " + (assignment.getProgramName() != null ? assignment.getProgramName() : "assigned training"),
+                    "/employee/training/detail/" + assignment.getAssignId()
+            );
 
             ra.addFlashAttribute("toastSuccess", "Training assigned successfully!");
             return "redirect:/manager/training/recommendations";
@@ -301,6 +323,13 @@ public class ManagerTrainingViewController {
                     "Your training evidence for \"" + (assignment.getProgramName() != null ? assignment.getProgramName() : "assigned training") + "\" has been approved.",
                     "/employee/training/detail/" + assignment.getAssignId()
             );
+
+            if (assignment.getRecommendationId() != null) {
+                recommendationRepository.findById(assignment.getRecommendationId()).ifPresent(rec -> {
+                    rec.setStatus(TrainingRecommendation.RecommendationStatus.COMPLETED);
+                    recommendationRepository.save(rec);
+                });
+            }
 
             ra.addFlashAttribute("toastSuccess", "Training completion approved!");
             return "redirect:/manager/training/evidence-confirmations";
