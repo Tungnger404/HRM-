@@ -80,7 +80,12 @@ public class AttendanceController {
         model.addAttribute("hrsWeek", String.format("%.2f", hoursWeek / 60.0));
         model.addAttribute("hrsMonth", String.format("%.2f", hoursMonth / 60.0));
         model.addAttribute("otMonth", String.format("%.2f", overtimeMonth / 60.0));
-        
+
+        boolean checkedInToday = logs.stream()
+                .anyMatch(log -> log.getWorkDate() != null && log.getWorkDate().isEqual(today)
+                        && log.getCheckIn() != null);
+        model.addAttribute("checkedInToday", checkedInToday);
+
         return "employee/attendance";
     }
 

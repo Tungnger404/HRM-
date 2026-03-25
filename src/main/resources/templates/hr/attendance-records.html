@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+    <title>Monthly Attendance Records</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <style>
+        .page-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .attendance-grid-container {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .grid-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .month-selector {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 1.1rem;
+        }
+
+        .btn-month-nav {
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-month-nav:hover {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-export {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .btn-export:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+        
+        .btn-export.xls {
+            color: #16a34a;
+        }
+        
+        .btn-export.csv {
+            color: #ea580c;
+        }
+
+        /* Table Styles */
+        .table-responsive-custom {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: max-content;
+        }
+
+        .attendance-table th, .attendance-table td {
+            padding: 12px 6px;
+            text-align: center;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .attendance-table th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .attendance-table td.cell-employee {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background: #ffffff;
+            z-index: 10;
+            padding: 12px 24px;
+            min-width: 250px;
+            max-width: 250px;
+            border-right: 1px solid #f1f5f9;
+        }
+
+        .attendance-table th.cell-employee {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background: #f8fafc;
+            z-index: 11;
+            padding: 12px 24px;
+            border-right: 1px solid #e2e8f0;
+        }
+        
+        .attendance-table td.cell-total {
+            font-weight: 700;
+            color: #334155;
+            padding: 12px 24px;
+            background: #fafafa;
+            border-left: 1px solid #f1f5f9;
+            min-width: 100px;
+        }
+        
+        .attendance-table th.cell-total {
+            background: #f8fafc;
+            padding: 12px 24px;
+            border-left: 1px solid #e2e8f0;
+        }
+
+        .emp-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .emp-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e0f2fe;
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .emp-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Status Blocks */
+        .status-block {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin: 0 auto;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        
+        .status-block:hover {
+            transform: scale(1.15);
+        }
+
+        /* PRESENT - Blue */
+        .status-PRESENT { background-color: #3b82f6; }
+        
+        /* ABSENT (No show / missed) - Red */
+        .status-ABSENT { background-color: #ef4444; }
+        
+        /* OFF (Weekend / Leave) - Dark Grey (xám đen) */
+        .status-OFF { background-color: #475569; }
+        
+        /* FUTURE - Not happened yet */
+        .status-FUTURE { background-color: #f1f5f9; border: 1px dashed #cbd5e1; cursor: default; }
+        .status-FUTURE:hover { transform: none; }
+
+        .day-header {
+            width: 28px;
+            min-width: 28px;
+        }
+        
+        .day-num {
+            display: block;
+            font-size: 0.85rem;
+            color: #0f172a;
+        }
+        
+        .day-name {
+            display: block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+
+        /* Legend */
+        .legend-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 24px;
+            border-top: 1px solid #f1f5f9;
+            background: #fafafa;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .legend-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+
+    </style>
+
+    <div class="mb-4">
+        <h1 class="page-header">Attendance Records</h1>
+    </div>
+
+    <div class="attendance-grid-container">
+        <!-- Toolbar -->
+        <div class="grid-toolbar">
+            <div class="month-selector">
+                <a th:href="@{/hr/attendance-records(year=${currentYearMonth.minusMonths(1).year}, month=${currentYearMonth.minusMonths(1).monthValue})}" class="btn-month-nav">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <span th:text="${currentYearMonth.month.name() + ' ' + currentYearMonth.year}">JANUARY 2026</span>
+                <a th:href="@{/hr/attendance-records(year=${currentYearMonth.plusMonths(1).year}, month=${currentYearMonth.plusMonths(1).monthValue})}" class="btn-month-nav">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+            
+            <div class="export-actions">
+                <button class="btn-export xls" title="Export to Excel">
+                    <i class="far fa-file-excel fs-5"></i> XLS
+                </button>
+                <button class="btn-export csv" title="Export to CSV">
+                    <i class="far fa-file-alt fs-5"></i> CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Math Grid -->
+        <div class="table-responsive-custom">
+            <table class="attendance-table">
+                <thead>
+                    <tr>
+                        <th class="cell-employee">
+                            <i class="fas fa-search me-2 text-muted"></i>
+                            <input type="text" id="empSearch" placeholder="Search employees..." 
+                                   style="border:none; background:transparent; outline:none; font-size: 0.85rem; width: 180px;">
+                        </th>
+                        
+                        <!-- Days Loop -->
+                        <th th:each="day : ${daysInMonth}" class="day-header"
+                            th:style="${day.dayOfWeek.value >= 6 ? 'background-color: #f8fafc;' : ''}">
+                            <div class="day-num" th:text="${day.dayOfMonth}"></div>
+                            <div class="day-name" th:text="${#strings.substring(day.dayOfWeek.name(), 0, 1)}"></div>
+                        </th>
+                        
+                        <th class="cell-total">Total Hrs</th>
+                    </tr>
+                </thead>
+                <tbody id="empGridBody">
+                    <tr th:each="record : ${records}" class="emp-row">
+                        <td class="cell-employee">
+                            <div class="emp-info">
+                                <div class="emp-avatar" th:text="${#strings.substring(record.employee.fullName, 0, 1)}"></div>
+                                <div class="emp-name" th:text="${record.employee.fullName}" th:title="${record.employee.fullName}"></div>
+                            </div>
+                        </td>
+                        
+                        <td th:each="day : ${daysInMonth}" 
+                            th:style="${day.dayOfWeek.value >= 6 ? 'background-color: #f8fafc;' : ''}">
+                            <div th:class="'status-block status-' + ${record.getStatusForDate(day, today)}"
+                                 th:title="${record.getTooltipForDate(day)}"
+                                 data-bs-toggle="tooltip"></div>
+                        </td>
+                        
+                        <td class="cell-total" th:text="${record.totalHours} + 'h'">0.0h</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(records)}">
+                        <td th:colspan="${daysInMonth.size() + 2}" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fs-2 mb-3 text-light"></i><br>
+                            No attendance records found for this period.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend-container">
+            <div class="legend-item">
+                <div class="legend-box status-PRESENT"></div> Present (Checked In)
+            </div>
+            <div class="legend-item">
+                <div class="legend-box status-ABSENT"></div> Absent / Missing
+            </div>
+            <div class="legend-item">
+                <div class="legend-box status-OFF"></div> Leave / Weekend
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Search functionality
+            const searchInput = document.getElementById("empSearch");
+            const tableRows = document.querySelectorAll(".emp-row");
+
+            searchInput.addEventListener("keyup", function() {
+                const query = this.value.toLowerCase();
+                tableRows.forEach(row => {
+                    const nameCell = row.querySelector(".emp-name").textContent.toLowerCase();
+                    if (nameCell.includes(query)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
+
+            // Initialize tooltips if Bootstrap is fully loaded
+            if (typeof bootstrap !== 'undefined') {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        });
+    </script>
+</div>
+</body>
+</html>

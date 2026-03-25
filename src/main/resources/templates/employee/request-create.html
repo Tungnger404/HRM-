@@ -44,7 +44,7 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold small text-dark mb-1">Dates <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <input type="date" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{targetWorkDate}" id="targetDate" required>
+                                    <input type="date" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{targetWorkDate}" id="targetDate" required onclick="this.showPicker()">
                                 </div>
                             </div>
 
@@ -52,11 +52,11 @@
                             <div class="row g-3 mb-3" id="timeFields">
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-dark mb-1">Start Time</label>
-                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{startTime}" id="startTime">
+                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{startTime}" id="startTime" onclick="this.showPicker()">
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-dark mb-1">End Time</label>
-                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{endTime}" id="endTime">
+                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{endTime}" id="endTime" onclick="this.showPicker()">
                                 </div>
                             </div>
 
@@ -251,13 +251,35 @@
             });
 
             // Bind Events
-            requestType.addEventListener("change", updateTimeFields);
+            requestType.addEventListener("change", function() {
+                updateTimeFields();
+                
+                // Restrict date for Overtime to today only
+                const type = requestType.value;
+                const todayStr = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD format in local timezone
+                
+                if (type === "OVERTIME") {
+                    targetDateInput.setAttribute('min', todayStr);
+                    targetDateInput.removeAttribute('max'); // Allow future dates
+                    
+                    // If targetDateInput is selected and is in the past, reset it
+                    if (targetDateInput.value && targetDateInput.value < todayStr) {
+                         targetDateInput.value = todayStr;
+                         calculateDuration();
+                    }
+                } else {
+                    targetDateInput.removeAttribute('min');
+                    targetDateInput.removeAttribute('max');
+                }
+            });
             targetDateInput.addEventListener('change', calculateDuration);
             startTimeInput.addEventListener('change', calculateDuration);
             endTimeInput.addEventListener('change', calculateDuration);
 
             // Init
             updateTimeFields();
+            // Trigger change once to initialize date constraints if OVERTIME is pre-selected
+            requestType.dispatchEvent(new Event('change'));
         });
     </script>
 </div>

@@ -138,6 +138,15 @@
 
     <li class="nav-item">
       <a class="nav-link"
+         th:href="@{/hr/attendance-records}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/attendance-records')} ? 'active' : ''">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-list-numbered"></use></svg>
+        Attendance Records
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link"
          th:href="@{/hr/shifts}"
          th:classappend="${#strings.startsWith(currentUri, '/hr/shifts')} ? 'active' : ''">
         <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-clock"></use></svg>

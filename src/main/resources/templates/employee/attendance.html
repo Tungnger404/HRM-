@@ -190,8 +190,11 @@
                     <div th:unless="${u != null and u.avatarPath != null and !u.avatarPath.isEmpty()}" class="profile-avatar-placeholder" th:text="${e != null ? e.fullName.substring(0,1) : 'U'}"></div>
                     
                     <div class="prod-hours mt-2 mb-2 d-inline-block px-3 py-1" style="background: #eaaa00; font-size: 0.85rem;" th:text="'Production : ' + ${hrsToday} + ' hrs'">Production : 0.00 hrs</div>
-                    <div class="text-muted-custom" style="font-size: 0.75rem;">
+                    <div th:if="${checkedInToday}" class="text-muted-custom" style="font-size: 0.75rem;">
                         <i class="fas fa-check-circle text-success me-1"></i> Checked In Today
+                    </div>
+                    <div th:unless="${checkedInToday}" class="text-muted-custom" style="font-size: 0.75rem;">
+                        <i class="fas fa-times-circle text-secondary me-1"></i> Not Checked In Yet
                     </div>
                 </div>
             </div>
