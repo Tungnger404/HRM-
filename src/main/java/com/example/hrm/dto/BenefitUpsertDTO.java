@@ -15,7 +15,7 @@ public class BenefitUpsertDTO {
     private String name;         // tên phúc lợi
     private String type;         // INCOME / DEDUCTION
     private String calcMethod;   // FIXED / PERCENT_BASE
-    private BigDecimal value;    // FIXED=amount, PERCENT_BASE=0.03
+    private BigDecimal value;    // FIXED=amount, PERCENT_BASE=0.03, PER_WORKING_DAY=amount per day
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate effectiveFrom;

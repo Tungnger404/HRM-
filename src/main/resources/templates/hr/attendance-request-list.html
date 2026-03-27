@@ -3,90 +3,319 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
-<body>
-<div layout:fragment="content">
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">View Request - Approved Waiting HR Process</h5>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-success" th:if="${message}" th:text="${message}"></div>
-            <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+<head>
+    <style>
+        .premium-bg {
+            background-color: #f4f7f6;
+            padding: 24px 0;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .stat-card.bg-green { background-color: #eefdf4; }
+        .stat-card.bg-blue { background-color: #f0f9ff; }
+        .stat-card.bg-purple { background-color: #faf5ff; }
+        .stat-card.bg-orange { background-color: #fff1f2; }
 
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Emp ID</th>
-                        <th>Type</th>
-                        <th>Target Date</th>
-                        <th>Reason</th>
-                        <th>Manager Note</th>
-                        <th>Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="r : ${approvedNotProcessed}">
-                        <td th:text="${r.requestId}"></td>
-                        <td th:text="${r.empId}"></td>
-                        <td th:text="${r.requestType}"></td>
-                        <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></td>
-                        <td th:text="${r.reason}"></td>
-                        <td th:text="${r.approverNote}"></td>
-                        <td>
-                            <form th:action="@{/hr/attendance-requests/{id}/process(id=${r.requestId})}" method="post">
-                                <button class="btn btn-sm btn-primary" type="submit">Process</button>
-                            </form>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(approvedNotProcessed)}">
-                        <td colspan="7" class="text-center text-muted">No approved requests waiting for HR.</td>
-                    </tr>
-                    </tbody>
-                </table>
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #111827;
+            margin-right: 16px;
+            line-height: 1;
+        }
+        .stat-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4b5563;
+            line-height: 1.3;
+        }
+
+        .premium-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: none;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        .premium-card-header {
+            padding: 24px 24px 16px 24px;
+            background: transparent;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .premium-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+        
+        .premium-table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .premium-table th {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+            padding: 16px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            background: transparent;
+        }
+        .premium-table td {
+            padding: 16px 24px;
+            font-size: 14px;
+            color: #374151;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        .premium-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .premium-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .type-text {
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-approved {
+            color: #16a34a;
+            background-color: #dcfce7;
+        }
+        .status-rejected {
+            color: #dc2626;
+            background-color: #fee2e2;
+        }
+        .status-pending {
+            color: #d97706;
+            background-color: #fef3c7;
+        }
+        
+        .btn-black-primary {
+            background-color: #111;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-black-primary:hover {
+            background-color: #333;
+            color: #fff;
+        }
+        
+        .action-icon {
+            color: #6366f1;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+            background: rgba(99, 102, 241, 0.1);
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .action-icon:hover {
+            background: rgba(99, 102, 241, 0.2);
+            color: #4338ca;
+        }
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content" class="premium-bg">
+    
+    <div class="alert alert-success" th:if="${message}" th:text="${message}"></div>
+    <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+    <h2 class="page-title">Leaves</h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card bg-green">
+                <div class="stat-number" th:text="${#lists.size(approvedNotProcessed)}">0</div>
+                <div class="stat-text">Waiting HR<br/>Process</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-blue">
+                <div class="stat-number" th:text="${#lists.size(managerDecided)}">0</div>
+                <div class="stat-text">Manager<br/>Decided</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-purple">
+                <div class="stat-number" th:text="${#lists.size(pendingRequests) + #lists.size(approvedNotProcessed) + #lists.size(managerDecided)}">0</div>
+                <div class="stat-text">Total Request<br/>Count</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-orange">
+                <div class="stat-number" th:text="${#calendars.format(#calendars.createNow(), 'MM')}">0</div>
+                <div class="stat-text">Current<br/>Month</div>
             </div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">View Request - Manager Decided (Approved/Rejected)</h5>
+    <div class="card premium-card">
+        <div class="premium-card-header">
+            <h5 class="premium-card-title">Pending Requests (Needs HR Action)</h5>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Emp ID</th>
-                        <th>Type</th>
-                        <th>Target Date</th>
-                        <th>Manager Decided At</th>
-                        <th>Status</th>
-                        <th>Manager Note</th>
-                        <th>Processed By HR</th>
-                        <th>Processed At</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="r : ${managerDecided}">
-                        <td th:text="${r.requestId}"></td>
-                        <td th:text="${r.empId}"></td>
-                        <td th:text="${r.requestType}"></td>
-                        <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></td>
-                        <td th:text="${r.managerDecidedAt != null ? #temporals.format(r.managerDecidedAt,'dd/MM/yyyy HH:mm') : '-'}"></td>
-                        <td th:text="${r.status}"></td>
-                        <td th:text="${r.approverNote != null ? r.approverNote : '-'}"></td>
-                        <td th:text="${r.processedByHr}"></td>
-                        <td th:text="${r.processedAt != null ? #temporals.format(r.processedAt,'dd/MM/yyyy HH:mm') : '-'}"></td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(managerDecided)}">
-                        <td colspan="9" class="text-center text-muted">No manager-decided requests yet.</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="table premium-table">
+                <thead>
+                <tr>
+                    <th>Leave Type</th>
+                    <th>Emp ID</th>
+                    <th>Target Date</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${pendingRequests}">
+                    <td class="type-text" th:text="${r.requestType}"></td>
+                    <td th:text="${r.empId}"></td>
+                    <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></td>
+                    <td th:text="${r.reason}"></td>
+                    <td>
+                        <form th:action="@{/hr/attendance-requests/{id}/approve(id=${r.requestId})}" method="post" style="display:inline-block; margin:0; margin-right: 8px; margin-bottom: 4px;">
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="note" class="form-control" placeholder="Approve note (optional)" style="max-width: 150px; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-success text-white" type="submit" style="border-radius: 0 6px 6px 0;">Approve</button>
+                            </div>
+                        </form>
+                        <form th:action="@{/hr/attendance-requests/{id}/reject(id=${r.requestId})}" method="post" style="display:inline-block; margin:0; margin-bottom: 4px;">
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="note" class="form-control" placeholder="Reject note (optional)" style="max-width: 150px; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-danger text-white" type="submit" style="border-radius: 0 6px 6px 0;">Reject</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(pendingRequests)}">
+                    <td colspan="5" class="empty-state">No pending requests found.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card premium-card">
+        <div class="premium-card-header">
+            <h5 class="premium-card-title">All Leaves Requests - Waiting HR Process</h5>
+            <button class="btn-black-primary"><i class="cil-filter"></i> Filter</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table premium-table">
+                <thead>
+                <tr>
+                    <th>Leave Type</th>
+                    <th>Emp ID</th>
+                    <th>Target Date</th>
+                    <th>Reason</th>
+                    <th>Manager Note</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${approvedNotProcessed}">
+                    <td class="type-text" th:text="${r.requestType}"></td>
+                    <td th:text="${r.empId}"></td>
+                    <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></td>
+                    <td th:text="${r.reason}"></td>
+                    <td th:text="${r.approverNote}"></td>
+                    <td>
+                        <span class="status-badge status-pending">Pending HR</span>
+                    </td>
+                    <td>
+                        <form th:action="@{/hr/attendance-requests/{id}/process(id=${r.requestId})}" method="post" style="margin:0;">
+                            <button class="action-icon border-0" type="submit" title="Process">
+                                Process
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(approvedNotProcessed)}">
+                    <td colspan="7" class="empty-state">No pending requests waiting for HR process.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card premium-card">
+        <div class="premium-card-header">
+            <h5 class="premium-card-title">Manager Decided (Approved/Rejected)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table premium-table">
+                <thead>
+                <tr>
+                    <th>Leave Type</th>
+                    <th>Emp ID</th>
+                    <th>Target Date</th>
+                    <th>Decided At</th>
+                    <th>Manager Note</th>
+                    <th>Processed By</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${managerDecided}">
+                    <td class="type-text" th:text="${r.requestType}"></td>
+                    <td th:text="${r.empId}"></td>
+                    <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></td>
+                    <td th:text="${r.managerDecidedAt != null ? #temporals.format(r.managerDecidedAt,'dd/MM/yyyy HH:mm') : '-'}"></td>
+                    <td th:text="${r.approverNote != null ? r.approverNote : '-'}"></td>
+                    <td th:text="${r.processedByHr}"></td>
+                    <td>
+                        <span th:if="${r.status == 'APPROVED'}" class="status-badge status-approved">Approved</span>
+                        <span th:if="${r.status == 'REJECTED'}" class="status-badge status-rejected">Rejected</span>
+                        <span th:if="${r.status != 'APPROVED' and r.status != 'REJECTED'}" class="status-badge status-pending" th:text="${r.status}"></span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(managerDecided)}">
+                    <td colspan="7" class="empty-state">No manager-decided requests found.</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

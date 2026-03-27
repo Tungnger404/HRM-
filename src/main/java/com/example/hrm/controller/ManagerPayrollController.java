@@ -556,6 +556,7 @@ public class ManagerPayrollController {
         res.put("msg", "Đã thêm nhân viên vào payroll.");
         return res;
     }
+
     @GetMapping(value = "/draft-batches", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public List<PayrollBatchSummaryDTO> getDraftBatches() {

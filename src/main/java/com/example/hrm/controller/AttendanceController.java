@@ -1,9 +1,7 @@
 package com.example.hrm.controller;
 import com.example.hrm.service.AttendanceAutoService;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.hrm.service.AttendanceService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

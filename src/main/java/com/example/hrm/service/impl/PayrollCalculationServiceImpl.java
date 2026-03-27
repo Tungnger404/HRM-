@@ -56,11 +56,13 @@ public class PayrollCalculationServiceImpl implements PayrollCalculationService 
         BigDecimal actual = nz(actualDays);
         BigDecimal ot = nz(otHours);
 
+        //lương thực tế = lương tháng × (ngày đi làm / ngày chuẩn)
         BigDecimal salaryByDays = BigDecimal.ZERO;
         if (standard.compareTo(BigDecimal.ZERO) > 0) {
             salaryByDays = base.multiply(actual).divide(standard, 2, RoundingMode.HALF_UP);
         }
 
+        //lương giờ = lương tháng / ngày chuẩn / 8 giờ
         BigDecimal hourly = BigDecimal.ZERO;
         if (standard.compareTo(BigDecimal.ZERO) > 0) {
             hourly = base.divide(standard, 2, RoundingMode.HALF_UP)
@@ -70,9 +72,10 @@ public class PayrollCalculationServiceImpl implements PayrollCalculationService 
         BigDecimal overtimePay = hourly.multiply(ot).multiply(BigDecimal.valueOf(1.5))
                 .setScale(2, RoundingMode.HALF_UP);
 
+        //truyen vao tu bang phuc loi de co the tinh duoc khi add vo phieu luong
         List<BenefitService.BenefitApplied> benefits = (empId == null)
                 ? List.of()
-                : benefitService.calculateForEmployee(empId, startDate, endDate, base);
+                : benefitService.calculateForEmployee(empId, startDate, endDate, base, actual);
 
         BigDecimal benefitIncome = benefits.stream()
                 .filter(x -> "INCOME".equalsIgnoreCase(x.type()))

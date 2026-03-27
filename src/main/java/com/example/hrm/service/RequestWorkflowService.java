@@ -65,6 +65,38 @@ public class RequestWorkflowService {
         requestRepository.save(req);
     }
 
+    public List<LeaveOrOtRequest> hrPendingRequests() {
+        return requestRepository.findByStatusOrderByCreatedAtDesc(RequestStatus.PENDING);
+    }
+
+    public void hrApprove(Integer hrEmpId, Integer requestId, String note) {
+        LeaveOrOtRequest req = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        validatePending(req);
+
+        req.setStatus(RequestStatus.APPROVED);
+        req.setApproverId(hrEmpId);
+        req.setApproverNote(note);
+        req.setManagerDecidedAt(LocalDateTime.now());
+
+        requestRepository.save(req);
+    }
+
+    public void hrReject(Integer hrEmpId, Integer requestId, String note) {
+        LeaveOrOtRequest req = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        validatePending(req);
+
+        req.setStatus(RequestStatus.REJECTED);
+        req.setApproverId(hrEmpId);
+        req.setApproverNote(note);
+        req.setManagerDecidedAt(LocalDateTime.now());
+
+        requestRepository.save(req);
+    }
+
     public List<LeaveOrOtRequest> hrApprovedNotProcessed() {
         return requestRepository.findByStatusAndProcessedAtIsNullOrderByCreatedAtDesc(RequestStatus.APPROVED);
     }

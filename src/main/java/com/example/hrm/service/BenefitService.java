@@ -27,6 +27,12 @@ public class BenefitService {
         return benefitRepo.search(q, type);
     }
 
+    /**
+     * Tạo mới một benefit.
+     *
+     * @param dto dữ liệu đầu vào
+     * @return benefit đã lưu
+     */
     @Transactional
     public Benefit create(BenefitUpsertDTO dto) {
         validate(dto, true);
@@ -44,6 +50,14 @@ public class BenefitService {
 
         return benefitRepo.save(b);
     }
+
+    /**
+     * Cập nhật benefit.
+     *
+     * @param id  id benefit
+     * @param dto dữ liệu cập nhật
+     * @return benefit sau khi update
+     */
 
     @Transactional
     public Benefit update(Integer id, BenefitUpsertDTO dto) {
@@ -70,12 +84,25 @@ public class BenefitService {
         return benefitRepo.save(b);
     }
 
+    /**
+     * Xóa benefit theo id.
+     *
+     * @param id id benefit
+     */
     @Transactional
     public void delete(Integer id) {
         // nếu muốn “xóa mềm” thì set active=false, còn đây xóa cứng:
         benefitRepo.deleteById(id);
     }
 
+    /**
+     * Gán một benefit cho toàn bộ nhân viên đang làm việc.
+     *
+     * @param benefitId    id benefit
+     * @param effectiveFrom ngày bắt đầu áp dụng
+     * @param effectiveTo   ngày kết thúc
+     * @param overrideValue giá trị override (nếu có)
+     */
     @Transactional
     public void assignBenefitToAllEmployees(Integer benefitId,
                                             LocalDate effectiveFrom,
@@ -108,9 +135,23 @@ public class BenefitService {
         }
     }
 
+    /**
+     * Tính toán tất cả benefit áp dụng cho một nhân viên trong khoảng thời gian.
+     *
+     * @param empId           id nhân viên
+     * @param start           ngày bắt đầu
+     * @param end             ngày kết thúc
+     * @param baseSalary      lương cơ bản
+     * @param actualWorkDays  số ngày làm thực tế
+     * @return danh sách benefit đã tính
+     */
     @Transactional(readOnly = true)
-    public List<BenefitApplied> calculateForEmployee(Integer empId, LocalDate start, LocalDate end, BigDecimal baseSalary) {
+    public List<BenefitApplied> calculateForEmployee(Integer empId, LocalDate start,
+                                                     LocalDate end,
+                                                     BigDecimal baseSalary,
+                                                     BigDecimal actualWorkDays  ) {
         BigDecimal base = nz(baseSalary);
+        BigDecimal actual = nz(actualWorkDays);
 
         List<EmployeeBenefit> rows = employeeBenefitRepo.findEffectiveForEmployee(empId, start, end);
 
@@ -121,6 +162,8 @@ public class BenefitService {
             BigDecimal amount;
             if ("PERCENT_BASE".equalsIgnoreCase(b.getCalcMethod())) {
                 amount = base.multiply(v).setScale(2, RoundingMode.HALF_UP);
+            } else if ("PER_WORKING_DAY".equalsIgnoreCase(b.getCalcMethod())) {
+                amount = v.multiply(actual).setScale(2, RoundingMode.HALF_UP);
             } else {
                 amount = v.setScale(2, RoundingMode.HALF_UP);
             }
@@ -129,6 +172,12 @@ public class BenefitService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Validate dữ liệu đầu vào.
+     *
+     * @param dto      dữ liệu
+     * @param isCreate true nếu là create
+     */
     private void validate(BenefitUpsertDTO dto, boolean isCreate) {
         if (dto.getCode() == null || dto.getCode().trim().isEmpty())
             throw new IllegalArgumentException("Code is required");
@@ -139,8 +188,8 @@ public class BenefitService {
         if (!List.of("INCOME", "DEDUCTION").contains(String.valueOf(dto.getType())))
             throw new IllegalArgumentException("Type must be INCOME or DEDUCTION");
 
-        if (!List.of("FIXED", "PERCENT_BASE").contains(String.valueOf(dto.getCalcMethod())))
-            throw new IllegalArgumentException("CalcMethod must be FIXED or PERCENT_BASE");
+        if (!List.of("FIXED", "PERCENT_BASE", "PER_WORKING_DAY").contains(String.valueOf(dto.getCalcMethod())))
+            throw new IllegalArgumentException("CalcMethod must be FIXED, PERCENT_BASE or PER_WORKING_DAY");
 
         // chỉ CREATE mới bắt buộc effectiveFrom
         if (isCreate && dto.getEffectiveFrom() == null)
@@ -159,10 +208,20 @@ public class BenefitService {
         return v == null ? BigDecimal.ZERO : v;
     }
 
+    /**
+     * Lấy danh sách benefit đang active.
+     */
     @Transactional(readOnly = true)
     public List<Benefit> listActive() {
         return benefitRepo.findByActiveTrueOrderByTypeAscCodeAsc();
     }
+
+    /**
+     * Kiểm tra benefit có active không.
+     *
+     * @param id id benefit
+     * @return benefit hợp lệ
+     */
     @Transactional(readOnly = true)
     public Benefit requireActive(Integer id) {
         Benefit b = benefitRepo.findById(id)

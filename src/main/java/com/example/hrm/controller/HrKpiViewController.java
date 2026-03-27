@@ -242,7 +242,17 @@ public class HrKpiViewController {
         return kpiTemplateRepository.findAllByOrderByKpiNameAsc().stream()
                 .findFirst()
                 .map(template -> template.getKpiId())
-                .orElseThrow(() -> new RuntimeException("No KPI template found. Please create KPI templates first."));
+                .orElseGet(() -> {
+                    com.example.hrm.entity.KpiTemplate defaultTemplate = new com.example.hrm.entity.KpiTemplate();
+                    defaultTemplate.setKpiName("Default Employee KPI 2026");
+                    defaultTemplate.setDescription("Standard performance metrics for current year");
+                    defaultTemplate.setWeight(new java.math.BigDecimal("100.00"));
+                    defaultTemplate.setCreatedAt(java.time.LocalDateTime.now());
+                    
+                    com.example.hrm.entity.KpiTemplate saved = kpiTemplateRepository.save(defaultTemplate);
+                    log.info("Auto-created default KPI template ID: {}", saved.getKpiId());
+                    return saved.getKpiId();
+                });
     }
 
     @GetMapping("/pending-verification")

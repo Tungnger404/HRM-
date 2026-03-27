@@ -1,4 +1,4 @@
-package com.example.hrm.controller.hr;
+package com.example.hrm.controller;
 
 import com.example.hrm.dto.JobPositionForm;
 import com.example.hrm.entity.Employee;

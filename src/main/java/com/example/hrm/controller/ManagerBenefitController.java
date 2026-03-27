@@ -36,8 +36,12 @@ public class ManagerBenefitController {
 
     @PostMapping
     public String create(@ModelAttribute("f") BenefitUpsertDTO f, RedirectAttributes ra) {
-        benefitService.create(f);
-        ra.addFlashAttribute("msg", "Đã tạo phúc lợi (benefit).");
+        try {
+            benefitService.create(f);
+            ra.addFlashAttribute("msg", "Đã tạo phúc lợi (benefit).");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/manager/payroll/benefits";
     }
 
@@ -46,8 +50,12 @@ public class ManagerBenefitController {
                          @ModelAttribute BenefitUpsertDTO f,
                          RedirectAttributes ra) {
 
-        benefitService.update(id, f);
-        ra.addFlashAttribute("msg", "Đã cập nhật phúc lợi.");
+        try {
+            benefitService.update(id, f);
+            ra.addFlashAttribute("msg", "Đã cập nhật phúc lợi.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/manager/payroll/benefits";
     }
 

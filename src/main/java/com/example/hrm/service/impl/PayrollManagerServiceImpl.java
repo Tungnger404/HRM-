@@ -64,13 +64,21 @@ public class PayrollManagerServiceImpl implements PayrollManagerService {
 
         Benefit b = benefitService.requireActive(benefitId);
 
+
+        //manager thêm benefit thủ công vào payslip
         BigDecimal base = nz(p.getBaseSalary());
+        BigDecimal actual = nz(p.getActualWorkDays());
         BigDecimal amount;
+
+
         if ("PERCENT_BASE".equalsIgnoreCase(b.getCalcMethod())) {
             amount = base.multiply(nz(b.getValue())).setScale(2, RoundingMode.HALF_UP);
+        } else if ("PER_WORKING_DAY".equalsIgnoreCase(b.getCalcMethod())) {
+            amount = nz(b.getValue()).multiply(actual).setScale(2, RoundingMode.HALF_UP);
         } else {
             amount = nz(b.getValue()).setScale(2, RoundingMode.HALF_UP);
         }
+
 
         String codeKey = (b.getCode() == null ? "" : b.getCode().trim().toUpperCase());
         if (codeKey.isBlank()) {

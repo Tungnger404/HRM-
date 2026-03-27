@@ -152,13 +152,12 @@
                             <input class="form-control"
                                    name="value"
                                    id="benefitValue"
-                                   placeholder="0"
-                                   inputmode="numeric"
-                                   value="0"
+                                   placeholder="Ví dụ: 50000"
+                                   inputmode="decimal"
                                    required
                                    autocomplete="off"
                                    spellcheck="false">
-                            <div class="small text-muted mt-1" id="valueHint">FIXED: nhập số tiền, ví dụ 50,000</div>
+                            <div class="small text-muted mt-1" id="valueHint">VD: nhập số tiền, ví dụ 50,000</div>
                         </div>
 
                         <div class="mt-3">
@@ -166,6 +165,7 @@
                             <select class="form-select" name="calcMethod" id="benefitCalcMethod" required>
                                 <option value="FIXED">Số tiền cố định</option>
                                 <option value="PERCENT_BASE">Biến đổi theo công / Công thức</option>
+                                <option value="PER_WORKING_DAY">Theo ngày công thực tế</option>
                             </select>
                         </div>
 
@@ -221,11 +221,18 @@
                     <td class="text-end">
                         <span th:if="${b.calcMethod=='FIXED'}"
                               th:text="${#numbers.formatDecimal(b.value,1,'COMMA',0,'POINT')} + ' đ'">0 đ</span>
+
                         <span th:if="${b.calcMethod=='PERCENT_BASE'}"
                               th:text="${#numbers.formatDecimal(b.value*100,1,'COMMA',0,'POINT')} + ' %'">0%</span>
+
+                        <span th:if="${b.calcMethod=='PER_WORKING_DAY'}"
+                              th:text="${#numbers.formatDecimal(b.value,1,'COMMA',0,'POINT')} + ' đ/ngày'">0 đ/ngày</span>
                     </td>
 
-                    <td th:text="${b.calcMethod=='PERCENT_BASE' ? 'Biến đổi' : 'Cố định'}">Cố định</td>
+                    <td th:text="${
+                                b.calcMethod=='PERCENT_BASE' ? '% lương cơ bản' :
+                                (b.calcMethod=='PER_WORKING_DAY' ? 'Theo ngày công' : 'Cố định')
+                            }">Cố định</td>
 
                     <td>
                         <span th:if="${b.active}" class="status-dot" style="background:#16a34a"></span>
@@ -338,12 +345,12 @@
                             <input class="form-control"
                                    name="value"
                                    id="e_value"
-                                   placeholder="0"
-                                   inputmode="numeric"
+                                   placeholder="Ví dụ: 50000"
+                                   inputmode="decimal"
                                    required
                                    autocomplete="off"
                                    spellcheck="false">
-                            <div class="small text-muted mt-1" id="e_valueHint">FIXED: nhập số tiền, ví dụ 50,000</div>
+                            <div class="small text-muted mt-1" id="e_valueHint">nhập số tiền, ví dụ 50,000</div>
                         </div>
 
                         <div class="mt-3">
@@ -351,6 +358,7 @@
                             <select class="form-select" name="calcMethod" id="e_calc" required>
                                 <option value="FIXED">Số tiền cố định</option>
                                 <option value="PERCENT_BASE">Biến đổi theo công / Công thức</option>
+                                <option value="PER_WORKING_DAY">Theo ngày công thực tế</option>
                             </select>
                         </div>
 
@@ -396,33 +404,30 @@
                 return s.substring(0, 50);
             }
 
-            function digitsOnly(s) {
-                return (s || "").toString().replace(/[^\d]/g, "");
+            // Gộp tất cả cách định dạng (FIXED, PERCENT, WORKING_DAY) vào thành 1 formatter tự động
+            function formatUnifiedValue(s) {
+                if (s === null || s === undefined || s === "") return "";
+                let raw = s.toString().replace(/,/g, "").replace(/[^\d.]/g, "");
+                let parts = raw.split(".");
+                if (parts.length > 2) {
+                    parts = [parts[0], parts.slice(1).join("")];
+                }
+                if (parts[0]) {
+                    // Loại bỏ số 0 vô ích ở đầu
+                    parts[0] = parts[0].replace(/^0+(?=\d)/, '');
+                    if (parts[0] === '') parts[0] = '0'; // Nếu toàn là số 0 thì trả về 0
+                    
+                    // Thêm dấu phẩy phân tách
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+                return parts.join(".");
             }
 
-            function formatMoneyCommaFromDigits(digits) {
-                const raw = digitsOnly(digits);
-                if (!raw) return "";
-                return raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            function stripUnifiedValue(s) {
+                if (!s) return "";
+                return s.toString().replace(/,/g, "");
             }
 
-            function sanitizePercent(s) {
-                s = (s || "").toString().replace(/,/g, "").replace(/[^\d.]/g, "");
-                const parts = s.split(".");
-                if (parts.length <= 1) return s;
-                return parts[0] + "." + parts.slice(1).join("");
-            }
-
-            // 3000.000000 -> 3000
-            function normalizeFixedServerValue(raw) {
-                let s = (raw || "").toString().trim().replace(/,/g, "");
-                if (!s) return "0";
-                if (/^\d+\.0+$/.test(s)) return s.split(".")[0];
-                if (/^\d+\.\d+$/.test(s)) return s.split(".")[0];
-                return digitsOnly(s) || "0";
-            }
-
-            // ✅ chống tự bôi đen toàn bộ khi click/focus (chỉ sửa khi đang bị select full)
             function clearAutoSelect(el) {
                 requestAnimationFrame(() => {
                     try {
@@ -441,8 +446,15 @@
                     if (isNaN(val)) return "0 %";
                     return (val * 100).toLocaleString("en-US", {maximumFractionDigits: 2}) + " %";
                 }
-                const fixedRaw = normalizeFixedServerValue(raw);
-                return (fixedRaw ? formatMoneyCommaFromDigits(fixedRaw) : "0") + " đ";
+
+                const displayRaw = stripUnifiedValue(raw);
+                const formatted = displayRaw ? formatUnifiedValue(displayRaw) : "0";
+
+                if (calcMethod === "PER_WORKING_DAY") {
+                    return formatted + " đ/ngày";
+                }
+
+                return formatted + " đ";
             }
 
             function setTodayToHiddenEffectiveFrom() {
@@ -454,33 +466,25 @@
             }
 
             function updateHintCreate() {
-                if (!calcEl || !hintEl) return;
-                hintEl.textContent =
-                    (calcEl.value === "PERCENT_BASE")
-                        ? "PERCENT_BASE: nhập 0.03 = 3% lương cơ bản"
-                        : "FIXED: nhập số tiền, ví dụ 50,000";
+                if (calcEl.value === "PERCENT_BASE") {
+                    hintEl.textContent = "PERCENT_BASE: nhập 0.03 = 3% lương cơ bản";
+                } else if (calcEl.value === "PER_WORKING_DAY") {
+                    hintEl.textContent = "PER_WORKING_DAY: nhập số tiền cho 1 ngày công, ví dụ 50,000";
+                } else {
+                    hintEl.textContent = "FIXED: nhập số tiền cố định, ví dụ 50,000";
+                }
             }
 
             function updateHintEdit() {
                 const eCalc = document.getElementById("e_calc");
                 const hint = document.getElementById("e_valueHint");
                 if (!eCalc || !hint) return;
-                hint.textContent =
-                    (eCalc.value === "PERCENT_BASE")
-                        ? "PERCENT_BASE: nhập 0.03 = 3% lương cơ bản"
-                        : "FIXED: nhập số tiền, ví dụ 50,000";
-            }
-
-            function formatEditValueIfNeeded() {
-                const eCalc = document.getElementById("e_calc");
-                const eVal = document.getElementById("e_value");
-                if (!eCalc || !eVal) return;
-
-                if (eCalc.value === "FIXED") {
-                    const raw = normalizeFixedServerValue(eVal.value);
-                    eVal.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
+                if (eCalc.value === "PERCENT_BASE") {
+                    hint.textContent = "PERCENT_BASE: nhập 0.03 = 3% lương cơ bản";
+                } else if (eCalc.value === "PER_WORKING_DAY") {
+                    hint.textContent = "PER_WORKING_DAY: nhập số tiền cho 1 ngày công, ví dụ 50,000";
                 } else {
-                    eVal.value = sanitizePercent(eVal.value);
+                    hint.textContent = "FIXED: nhập số tiền cố định, ví dụ 50,000";
                 }
             }
 
@@ -492,54 +496,30 @@
                 if (codeEl) codeEl.value = code || "BENEFIT";
             });
 
-            // ===== CREATE value: giữ dấu phẩy khi click (không strip) + chống bôi đen =====
-            if (createValueEl && calcEl) {
+            // ===== CREATE value: thống nhất định dạng chung =====
+            if (createValueEl) {
                 createValueEl.addEventListener("focus", function () {
-                    if (calcEl.value === "FIXED") {
-                        const raw = normalizeFixedServerValue(createValueEl.value);
-                        createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
-                    } else {
-                        createValueEl.value = sanitizePercent(createValueEl.value);
-                    }
+                    createValueEl.value = formatUnifiedValue(createValueEl.value);
                     clearAutoSelect(createValueEl);
                 });
 
                 createValueEl.addEventListener("input", function () {
-                    if (calcEl.value === "FIXED") {
-                        const raw = digitsOnly(createValueEl.value);
-                        createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "";
-                    } else {
-                        createValueEl.value = sanitizePercent(createValueEl.value);
-                    }
+                    createValueEl.value = formatUnifiedValue(createValueEl.value);
                 });
 
                 createValueEl.addEventListener("blur", function () {
-                    if (calcEl.value === "FIXED") {
-                        const raw = normalizeFixedServerValue(createValueEl.value);
-                        createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
-                    } else {
-                        createValueEl.value = sanitizePercent(createValueEl.value);
-                    }
+                    createValueEl.value = formatUnifiedValue(createValueEl.value);
                 });
 
                 document.getElementById("benefitCreateForm")?.addEventListener("submit", function () {
-                    if (calcEl.value === "FIXED") {
-                        createValueEl.value = normalizeFixedServerValue(createValueEl.value);
-                    } else {
-                        createValueEl.value = sanitizePercent(createValueEl.value);
-                    }
+                    createValueEl.value = stripUnifiedValue(createValueEl.value);
                 });
             }
 
             calcEl?.addEventListener("change", function () {
                 updateHintCreate();
-                if (!createValueEl) return;
-
-                if (calcEl.value === "FIXED") {
-                    const raw = normalizeFixedServerValue(createValueEl.value);
-                    createValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
-                } else {
-                    createValueEl.value = sanitizePercent(createValueEl.value);
+                if (createValueEl) {
+                    createValueEl.value = formatUnifiedValue(createValueEl.value);
                 }
             });
 
@@ -552,8 +532,13 @@
                     document.getElementById("v_name").textContent = vBtn.dataset.name || "";
                     document.getElementById("v_type").textContent =
                         (vBtn.dataset.type === "DEDUCTION") ? "Khấu trừ" : "Thu nhập";
-                    document.getElementById("v_calc").textContent =
-                        (vBtn.dataset.calc === "PERCENT_BASE") ? "Biến đổi" : "Cố định";
+                    if (vBtn.dataset.calc === "PERCENT_BASE") {
+                        document.getElementById("v_calc").textContent = "% lương cơ bản";
+                    } else if (vBtn.dataset.calc === "PER_WORKING_DAY") {
+                        document.getElementById("v_calc").textContent = "Theo ngày công";
+                    } else {
+                        document.getElementById("v_calc").textContent = "Cố định";
+                    }
                     document.getElementById("v_value").textContent =
                         formatDisplayValue(vBtn.dataset.value || "0", vBtn.dataset.calc || "FIXED");
                     document.getElementById("v_active").textContent =
@@ -573,30 +558,23 @@
 
                     const rawValue = (eBtn.dataset.value || "0").toString();
                     const eVal = document.getElementById("e_value");
-
-                    if (document.getElementById("e_calc").value === "FIXED") {
-                        eVal.value = formatMoneyCommaFromDigits(normalizeFixedServerValue(rawValue));
-                    } else {
-                        eVal.value = sanitizePercent(rawValue);
+                    
+                    let cleanRaw = stripUnifiedValue(rawValue);
+                    if (cleanRaw.includes('.')) {
+                        // Cắt bỏ các số 0 thừa ở cuối phần thập phân, và cả dấu chấm nếu không còn phần thập phân
+                        cleanRaw = cleanRaw.replace(/0+$/, '').replace(/\.$/, '');
                     }
+                    eVal.value = formatUnifiedValue(cleanRaw);
 
                     updateHintEdit();
                 }
             });
 
-            // ===== EDIT: giữ dấu phẩy khi click + chống bôi đen =====
+            // ===== EDIT value: thống nhất định dạng chung =====
             const eValueEl = document.getElementById("e_value");
             if (eValueEl) {
                 eValueEl.addEventListener("focus", function () {
-                    const eCalc = document.getElementById("e_calc");
-                    if (!eCalc) return;
-
-                    if (eCalc.value === "FIXED") {
-                        const raw = normalizeFixedServerValue(eValueEl.value);
-                        eValueEl.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
-                    } else {
-                        eValueEl.value = sanitizePercent(eValueEl.value);
-                    }
+                    eValueEl.value = formatUnifiedValue(eValueEl.value);
                     clearAutoSelect(eValueEl);
                 });
             }
@@ -604,48 +582,26 @@
             document.addEventListener("change", function (e) {
                 if (e.target && e.target.id === "e_calc") {
                     updateHintEdit();
-                    formatEditValueIfNeeded();
+                    if (eValueEl) eValueEl.value = formatUnifiedValue(eValueEl.value);
                 }
             });
 
             document.addEventListener("input", function (e) {
                 if (e.target && e.target.id === "e_value") {
-                    const eCalc = document.getElementById("e_calc");
-                    if (!eCalc) return;
-
-                    if (eCalc.value === "FIXED") {
-                        const raw = digitsOnly(e.target.value);
-                        e.target.value = raw ? formatMoneyCommaFromDigits(raw) : "";
-                    } else {
-                        e.target.value = sanitizePercent(e.target.value);
-                    }
+                    e.target.value = formatUnifiedValue(e.target.value);
                 }
             });
 
-            // blur capture
             document.addEventListener("blur", function (e) {
                 if (e.target && e.target.id === "e_value") {
-                    const eCalc = document.getElementById("e_calc");
-                    if (!eCalc) return;
-
-                    if (eCalc.value === "FIXED") {
-                        const raw = normalizeFixedServerValue(e.target.value);
-                        e.target.value = raw ? formatMoneyCommaFromDigits(raw) : "0";
-                    } else {
-                        e.target.value = sanitizePercent(e.target.value);
-                    }
+                    e.target.value = formatUnifiedValue(e.target.value);
                 }
             }, true);
 
             document.getElementById("benefitEditForm")?.addEventListener("submit", function () {
-                const eCalc = document.getElementById("e_calc");
                 const eVal = document.getElementById("e_value");
-                if (!eCalc || !eVal) return;
-
-                if (eCalc.value === "FIXED") {
-                    eVal.value = normalizeFixedServerValue(eVal.value);
-                } else {
-                    eVal.value = sanitizePercent(eVal.value);
+                if (eVal) {
+                    eVal.value = stripUnifiedValue(eVal.value);
                 }
             });
         });
