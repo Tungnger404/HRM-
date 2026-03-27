@@ -10,49 +10,49 @@ public interface PerformanceRankingService {
     // === Ranking Calculation ===
     
     /**
-     * Tự động tính ranking cho tất cả nhân viên trong một cycle
-     * @param cycleId ID của chu kỳ đánh giá
+     * Automatically calculate rankings for all employees in a cycle
+     * @param cycleId evaluation cycle ID
      */
     void calculateRankingsForCycle(Integer cycleId);
 
     /**
-     * Xác định nhân viên đủ điều kiện thăng chức
-     * @param cycleId ID của chu kỳ đánh giá
+     * Mark promotion eligibility for employees
+     * @param cycleId evaluation cycle ID
      */
     void markPromotionEligibility(Integer cycleId);
 
     /**
-     * Lấy danh sách top performers
+     * Get top performers
      */
     List<PerformanceRanking> getTopPerformers(Integer cycleId, Integer limit);
 
     /**
-     * Lấy danh sách ứng viên thăng chức
+     * Get promotion candidates
      */
     List<PerformanceRanking> getPromotionCandidates(Integer cycleId);
 
     /**
-     * Lấy ranking của một nhân viên trong cycle
+     * Get ranking of an employee in a cycle
      */
     PerformanceRanking getRankingByEmployeeAndCycle(Integer empId, Integer cycleId);
 
     // === Auto Training Recommendation ===
     
     /**
-     * Tự động tạo recommendation đào tạo dựa trên kết quả đánh giá
-     * - Classification C/D: Tạo recommendation priority HIGH + notify Manager
-     * - Classification B: Tạo recommendation priority MEDIUM + notify Employee
-     * - Classification A: Không tạo (nhân viên tự chọn nếu muốn)
+     * Automatically create training recommendations from evaluation results
+     * - Classification C/D: create HIGH priority recommendations + notify manager
+     * - Classification B: create MEDIUM priority recommendations + notify employee
+     * - Classification A: do not create recommendations (employee can self-enroll)
      * 
-     * @param evalId ID của evaluation vừa được approve
-     * @return List các recommendation được tạo
+     * @param evalId approved evaluation ID
+     * @return list of created recommendations
      */
     List<TrainingRecommendation> autoCreateTrainingRecommendations(Integer evalId);
 
     /**
-     * Phân tích KPI yếu và match với training programs
-     * @param evalId ID của evaluation
-     * @return List recommendation dựa trên KPI yếu
+     * Analyze weak KPI areas and match training programs
+     * @param evalId evaluation ID
+     * @return list of recommendations based on weak KPI areas
      */
     List<TrainingRecommendation> analyzeWeakKPIsAndRecommend(Integer evalId);
 }

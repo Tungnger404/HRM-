@@ -113,8 +113,6 @@
       </ul>
     </li>
 
-    <li class="nav-title" style="text-transform: uppercase;">Attend</li>
-
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/view-request}">
@@ -125,14 +123,14 @@
       </a>
     </li>
 
-
-
     <li class="nav-item">
       <a class="nav-link"
-         th:href="@{/hr/attendance-records}"
-         th:classappend="${#strings.startsWith(currentUri, '/hr/attendance-records')} ? 'active' : ''">
-        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-list-numbered"></use></svg>
-        Attendance Records
+         th:href="@{/hr/schedules/monthly}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/schedules/monthly')} ? 'active' : ''">
+        <svg class="nav-icon">
+          <use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-calendar"></use>
+        </svg>
+        Monthly Shift Schedule
       </a>
     </li>
 
@@ -154,14 +152,12 @@
       </a>
     </li>
 
-
-
     <li class="nav-item">
       <a class="nav-link"
-         th:href="@{/hr/holidays}"
-         th:classappend="${#strings.startsWith(currentUri, '/hr/holidays')} ? 'active' : ''">
-        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-airplane-mode"></use></svg>
-        Holidays
+         th:href="@{/hr/schedules/assignments}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/schedules/assignments')} ? 'active' : ''">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-calendar-check"></use></svg>
+        Shift Assignments
       </a>
     </li>
 

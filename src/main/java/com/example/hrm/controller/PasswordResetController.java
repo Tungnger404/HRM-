@@ -88,7 +88,7 @@ public class PasswordResetController {
                     request.getNewPassword(),
                     request.getConfirmPassword()
             );
-            return "redirect:/login?resetSuccess=true";
+            return "redirect:/auth/login?resetSuccess=true";
         } catch (RuntimeException ex) {
             model.addAttribute("error", ex.getMessage());
             return "login/reset-password";

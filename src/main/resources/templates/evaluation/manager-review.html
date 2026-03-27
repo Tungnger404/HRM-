@@ -62,7 +62,7 @@
                         <div class="mb-3">
                             <a class="btn btn-outline-primary btn-sm"
                                th:if="${assignment.employeeExcelPath != null and !#strings.isEmpty(assignment.employeeExcelPath)}"
-                               th:href="@{'/hr/kpi/download-employee/' + ${assignment.assignmentId}}">
+                               th:href="@{'/manager/evaluation/download-employee/' + ${assignment.assignmentId}}">
                                 <i class="fa fa-download"></i> Download Employee KPI File
                             </a>
                         </div>
@@ -87,7 +87,7 @@
                                     <td th:text="${evidence.uploadedAt != null ? #temporals.format(evidence.uploadedAt, 'dd/MM/yyyy HH:mm') : '-'}">08/03/2026 09:00</td>
                                     <td>
                                         <a class="btn btn-outline-secondary btn-sm"
-                                           th:href="@{'/hr/kpi/download-evidence/' + ${evidence.evidenceId}}">
+                                           th:href="@{'/manager/evaluation/download-evidence/' + ${evidence.evidenceId}}">
                                             Download
                                         </a>
                                     </td>

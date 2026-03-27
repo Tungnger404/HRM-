@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PromotionServiceImpl implements PromotionService {
 
-    private static final double ELIGIBLE_MIN_FINAL_SCORE = 80.0;
     private static final int ELIGIBLE_MIN_EVALUATION_COUNT = 2;
+    private static final int ELIGIBLE_MIN_A_CLASSIFICATION_COUNT = 2;
 
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
@@ -62,7 +62,9 @@ public class PromotionServiceImpl implements PromotionService {
                     result.put("currentPositionLevel", resolvePositionLevel(emp.getJobId()));
                     result.put("avgScore", Math.round(avgScore * 10.0) / 10.0);
                     result.put("evaluationCount", completedEvals.size());
-                    result.put("isEligible", isEligible(avgScore, completedEvals.size()));
+                    boolean eligible = isEligible(completedEvals);
+                    result.put("isEligible", eligible);
+                    result.put("validPromotionOptions", getValidPromotionPositions(emp.getJobId()).size());
 
                     return result;
                 })
@@ -143,10 +145,11 @@ public class PromotionServiceImpl implements PromotionService {
         JobPosition proposedPosition = jobPositionRepository.findById(proposedPositionId)
                 .orElseThrow(() -> new RuntimeException("Proposed position not found"));
 
-        if (currentPosition != null
-                && currentPosition.getJobLevel() != null
-                && proposedPosition.getJobLevel() != null
-                && proposedPosition.getJobLevel() <= currentPosition.getJobLevel()) {
+        if (!Boolean.TRUE.equals(proposedPosition.getActive())) {
+            throw new RuntimeException("Proposed position is inactive");
+        }
+
+        if (!isValidHigherPosition(currentPosition, proposedPosition)) {
             throw new RuntimeException("Proposed position level must be higher than current position level");
         }
 
@@ -162,8 +165,8 @@ public class PromotionServiceImpl implements PromotionService {
                         .average()
                         .orElse(0.0);
 
-        if (!isEligible(avgScore, completedEvals.size())) {
-            throw new RuntimeException("Employee is not eligible for promotion yet (minimum 2 completed manager evaluations and average final score >= 80)");
+        if (!isEligible(completedEvals)) {
+            throw new RuntimeException("Employee is not eligible for promotion yet (minimum 2 completed manager evaluations with classification A)");
         }
 
         String evalSummary = String.format(
@@ -271,8 +274,45 @@ public class PromotionServiceImpl implements PromotionService {
         return promotionRequestRepository.findByRequestedByOrderByRequestedAtDesc(requestedBy);
     }
 
-    private boolean isEligible(double avgScore, int evaluationCount) {
-        return avgScore >= ELIGIBLE_MIN_FINAL_SCORE && evaluationCount >= ELIGIBLE_MIN_EVALUATION_COUNT;
+    private boolean isEligible(List<KpiAssignment> completedEvals) {
+        if (completedEvals == null || completedEvals.size() < ELIGIBLE_MIN_EVALUATION_COUNT) {
+            return false;
+        }
+        long aCount = completedEvals.stream()
+                .map(KpiAssignment::getClassification)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .filter("A"::equals)
+                .count();
+        return aCount >= ELIGIBLE_MIN_A_CLASSIFICATION_COUNT;
+    }
+
+    @Override
+    public List<JobPosition> getValidPromotionPositions(Integer currentJobId) {
+        JobPosition currentPosition = currentJobId != null
+                ? jobPositionRepository.findById(currentJobId).orElse(null)
+                : null;
+
+        return jobPositionRepository.findByActiveTrueOrderByTitleAsc().stream()
+                .filter(pos -> currentJobId == null || !Objects.equals(pos.getJobId(), currentJobId))
+                .filter(pos -> isValidHigherPosition(currentPosition, pos))
+                .toList();
+    }
+
+    private boolean isValidHigherPosition(JobPosition currentPosition, JobPosition proposedPosition) {
+        if (proposedPosition == null || !Boolean.TRUE.equals(proposedPosition.getActive())) {
+            return false;
+        }
+        if (currentPosition == null) {
+            return true;
+        }
+        Integer currentLevel = currentPosition.getJobLevel();
+        Integer proposedLevel = proposedPosition.getJobLevel();
+        if (currentLevel == null || proposedLevel == null) {
+            return false;
+        }
+        return proposedLevel > currentLevel;
     }
 
     private String resolveDepartmentName(Integer deptId) {

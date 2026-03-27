@@ -60,12 +60,14 @@
         </div>
 
         <div class="mb-3 d-none" id="empBlock">
-          <label class="form-label">Employee ID</label>
-          <input type="number"
-                 name="empId"
-                 id="empIdInput"
-                 class="form-control"
-                 placeholder="Enter employee ID">
+          <label class="form-label">Employee</label>
+          <select name="empId" id="empIdSelect" class="form-select">
+            <option value="">-- Select Employee --</option>
+            <option th:each="emp : ${employeeOptions}"
+                    th:value="${emp.empId}"
+                    th:text="${emp.empId + ' - ' + emp.fullName + ' | ' + emp.deptName + ' | ' + emp.positionTitle}">
+            </option>
+          </select>
         </div>
 
         <div class="mb-3">
@@ -140,12 +142,12 @@
     </div>
   </div>
 
-  <script>
+  <script th:inline="javascript">
     const applyScope = document.getElementById('applyScope');
     const deptBlock = document.getElementById('deptBlock');
     const empBlock = document.getElementById('empBlock');
     const deptSelect = document.getElementById('deptSelect');
-    const empIdInput = document.getElementById('empIdInput');
+    const empIdSelect = document.getElementById('empIdSelect');
 
     const previewScope = document.getElementById('previewScope');
     const previewCount = document.getElementById('previewCount');
@@ -165,7 +167,7 @@
       empBlock.classList.add('d-none');
 
       deptSelect.required = false;
-      empIdInput.required = false;
+      empIdSelect.required = false;
 
       if (scope === 'ALL') {
         previewScope.textContent = 'All Employees';
@@ -176,7 +178,7 @@
         previewScope.textContent = 'By Department';
       } else if (scope === 'EMPLOYEE') {
         empBlock.classList.remove('d-none');
-        empIdInput.required = true;
+        empIdSelect.required = true;
         previewScope.textContent = 'Specific Employee';
         previewCount.textContent = '1';
       }

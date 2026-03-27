@@ -457,7 +457,7 @@ public class EvaluationViewController {
                 throw new RuntimeException("Manager score must be between 0 and 100");
             }
             
-            // Gọi workflow service để lưu manager review
+            // Use workflow service to persist manager review
             kpiAssignmentWorkflowService.managerApprove(
                     assignment,
                     managerId,
@@ -493,8 +493,8 @@ public class EvaluationViewController {
                 throw new RuntimeException("This assignment does not have a promotion recommendation");
             }
             
-            // TODO: Implement promotion approval logic - tạo PromotionRequest record
-            // Tạm thời chỉ lưu flag approved
+            // TODO: Implement promotion approval logic - create PromotionRequest record
+            // For now, only keep the approved flag
             
             redirectAttributes.addFlashAttribute("msg", "Promotion approved successfully!");
             return "redirect:/evaluation/promotion-recommendations/1";

@@ -12,7 +12,7 @@ public class TrainingProgress {
     public enum ProgressStatus {
         NOT_STARTED,
         IN_PROGRESS,
-        AWAITING_EVIDENCE,  // Chờ nhân viên upload chứng chỉ
+        AWAITING_EVIDENCE,  // Waiting for employee certificate upload
         COMPLETED,
         FAILED,
         CANCELLED

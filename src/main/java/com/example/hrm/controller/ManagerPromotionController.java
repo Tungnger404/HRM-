@@ -2,7 +2,6 @@ package com.example.hrm.controller;
 
 import com.example.hrm.dto.PromotionReviewDTO;
 import com.example.hrm.entity.Employee;
-import com.example.hrm.entity.JobPosition;
 import com.example.hrm.entity.User;
 import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.repository.JobPositionRepository;
@@ -17,6 +16,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/manager/promotion")
@@ -45,11 +45,22 @@ public class ManagerPromotionController {
         List<Map<String, Object>> eligibleEmployees =
                 promotionService.getEligibleEmployeesForPromotion(currentManager.getEmpId());
 
-        List<JobPosition> allPositions = jobPositionRepository.findAll();
+        Map<Integer, List<Integer>> validPositionIdsByEmpId = eligibleEmployees.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        e -> (Integer) e.get("empId"),
+                        e -> promotionService.getValidPromotionPositions((Integer) e.get("currentPosition"))
+                                .stream()
+                                .map(p -> p.getJobId())
+                                .filter(Objects::nonNull)
+                                .toList()
+                ));
+
+        List<com.example.hrm.entity.JobPosition> allPositions = jobPositionRepository.findByActiveTrueOrderByTitleAsc();
 
         model.addAttribute("employees", eligibleEmployees);
         model.addAttribute("positions", allPositions);
         model.addAttribute("positionsJs", allPositions);
+        model.addAttribute("validPositionIdsByEmpId", validPositionIdsByEmpId);
         model.addAttribute("pageTitle", "Promotion Recommendations");
 
         return "manager/promotion-recommendations";

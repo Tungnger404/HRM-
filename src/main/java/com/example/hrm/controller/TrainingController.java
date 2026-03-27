@@ -15,6 +15,8 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/training")
+// Legacy/mixed API surface: active web demo flow uses TrainingAssignment pages,
+// while some endpoints below are retained for backward compatibility.
 public class TrainingController {
 
     @Autowired
@@ -187,9 +189,9 @@ public class TrainingController {
 
     /**
      * PUT /api/training/progress/{progressId}/complete
-     * Nhân viên báo đã hoàn thành khóa học
+     * Employee marks the training as completed
      * Status: IN_PROGRESS -> AWAITING_EVIDENCE
-     * Hệ thống yêu cầu upload chứng chỉ
+     * System requires certificate upload
      */
     @PutMapping("/progress/{progressId}/complete")
     public ResponseEntity<TrainingProgress> markTrainingAsComplete(@PathVariable Integer progressId) {

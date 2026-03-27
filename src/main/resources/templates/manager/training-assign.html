@@ -11,7 +11,7 @@
         <div class="row mb-4">
             <div class="col-12">
                 <h2>Assign Training</h2>
-                <p class="text-muted mb-0">Create training assignments for employees in your team.</p>
+                <p class="text-muted mb-0">Create training assignments and review assignment history for your team.</p>
             </div>
         </div>
 
@@ -35,62 +35,167 @@
             </div>
         </div>
 
-        <div class="row g-4">
+        <div class="row">
             <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-header">
-                        <strong>New Assignment</strong>
+                <div class="card">
+                    <div class="card-header border-bottom-0 pb-0">
+                        <ul class="nav nav-tabs card-header-tabs" id="assignTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="new-assignment-tab" data-coreui-toggle="tab"
+                                        data-coreui-target="#new-assignment-pane" type="button" role="tab"
+                                        aria-controls="new-assignment-pane" aria-selected="true">
+                                    New Assignment
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="assignment-history-tab" data-coreui-toggle="tab"
+                                        data-coreui-target="#assignment-history-pane" type="button" role="tab"
+                                        aria-controls="assignment-history-pane" aria-selected="false">
+                                    Assignment History
+                                </button>
+                            </li>
+                        </ul>
                     </div>
-                    <div class="card-body">
-                        <form method="post" th:action="@{/manager/training/assign}">
-                            <div th:if="${_csrf != null}">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            </div>
 
-                            <div class="mb-3">
-                                <label for="empId" class="form-label">Employee <span class="text-danger">*</span></label>
-                                <select id="empId" name="empId" class="form-select" required>
-                                    <option value="">-- Select employee --</option>
-                                    <option th:each="emp : ${teamMembers}"
-                                            th:value="${emp.empId}"
-                                            th:selected="${selectedEmpId != null and selectedEmpId == emp.empId}"
-                                            th:text="${emp.empId + ' - ' + emp.fullName}">1 - Employee</option>
-                                </select>
-                            </div>
+                    <div class="card-body tab-content" id="assignTabsContent">
+                        <div class="tab-pane fade show active" id="new-assignment-pane" role="tabpanel" aria-labelledby="new-assignment-tab">
+                            <form method="post" th:action="@{/manager/training/assign}">
+                                <div th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                </div>
 
-                            <div class="mb-3">
-                                <label for="programId" class="form-label">Training Program <span class="text-danger">*</span></label>
-                                <select id="programId" name="programId" class="form-select" required>
-                                    <option value="">-- Select program --</option>
-                                    <option th:each="program : ${programs}"
-                                            th:value="${program.programId}"
-                                            th:text="${program.programCode + ' - ' + program.programName}">TR-001 - Program</option>
-                                </select>
-                            </div>
+                                <div class="row g-4">
+                                    <div class="col-12">
+                                        <div class="card border h-100">
+                                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                <strong>Employee Selection</strong>
+                                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openAssignWithHistory()">
+                                                    <i class="fa fa-lightbulb-o"></i> View Suggestions
+                                                </button>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label for="empId" class="form-label">Employee <span class="text-danger">*</span></label>
+                                                    <select id="empId" name="empId" class="form-select" required>
+                                                        <option value="">-- Select employee --</option>
+                                                        <option th:each="emp : ${teamMembers}"
+                                                                th:value="${emp.empId}"
+                                                                th:selected="${selectedEmpId != null and selectedEmpId == emp.empId}"
+                                                                th:text="${emp.empId + ' - ' + emp.fullName}">1 - Employee</option>
+                                                    </select>
+                                                </div>
 
-                            <div class="mb-3">
-                                <label for="deadline" class="form-label">Deadline <span class="text-danger">*</span></label>
-                                <input id="deadline" name="deadline" type="date" class="form-control"
-                                       th:attr="min=${today}" required>
-                                <small class="text-muted">Assigned date is generated automatically by the system.</small>
-                            </div>
+                                                <div class="mb-3">
+                                                    <label for="programId" class="form-label">Training Program <span class="text-danger">*</span></label>
+                                                    <select id="programId" name="programId" class="form-select" required>
+                                                        <option value="">-- Select program --</option>
+                                                        <option th:each="program : ${programs}"
+                                                                th:value="${program.programId}"
+                                                                th:text="${program.programCode + ' - ' + program.programName}">TR-001 - Program</option>
+                                                    </select>
+                                                </div>
 
-                            <div class="mb-3">
-                                <label for="objective" class="form-label">Training Objective <span class="text-danger">*</span></label>
-                                <textarea id="objective" name="objective" class="form-control" rows="4"
-                                          placeholder="State why this training is needed and the expected outcome."
-                                          required></textarea>
-                            </div>
+                                                <div class="mb-3">
+                                                    <label for="deadline" class="form-label">Due Date <span class="text-danger">*</span></label>
+                                                    <input id="deadline" name="deadline" type="date" class="form-control"
+                                                           th:attr="min=${today}" required>
+                                                    <small class="text-muted">Assigned date is generated automatically by the system.</small>
+                                                </div>
 
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-plus-circle"></i> Assign Training
-                            </button>
-                        </form>
+                                                <div class="mb-0">
+                                                    <label for="objective" class="form-label">Training Objective <span class="text-danger">*</span></label>
+                                                    <textarea id="objective" name="objective" class="form-control" rows="4"
+                                                              placeholder="State why this training is needed and the expected outcome."
+                                                              required></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fa fa-plus-circle"></i> Assign Training
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="tab-pane fade" id="assignment-history-pane" role="tabpanel" aria-labelledby="assignment-history-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Training Program</th>
+                                        <th>Assigned Date</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>Assigned By</th>
+                                        <th>Source</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:if="${#lists.isEmpty(assignmentHistory)}">
+                                        <td colspan="8" class="text-center text-muted">No assignment history found.</td>
+                                    </tr>
+                                    <tr th:each="item : ${assignmentHistory}">
+                                        <td th:text="${employeeNames.get(item.empId) != null ? employeeNames.get(item.empId) : ('Employee #' + item.empId)}">Employee</td>
+                                        <td th:text="${item.programName != null and !#strings.isEmpty(item.programName) ? item.programName : (programNames.get(item.programId) != null ? programNames.get(item.programId) : 'N/A')}">Program</td>
+                                        <td th:text="${item.assignedAt != null ? #temporals.format(item.assignedAt, 'dd/MM/yyyy HH:mm') : '-'}">01/01/2026</td>
+                                        <td th:text="${item.endDate != null ? #temporals.format(item.endDate, 'dd/MM/yyyy') : '-'}">31/01/2026</td>
+                                        <td>
+                                            <span class="badge bg-secondary" th:text="${item.status}">ASSIGNED</span>
+                                        </td>
+                                        <td th:text="${item.assignedBy != null ? (assignedByNames.get(item.assignedBy) != null ? assignedByNames.get(item.assignedBy) : ('Employee #' + item.assignedBy)) : '-'}">Manager</td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:classappend="${assignmentSource.get(item.assignId) == 'Recommendation'} ? 'bg-info' : 'bg-primary'"
+                                                  th:text="${assignmentSource.get(item.assignId)}">Manual</span>
+                                        </td>
+                                        <td>
+                                            <a class="btn btn-sm btn-outline-primary"
+                                               th:href="@{/manager/training/assignments/{id}(id=${item.assignId})}">
+                                                <i class="fa fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<div layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'history') {
+                const historyTab = document.getElementById('assignment-history-tab');
+                if (historyTab) {
+                    const tabInstance = new coreui.Tab(historyTab);
+                    tabInstance.show();
+                }
+            }
+        });
+
+        function openAssignWithHistory() {
+            const employeeSelect = document.getElementById('empId');
+            if (!employeeSelect || !employeeSelect.value) {
+                if (typeof showErrorToast === 'function') {
+                    showErrorToast('Please select an employee first.');
+                }
+                return;
+            }
+            window.location.href = '/manager/training/assign-with-history/' + employeeSelect.value;
+        }
+    </script>
 </div>
 </body>
 </html>

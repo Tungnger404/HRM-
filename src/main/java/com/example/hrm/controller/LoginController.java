@@ -21,6 +21,11 @@ public class LoginController {
 
     // ================= LOGIN =================
     @GetMapping("/login")
+    public String loginRedirect() {
+        return "redirect:/careers";
+    }
+
+    @GetMapping("/auth/login")
     public String loginPage(Model model) {
         model.addAttribute("loginRequest", new LoginRequest());
         return "login/login"; // Thymeleaf: templates/login/login.html
@@ -65,7 +70,7 @@ public class LoginController {
 
         try {
             authService.register(registerRequest);
-            return "redirect:/login?registered=1";
+            return "redirect:/auth/login?registered=1";
         } catch (RuntimeException ex) {
             model.addAttribute("error", ex.getMessage());
             return "login/register";
@@ -76,7 +81,7 @@ public class LoginController {
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         if (session != null) session.invalidate();
-        return "redirect:/login?logout=1";
+        return "redirect:/auth/login?logout=1";
     }
 
     // ================= CHANGE PASSWORD (UI) =================

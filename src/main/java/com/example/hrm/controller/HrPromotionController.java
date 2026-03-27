@@ -37,6 +37,7 @@ public class HrPromotionController {
         List<PromotionRequest> pendingRequests = promotionService.getPendingPromotionRequests();
         
         Set<Integer> employeeIds = pendingRequests.stream().map(PromotionRequest::getEmpId).collect(Collectors.toSet());
+        Set<Integer> requesterIds = pendingRequests.stream().map(PromotionRequest::getRequestedBy).collect(Collectors.toSet());
         Set<Integer> positionIds = pendingRequests.stream()
                 .flatMap(r -> java.util.stream.Stream.of(r.getCurrentPositionId(), r.getProposedPositionId()))
                 .filter(java.util.Objects::nonNull)
@@ -44,11 +45,14 @@ public class HrPromotionController {
         
         Map<Integer, String> employeeNames = employeeRepository.findAllById(employeeIds).stream()
                 .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
+        Map<Integer, String> requesterNames = employeeRepository.findAllById(requesterIds).stream()
+                .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
         Map<Integer, String> positionTitles = jobPositionRepository.findAllById(positionIds).stream()
                 .collect(Collectors.toMap(JobPosition::getJobId, JobPosition::getTitle));
          
         model.addAttribute("requests", pendingRequests);
         model.addAttribute("employeeNames", employeeNames);
+        model.addAttribute("requesterNames", requesterNames);
         model.addAttribute("positionTitles", positionTitles);
         model.addAttribute("pageTitle", "Pending Promotion Requests");
         

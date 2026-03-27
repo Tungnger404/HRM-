@@ -20,13 +20,13 @@ public interface TrainingService {
 
     TrainingProgram createTrainingProgram(TrainingProgram trainingProgram);
 
-    TrainingProgram updateTrainingProgram(Integer programId, TrainingProgram trainingProgram);  // ✅ SỬA Long → Integer
+    TrainingProgram updateTrainingProgram(Integer programId, TrainingProgram trainingProgram);  // Changed Long to Integer
 
     List<TrainingProgram> getAllTrainingPrograms();
 
     List<TrainingProgram> getTrainingProgramsByStatus(TrainingStatus status);
 
-    Optional<TrainingProgram> getTrainingProgramById(Integer programId);  // ✅ SỬA Long → Integer
+    Optional<TrainingProgram> getTrainingProgramById(Integer programId);  // Changed Long to Integer
 
     List<TrainingProgram> getTrainingProgramsBySkill(String skillCategory);
 
@@ -36,6 +36,17 @@ public interface TrainingService {
 
     TrainingAssignment assignTraining(Integer empId, Integer programId, Integer assignedBy, String objective,
                                       LocalDate startDate, LocalDate endDate);
+
+    TrainingAssignment createManagerAssignment(Integer empId,
+                                               Integer programId,
+                                               String programName,
+                                               String courseUrl,
+                                               Integer assignedBy,
+                                               String objective,
+                                               LocalDate startDate,
+                                               LocalDate endDate,
+                                               String trainingType,
+                                               Integer recommendationId);
 
     TrainingAssignment assignMentor(Integer empId, Integer mentorId, Integer assignedBy, String objective);
 
@@ -58,9 +69,9 @@ public interface TrainingService {
     TrainingProgress updateProgressScore(Integer progressId, BigDecimal finalScore, BigDecimal attendanceRate);
 
     /**
-     * Nhân viên báo đã hoàn thành khóa học
+     * Employee marks the training as completed.
      * Status: IN_PROGRESS -> AWAITING_EVIDENCE
-     * Hệ thống sẽ yêu cầu upload chứng chỉ
+     * System requires certificate upload.
      */
     TrainingProgress markTrainingAsComplete(Integer progressId);
 

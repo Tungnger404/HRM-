@@ -10,6 +10,7 @@ import com.example.hrm.repository.EvalCycleRepository;
 import com.example.hrm.repository.KpiAssignmentRepository;
 import com.example.hrm.repository.KpiEvidenceRepository;
 import com.example.hrm.repository.KpiTemplateRepository;
+import com.example.hrm.repository.JobPositionRepository;
 import com.example.hrm.service.CurrentEmployeeService;
 import com.example.hrm.service.DocumentStorageService;
 import com.example.hrm.service.FileValidationService;
@@ -31,7 +32,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.security.Principal;
 
 @Controller
@@ -51,6 +55,7 @@ public class HrKpiViewController {
     private final KpiEvidenceService kpiEvidenceService;
     private final CurrentEmployeeService currentEmployeeService;
     private final KpiTemplateRepository kpiTemplateRepository;
+    private final JobPositionRepository jobPositionRepository;
 
     public HrKpiViewController(EmployeeRepository employeeRepository,
                                DepartmentRepository departmentRepository,
@@ -62,7 +67,8 @@ public class HrKpiViewController {
                                NotificationService notificationService,
                                KpiEvidenceService kpiEvidenceService,
                                CurrentEmployeeService currentEmployeeService,
-                               KpiTemplateRepository kpiTemplateRepository) {
+                               KpiTemplateRepository kpiTemplateRepository,
+                               JobPositionRepository jobPositionRepository) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.kpiAssignmentRepository = kpiAssignmentRepository;
@@ -74,6 +80,7 @@ public class HrKpiViewController {
         this.kpiEvidenceService = kpiEvidenceService;
         this.currentEmployeeService = currentEmployeeService;
         this.kpiTemplateRepository = kpiTemplateRepository;
+        this.jobPositionRepository = jobPositionRepository;
     }
 
     @GetMapping("/configure")
@@ -86,9 +93,31 @@ public class HrKpiViewController {
 
         List<Employee> allEmployees = employeeRepository.findAllEmployeesOnly();
         int allEmployeesCount = allEmployees.size();
+
+        Map<Integer, String> deptNames = departmentRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        d -> d.getDeptId(),
+                        d -> d.getDeptName() != null ? d.getDeptName() : "-"
+                ));
+        Map<Integer, String> positionNames = jobPositionRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        p -> p.getJobId(),
+                        p -> p.getTitle() != null ? p.getTitle() : "-"
+                ));
+
+        List<Map<String, Object>> employeeOptions = new ArrayList<>();
+        for (Employee emp : allEmployees) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("empId", emp.getEmpId());
+            item.put("fullName", emp.getFullName());
+            item.put("deptName", emp.getDeptId() != null ? deptNames.getOrDefault(emp.getDeptId(), "-") : "-");
+            item.put("positionTitle", emp.getJobId() != null ? positionNames.getOrDefault(emp.getJobId(), "-") : "-");
+            employeeOptions.add(item);
+        }
         
         log.info("Total EMPLOYEE role users in system: {}", allEmployeesCount);
         model.addAttribute("allEmployeesCount", allEmployeesCount);
+        model.addAttribute("employeeOptions", employeeOptions);
         return "hr/kpi_configure";
     }
 
@@ -140,11 +169,11 @@ public class HrKpiViewController {
 
                 case "EMPLOYEE":
                     if (empId == null) {
-                        ra.addFlashAttribute("err", "Please enter Employee ID");
+                        ra.addFlashAttribute("err", "Please select an employee");
                         return "redirect:/hr/kpi/configure";
                     }
-                    Employee one = employeeRepository.findById(empId)
-                            .orElseThrow(() -> new RuntimeException("Employee not found"));
+                    Employee one = employeeRepository.findEmployeeOnlyByEmpId(empId)
+                            .orElseThrow(() -> new RuntimeException("Selected user is not an EMPLOYEE role user"));
                     targetEmployees = List.of(one);
                     break;
 
@@ -242,17 +271,7 @@ public class HrKpiViewController {
         return kpiTemplateRepository.findAllByOrderByKpiNameAsc().stream()
                 .findFirst()
                 .map(template -> template.getKpiId())
-                .orElseGet(() -> {
-                    com.example.hrm.entity.KpiTemplate defaultTemplate = new com.example.hrm.entity.KpiTemplate();
-                    defaultTemplate.setKpiName("Default Employee KPI 2026");
-                    defaultTemplate.setDescription("Standard performance metrics for current year");
-                    defaultTemplate.setWeight(new java.math.BigDecimal("100.00"));
-                    defaultTemplate.setCreatedAt(java.time.LocalDateTime.now());
-                    
-                    com.example.hrm.entity.KpiTemplate saved = kpiTemplateRepository.save(defaultTemplate);
-                    log.info("Auto-created default KPI template ID: {}", saved.getKpiId());
-                    return saved.getKpiId();
-                });
+                .orElseThrow(() -> new RuntimeException("No KPI template found"));
     }
 
     @GetMapping("/pending-verification")

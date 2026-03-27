@@ -105,14 +105,14 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
                     ranking.getPercentile() != null &&
                     ranking.getPercentile().compareTo(new BigDecimal("90")) >= 0) {
                 isEligible = true;
-                recommendation = "Xuất sắc, nằm trong top 10%. Đề xuất thăng chức.";
+                recommendation = "Outstanding performance, in top 10%. Promotion is recommended.";
             }
             // Rule 2: Classification A and rank in top 5
             else if ("A".equals(ranking.getClassification()) &&
                     ranking.getRankOverall() != null &&
                     ranking.getRankOverall() <= 5) {
                 isEligible = true;
-                recommendation = "Xuất sắc, nằm trong top 5 nhân viên. Đề xuất thăng chức.";
+                recommendation = "Outstanding performance, in top 5 employees. Promotion is recommended.";
             }
 
             ranking.setIsPromotionEligible(isEligible);
@@ -158,16 +158,16 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
         switch (classification) {
             case "D":
             case "C":
-                // Nhân viên yếu - tạo recommendation priority HIGH
+                // Low performance - create HIGH priority recommendations
                 recommendations = analyzeWeakKPIsAndRecommend(assignmentId);
                 for (TrainingRecommendation rec : recommendations) {
                     rec.setPriority("HIGH");
-                    rec.setReason(rec.getReason() + " [ĐÁNH GIÁ YẾU - CẦN ĐÀO TẠO BẮT BUỘC]");
+                    rec.setReason(rec.getReason() + " [LOW PERFORMANCE - MANDATORY TRAINING REQUIRED]");
                 }
                 break;
 
             case "B":
-                // Nhân viên trung bình - tạo recommendation priority MEDIUM
+                // Average performance - create MEDIUM priority recommendations
                 recommendations = analyzeWeakKPIsAndRecommend(assignmentId);
                 for (TrainingRecommendation rec : recommendations) {
                     rec.setPriority("MEDIUM");
@@ -175,8 +175,8 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
                 break;
 
             case "A":
-                // Nhân viên xuất sắc - không tạo recommendation
-                // Họ có thể tự đăng ký nếu muốn
+                // Outstanding performance - do not auto-create recommendations
+                // Employee can self-enroll if needed
                 break;
 
             default:
@@ -209,7 +209,7 @@ public class PerformanceRankingServiceImpl implements PerformanceRankingService 
 
             for (TrainingProgram program : generalPrograms) {
                 String reason = String.format(
-                        "Nhân viên đạt classification %s (score: %d). Cần cải thiện kỹ năng: %s",
+                        "Employee is classified as %s (score: %d). Skill improvement needed: %s",
                         assignment.getClassification(),
                         assignment.getManagerScore() != null ? assignment.getManagerScore() : 0,
                         program.getSkillCategory()

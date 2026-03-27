@@ -1,6 +1,7 @@
 package com.example.hrm.service;
 
 import com.example.hrm.dto.PromotionReviewDTO;
+import com.example.hrm.entity.JobPosition;
 import com.example.hrm.entity.PromotionRequest;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,9 @@ public interface PromotionService {
     List<Map<String, Object>> getEligibleEmployeesForPromotion(Integer requesterId);
     
     PromotionReviewDTO getEmployeeEvaluationHistory(Integer empId);
-    
+
+    List<JobPosition> getValidPromotionPositions(Integer currentJobId);
+
     PromotionRequest submitPromotionRequest(Integer empId, Integer proposedPositionId, 
                                            String reason, Integer requestedBy);
     

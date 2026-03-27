@@ -45,7 +45,7 @@ public class TrainingViewController {
     }
 
     /**
-     * Register for training program (Pure Server-Side - giống team)
+     * Register for training program (pure server-side flow, aligned with team style)
      */
     @PostMapping("/programs/{programId}/register")
     public String registerForTraining(
@@ -99,7 +99,7 @@ public class TrainingViewController {
     }
 
     /**
-     * Submit training evidence with certificate file (Pure Server-Side - giống team)
+     * Submit training evidence with certificate file (pure server-side flow, aligned with team style)
      */
     @PostMapping("/submit-evidence/{progressId}/submit")
     public String submitEvidence(

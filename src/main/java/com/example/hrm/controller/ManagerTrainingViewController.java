@@ -1,10 +1,12 @@
 package com.example.hrm.controller;
 
 import com.example.hrm.entity.Employee;
+import com.example.hrm.entity.KpiAssignment;
 import com.example.hrm.entity.TrainingAssignment;
 import com.example.hrm.entity.TrainingProgram;
 import com.example.hrm.entity.TrainingRecommendation;
 import com.example.hrm.repository.EmployeeRepository;
+import com.example.hrm.repository.KpiAssignmentRepository;
 import com.example.hrm.repository.TrainingAssignmentRepository;
 import com.example.hrm.repository.TrainingProgramRepository;
 import com.example.hrm.repository.TrainingRecommendationRepository;
@@ -20,8 +22,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -35,6 +39,7 @@ public class ManagerTrainingViewController {
     private final CurrentEmployeeService currentEmployeeService;
     private final TrainingRecommendationRepository recommendationRepository;
     private final TrainingAssignmentRepository assignmentRepository;
+    private final KpiAssignmentRepository kpiAssignmentRepository;
     private final NotificationService notificationService;
 
     @GetMapping("/assign")
@@ -44,13 +49,154 @@ public class ManagerTrainingViewController {
         Employee currentManager = currentEmployeeService.requireEmployee(principal);
         List<Employee> teamMembers = employeeRepository.findByDirectManagerId(currentManager.getEmpId());
         List<TrainingProgram> programs = trainingProgramRepository.findByStatus(TrainingProgram.TrainingStatus.ACTIVE);
+        List<Integer> teamEmpIds = teamMembers.stream().map(Employee::getEmpId).toList();
+
+        List<TrainingAssignment> assignmentHistory = teamEmpIds.isEmpty()
+                ? List.of()
+                : assignmentRepository.findByEmpIdInOrderByAssignedAtDesc(teamEmpIds);
+
+        Set<Integer> assignedByIds = assignmentHistory.stream()
+                .map(TrainingAssignment::getAssignedBy)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        Map<Integer, String> assignedByNames = employeeRepository.findAllById(assignedByIds).stream()
+                .collect(Collectors.toMap(
+                        Employee::getEmpId,
+                        e -> e.getFullName() != null ? e.getFullName() : ("Employee #" + e.getEmpId())
+                ));
+
+        Map<Integer, String> employeeNames = teamMembers.stream()
+                .collect(Collectors.toMap(
+                        Employee::getEmpId,
+                        e -> e.getFullName() != null ? e.getFullName() : ("Employee #" + e.getEmpId())
+                ));
+
+        Set<Integer> programIds = assignmentHistory.stream()
+                .map(TrainingAssignment::getProgramId)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        Map<Integer, String> programNames = trainingProgramRepository.findAllById(programIds).stream()
+                .collect(Collectors.toMap(
+                        TrainingProgram::getProgramId,
+                        p -> p.getProgramName() != null ? p.getProgramName() : ("Program #" + p.getProgramId())
+                ));
+
+        Map<Integer, String> assignmentSource = new HashMap<>();
+        for (TrainingAssignment assignment : assignmentHistory) {
+            assignmentSource.put(
+                    assignment.getAssignId(),
+                    assignment.getRecommendationId() != null ? "Recommendation" : "Manual"
+            );
+        }
 
         model.addAttribute("teamMembers", teamMembers);
         model.addAttribute("programs", programs);
         model.addAttribute("selectedEmpId", selectedEmpId);
+        model.addAttribute("assignmentHistory", assignmentHistory);
+        model.addAttribute("employeeNames", employeeNames);
+        model.addAttribute("assignedByNames", assignedByNames);
+        model.addAttribute("programNames", programNames);
+        model.addAttribute("assignmentSource", assignmentSource);
         model.addAttribute("today", LocalDate.now());
         model.addAttribute("pageTitle", "Assign Training");
         return "manager/training-assign";
+    }
+
+    @GetMapping("/assign-with-history/{empId}")
+    public String showAssignWithHistory(@PathVariable Integer empId,
+                                        Principal principal,
+                                        Model model,
+                                        RedirectAttributes ra) {
+        try {
+            Employee currentManager = currentEmployeeService.requireEmployee(principal);
+            Employee employee = employeeRepository.findById(empId)
+                    .orElseThrow(() -> new IllegalArgumentException("Employee not found."));
+
+            if (!currentManager.getEmpId().equals(employee.getDirectManagerId())) {
+                throw new IllegalArgumentException("You can only assign training to employees in your team.");
+            }
+
+            List<KpiAssignment> completedEvaluations = kpiAssignmentRepository
+                    .findByEmpIdAndStatusOrderByManagerReviewedAtDesc(empId, KpiAssignment.AssignmentStatus.COMPLETED)
+                    .stream()
+                    .filter(a -> a.getManagerScore() != null)
+                    .toList();
+
+            List<TrainingProgram> programs = trainingProgramRepository.findByStatus(TrainingProgram.TrainingStatus.ACTIVE);
+
+            model.addAttribute("employee", employee);
+            model.addAttribute("completedEvaluations", completedEvaluations);
+            model.addAttribute("programs", programs);
+            model.addAttribute("today", LocalDate.now());
+            model.addAttribute("pageTitle", "Assign Training with History");
+            return "manager/training-assign-with-history";
+        } catch (Exception ex) {
+            ra.addFlashAttribute("err", ex.getMessage());
+            return "redirect:/manager/training/assign";
+        }
+    }
+
+    @GetMapping("/assignments/{id}")
+    public String showAssignmentDetail(@PathVariable Integer id,
+                                       Principal principal,
+                                       Model model,
+                                       RedirectAttributes ra) {
+        try {
+            TrainingAssignment assignment = requireManagedAssignment(principal, id);
+            Employee employee = employeeRepository.findById(assignment.getEmpId())
+                    .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+            Employee assignedBy = null;
+            if (assignment.getAssignedBy() != null) {
+                assignedBy = employeeRepository.findById(assignment.getAssignedBy()).orElse(null);
+            }
+
+            TrainingProgram program = null;
+            if (assignment.getProgramId() != null) {
+                program = trainingProgramRepository.findById(assignment.getProgramId()).orElse(null);
+            }
+
+            model.addAttribute("assignment", assignment);
+            model.addAttribute("employee", employee);
+            model.addAttribute("assignedBy", assignedBy);
+            model.addAttribute("program", program);
+            model.addAttribute("source", assignment.getRecommendationId() != null ? "Recommendation" : "Manual");
+            model.addAttribute("canCancel", assignment.getStatus() != TrainingAssignment.AssignmentStatus.COMPLETED
+                    && assignment.getStatus() != TrainingAssignment.AssignmentStatus.CANCELLED);
+            model.addAttribute("pageTitle", "Training Assignment Detail");
+            return "manager/training-assignment-detail";
+        } catch (Exception ex) {
+            ra.addFlashAttribute("toastError", ex.getMessage());
+            return "redirect:/manager/training/assign";
+        }
+    }
+
+    @PostMapping("/assignments/{id}/cancel")
+    public String cancelAssignment(@PathVariable Integer id,
+                                   Principal principal,
+                                   RedirectAttributes ra) {
+        try {
+            Employee currentManager = currentEmployeeService.requireEmployee(principal);
+            TrainingAssignment assignment = requireManagedAssignment(principal, id);
+
+            if (assignment.getStatus() == TrainingAssignment.AssignmentStatus.COMPLETED) {
+                throw new IllegalArgumentException("Completed assignments cannot be cancelled.");
+            }
+            if (assignment.getStatus() == TrainingAssignment.AssignmentStatus.CANCELLED) {
+                throw new IllegalArgumentException("Assignment is already cancelled.");
+            }
+
+            assignment.setStatus(TrainingAssignment.AssignmentStatus.CANCELLED);
+            assignment.setReviewedAt(LocalDateTime.now());
+            assignment.setReviewedBy(currentManager.getEmpId());
+            assignmentRepository.save(assignment);
+
+            ra.addFlashAttribute("msg", "Assignment cancelled successfully.");
+            return "redirect:/manager/training/assign?tab=history";
+        } catch (Exception ex) {
+            ra.addFlashAttribute("err", ex.getMessage());
+            return "redirect:/manager/training/assign?tab=history";
+        }
     }
 
     @PostMapping("/assign")
@@ -169,44 +315,52 @@ public class ManagerTrainingViewController {
                 throw new IllegalArgumentException("End date must be after start date");
             }
 
-            // Create training assignment for either offline or online
-            TrainingAssignment assignment = new TrainingAssignment();
-            assignment.setEmpId(recommendation.getEmpId());
-            assignment.setAssignedBy(currentManager.getEmpId());
-            assignment.setStartDate(start);
-            assignment.setEndDate(end);
-            assignment.setObjective(recommendation.getReason() != null ? recommendation.getReason() : "Based on evaluation recommendation");
-            assignment.setStatus(TrainingAssignment.AssignmentStatus.ASSIGNED);
-            assignment.setAssignedAt(LocalDateTime.now());
+            String objective = recommendation.getReason() != null
+                    ? recommendation.getReason()
+                    : "Based on evaluation recommendation";
+            TrainingAssignment assignment;
 
             if ("OFFLINE".equals(trainingType) && programId != null) {
-                // Offline training
                 TrainingProgram program = trainingProgramRepository.findById(programId)
                         .orElseThrow(() -> new IllegalArgumentException("Training program not found"));
-                assignment.setProgramId(programId);
-                assignment.setProgramName(program.getProgramName());
-                assignment.setTrainingType("OFFLINE");
+                assignment = trainingService.createManagerAssignment(
+                        recommendation.getEmpId(),
+                        programId,
+                        program.getProgramName(),
+                        program.getCourseUrl(),
+                        currentManager.getEmpId(),
+                        objective,
+                        start,
+                        end,
+                        "OFFLINE",
+                        recommendation.getRecommendationId()
+                );
             } else if ("ONLINE".equals(trainingType)) {
-                // Online training
                 if (onlineProgramName == null || onlineProgramName.trim().isEmpty()) {
                     throw new IllegalArgumentException("Please provide program name for online training");
                 }
                 if (onlineProgramUrl == null || onlineProgramUrl.trim().isEmpty()) {
                     throw new IllegalArgumentException("Please provide course URL for online training");
                 }
-                assignment.setProgramName(onlineProgramName);
-                assignment.setCourseUrl(onlineProgramUrl);
-                assignment.setTrainingType("ONLINE");
+                assignment = trainingService.createManagerAssignment(
+                        recommendation.getEmpId(),
+                        null,
+                        onlineProgramName.trim(),
+                        onlineProgramUrl.trim(),
+                        currentManager.getEmpId(),
+                        objective,
+                        start,
+                        end,
+                        "ONLINE",
+                        recommendation.getRecommendationId()
+                );
             } else {
                 throw new IllegalArgumentException("Please select valid training type");
             }
 
-            assignment = assignmentRepository.save(assignment);
             recommendation.setStatus(TrainingRecommendation.RecommendationStatus.ASSIGNED);
             recommendationRepository.save(recommendation);
 
-            assignment.setRecommendationId(recommendation.getRecommendationId());
-            assignment = assignmentRepository.save(assignment);
 
             notificationService.create(
                     assignment.getEmpId(),

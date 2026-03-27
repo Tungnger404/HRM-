@@ -131,7 +131,12 @@ public class ManagerEvaluationViewController {
         Map<Integer, String> empNames = employeeRepository.findAllById(
                 filtered.stream().map(KpiAssignment::getEmpId).collect(Collectors.toSet())
         ).stream()
-        .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
+        .collect(Collectors.toMap(
+                Employee::getEmpId,
+                e -> (e.getFullName() == null || e.getFullName().isBlank())
+                        ? ("Employee #" + e.getEmpId())
+                        : e.getFullName()
+        ));
 
         model.addAttribute("evaluations", filtered);
         model.addAttribute("empNames", empNames);
@@ -164,17 +169,30 @@ public class ManagerEvaluationViewController {
                 .collect(Collectors.toMap(Employee::getEmpId, e -> e));
 
         Map<Integer, String> empNames = employeeById.values().stream()
-                .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
+                .collect(Collectors.toMap(
+                        Employee::getEmpId,
+                        e -> (e.getFullName() == null || e.getFullName().isBlank())
+                                ? ("Employee #" + e.getEmpId())
+                                : e.getFullName(),
+                        (left, right) -> left,
+                        HashMap::new
+                ));
 
         Map<Integer, String> deptNames = departmentRepository.findAllById(
                         employeeById.values().stream().map(Employee::getDeptId).filter(id -> id != null).collect(Collectors.toSet()))
                 .stream()
-                .collect(Collectors.toMap(Department::getDeptId, Department::getDeptName));
+                .collect(Collectors.toMap(
+                        Department::getDeptId,
+                        d -> d.getDeptName() != null ? d.getDeptName() : "-"
+                ));
 
         Map<Integer, String> positionNames = jobPositionRepository.findAllById(
                         employeeById.values().stream().map(Employee::getJobId).filter(id -> id != null).collect(Collectors.toSet()))
                 .stream()
-                .collect(Collectors.toMap(JobPosition::getJobId, JobPosition::getTitle));
+                .collect(Collectors.toMap(
+                        JobPosition::getJobId,
+                        p -> p.getTitle() != null ? p.getTitle() : "-"
+                ));
 
         // Collectors.toMap does not accept null values; some employees may have no assignment yet.
         Map<Integer, Integer> assignmentIds = new HashMap<>();
@@ -245,7 +263,12 @@ public class ManagerEvaluationViewController {
         Map<Integer, String> empNames = employeeRepository.findAllById(
                 allRankings.stream().map(PerformanceRanking::getEmpId).collect(Collectors.toSet())
         ).stream()
-        .collect(Collectors.toMap(Employee::getEmpId, Employee::getFullName));
+        .collect(Collectors.toMap(
+                Employee::getEmpId,
+                e -> (e.getFullName() == null || e.getFullName().isBlank())
+                        ? ("Employee #" + e.getEmpId())
+                        : e.getFullName()
+        ));
         
         long countA = allRankings.stream().filter(r -> "A".equals(r.getClassification())).count();
         long countB = allRankings.stream().filter(r -> "B".equals(r.getClassification())).count();

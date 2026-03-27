@@ -59,7 +59,7 @@
                                                   th:text="${req.avgScore} + ' / 100'">85 / 100</span>
                                         </td>
                                         <td th:text="${req.evaluationCount}">3</td>
-                                        <td th:text="'EMP-' + ${req.requestedBy}">EMP-002</td>
+                                        <td th:text="${requesterNames.get(req.requestedBy) != null ? requesterNames.get(req.requestedBy) : 'EMP-' + req.requestedBy}">EMP-002</td>
                                         <td th:text="${#temporals.format(req.requestedAt, 'dd/MM/yyyy HH:mm')}">01/03/2026 10:30</td>
                                         <td>
                                             <button type="button" 
@@ -111,6 +111,7 @@
      const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
      const positionTitles = /*[[${positionTitles}]]*/ {};
      const employeeNames = /*[[${employeeNames}]]*/ {};
+     const requesterNames = /*[[${requesterNames}]]*/ {};
 
     function showRequestDetail(button) {
         const requestId = button.getAttribute('data-request-id');
@@ -140,7 +141,7 @@
                         <div class="col-md-6">
                             <p class="mb-1"><strong>Average Score:</strong> <span class="badge bg-primary">${selectedRequest.avgScore} / 100</span></p>
                             <p class="mb-1"><strong>Total Evaluations:</strong> ${selectedRequest.evaluationCount}</p>
-                            <p class="mb-1"><strong>Requested By:</strong> EMP-${selectedRequest.requestedBy}</p>
+                            <p class="mb-1"><strong>Requested By:</strong> ${requesterNames[selectedRequest.requestedBy] || ('EMP-' + selectedRequest.requestedBy)}</p>
                         </div>
                     </div>
                     

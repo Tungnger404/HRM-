@@ -36,11 +36,13 @@ public class SecurityConfig {
                                 "/careers",
                                 "/careers/**",
                                 "/login",
+                                "/auth/login",
                                 "/logout",
                                 "/register", "/register/**",
                                 "/forgot-password", "/forgot-password/**",
                                 "/oauth2/**", "/login/oauth2/**",
                                 "/css/**", "/js/**", "/images/**",
+                                "/sbadmin/**",
                                 "/vendors/**", "/assets/**",
                                 "/webjars/**",
                                 "/swagger-ui/**", "/swagger-ui.html",
@@ -60,7 +62,7 @@ public class SecurityConfig {
                 )
 
                 .formLogin(form -> form
-                        .loginPage("/login")
+                        .loginPage("/auth/login")
                         .loginProcessingUrl("/login")
                         .usernameParameter("username")
                         .passwordParameter("password")
@@ -82,12 +84,12 @@ public class SecurityConfig {
                                 response.sendRedirect("/dashboard/employee");
                             }
                         })
-                        .failureUrl("/login?error=true")
+                        .failureUrl("/auth/login?error=true")
                         .permitAll()
                 )
 
                 .oauth2Login(oauth -> oauth
-                        .loginPage("/login")
+                        .loginPage("/auth/login")
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2LoginSuccessHandler)
                 )

@@ -50,7 +50,7 @@
                                                   th:classappend="${assign.status.name() == 'ASSIGNED' ? 'bg-secondary' : 
                                                                   ((assign.status.name() == 'IN_PROGRESS' or assign.status.name() == 'IN_PROCESS') ? 'bg-primary' :
                                                                   (assign.status.name() == 'PENDING_REVIEW' ? 'bg-warning' :
-                                                                  (assign.status.name() == 'COMPLETED' ? 'bg-success' : 
+                                                                  (assign.status.name() == 'COMPLETED' ? 'bg-success' :
                                                                   (assign.status.name() == 'REJECTED' ? 'bg-danger' : 'bg-secondary'))))}"
                                                   th:text="${assign.status}">ASSIGNED</span>
                                         </td>

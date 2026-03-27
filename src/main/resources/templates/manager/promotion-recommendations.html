@@ -27,7 +27,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <strong><i class="fa fa-users"></i> Eligible Employees for Promotion</strong>
+                        <strong><i class="fa fa-users"></i> Promotion Review Candidates</strong>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -37,6 +37,7 @@
                                         <th>ID</th>
                                         <th>Full Name</th>
                                         <th>Position</th>
+                                        <th>Eligibility</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -48,16 +49,23 @@
                                             <span th:text="${emp.currentPositionTitle != null ? emp.currentPositionTitle : 'N/A'}">N/A</span>
                                         </td>
                                         <td>
+                                            <span class="badge"
+                                                  th:classappend="${emp.isEligible} ? 'bg-success' : 'bg-secondary'"
+                                                  th:text="${emp.isEligible} ? 'Eligible' : 'Not eligible'">
+                                                Eligible
+                                            </span>
+                                        </td>
+                                        <td>
                                             <button type="button" 
                                                     class="btn btn-sm btn-info"
                                                     onclick="showReviewModal(this)"
-                                                    th:attr="data-emp-id=${emp.empId}, data-emp-name=${emp.fullName}, data-position=${emp.currentPosition}, data-current-level=${emp.currentPositionLevel}">
+                                                    th:attr="data-emp-id=${emp.empId}, data-emp-name=${emp.fullName}, data-position=${emp.currentPosition}, data-current-level=${emp.currentPositionLevel}, data-is-eligible=${emp.isEligible}">
                                                 <i class="fa fa-eye"></i> Review
                                             </button>
                                         </td>
                                     </tr>
                                     <tr th:if="${#lists.isEmpty(employees)}">
-                                        <td colspan="4" class="text-center text-muted">No employees found</td>
+                                        <td colspan="5" class="text-center text-muted">No employees found</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -74,7 +82,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="reviewModalLabel">
-                        <i class="fa fa-user-check"></i> Đánh giá nhân viên
+                        <i class="fa fa-user-check"></i> Employee Review
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -89,10 +97,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">
-                        <i class="fa fa-times"></i> Đóng
+                        <i class="fa fa-times"></i> Close
                     </button>
                     <button type="button" class="btn btn-success" id="submitPromotionBtn" onclick="showPromotionForm()">
-                        <i class="fa fa-arrow-up"></i> Đề xuất nâng cấp
+                        <i class="fa fa-arrow-up"></i> Submit Promotion Recommendation
                     </button>
                 </div>
             </div>
@@ -105,7 +113,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="promotionFormModalLabel">
-                        <i class="fa fa-arrow-up"></i> Gửi đề xuất nâng cấp
+                        <i class="fa fa-arrow-up"></i> Submit Promotion Recommendation
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -129,6 +137,7 @@
 <div layout:fragment="script">
 <script th:inline="javascript">
     let currentEmpData = {};
+    const validPositionIdsByEmpId = /*[[${validPositionIdsByEmpId}]]*/ {};
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
     const csrfParamName = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
 
@@ -137,7 +146,8 @@
             empId: button.getAttribute('data-emp-id'),
             empName: button.getAttribute('data-emp-name'),
             position: button.getAttribute('data-position'),
-            currentLevel: button.getAttribute('data-current-level')
+            currentLevel: button.getAttribute('data-current-level'),
+            isEligible: button.getAttribute('data-is-eligible') === 'true'
          };
 
         const reviewModalElement = document.getElementById('reviewModal');
@@ -156,7 +166,7 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-2">Đang tải thông tin nhân viên...</p>
+                <p class="mt-2">Loading employee information...</p>
             </div>
         `;
         
@@ -164,7 +174,7 @@
 
         fetch('/manager/promotion/review/' + currentEmpData.empId)
             .then(response => {
-                if (!response.ok) throw new Error('Tải dữ liệu thất bại: ' + response.status);
+                if (!response.ok) throw new Error('Failed to load data: ' + response.status);
                 return response.json();
             })
             .then(data => {
@@ -175,7 +185,7 @@
                 document.getElementById('modalContent').innerHTML = `
                     <div class="alert alert-danger">
                         <i class="fa fa-exclamation-circle"></i>
-                        <strong>Lỗi:</strong> ${error.message}
+                        <strong>Error:</strong> ${error.message}
                     </div>
                 `;
             });
@@ -206,7 +216,7 @@
         }
         
         const html = `
-            <!-- Phần 1: Employee Summary -->
+            <!-- Section 1: Employee Summary -->
             <div class="card border-primary mb-3">
                 <div class="card-header bg-primary text-white">
                     <strong><i class="fa fa-user"></i> Employee Summary</strong>
@@ -227,7 +237,7 @@
                 </div>
             </div>
             
-            <!-- Phần 2: Evaluation History -->
+            <!-- Section 2: Evaluation History -->
             <div class="card border-info mb-3">
                 <div class="card-header bg-info text-white">
                     <strong><i class="fa fa-star"></i> Completed Evaluation Cycles</strong>
@@ -271,68 +281,41 @@
             return;
         }
         
-        let positionOptions = '<option value="">-- Chọn vị trí --</option>';
+        let positionOptions = '<option value="">-- Select position --</option>';
         const positionTemplate = document.getElementById('positionOptionsTemplate');
         const currentJobId = Number.parseInt(currentEmpData.position, 10);
-        const currentLevelRaw = currentEmpData.currentLevel;
-        const currentLevel = currentLevelRaw !== null && currentLevelRaw !== ''
-            ? Number.parseInt(currentLevelRaw, 10)
-            : null;
+        const validPositionIds = (validPositionIdsByEmpId && validPositionIdsByEmpId[currentEmpData.empId])
+            ? validPositionIdsByEmpId[currentEmpData.empId].map(v => Number.parseInt(v, 10))
+            : [];
         let validOptionCount = 0;
-        let usedFallbackOptions = false;
 
         if (positionTemplate && positionTemplate.options.length > 0) {
-            const allOtherOptions = [];
-            const strictHigherLevelOptions = [];
-
             Array.from(positionTemplate.options).forEach(option => {
                 const optionJobId = Number.parseInt(option.value, 10);
                 if (!Number.isNaN(currentJobId) && optionJobId === currentJobId) {
                     return;
                 }
-
-                allOtherOptions.push(option);
-
-                const optionLevelRaw = option.getAttribute('data-level');
-                const optionLevel = optionLevelRaw !== null && optionLevelRaw !== ''
-                    ? Number.parseInt(optionLevelRaw, 10)
-                    : null;
-
-                if (currentLevel !== null
-                    && !Number.isNaN(currentLevel)
-                    && optionLevel !== null
-                    && !Number.isNaN(optionLevel)
-                    && optionLevel <= currentLevel) {
+                if (!validPositionIds.includes(optionJobId)) {
                     return;
                 }
-
-                strictHigherLevelOptions.push(option);
-            });
-
-            const selectedOptions = strictHigherLevelOptions.length > 0
-                ? strictHigherLevelOptions
-                : allOtherOptions;
-
-            usedFallbackOptions = strictHigherLevelOptions.length === 0 && allOtherOptions.length > 0;
-
-            selectedOptions.forEach(option => {
                 validOptionCount += 1;
                 positionOptions += `<option value="${option.value}">${option.text}</option>`;
             });
         } else {
-            positionOptions += '<option disabled>Không có vị trí nào</option>';
+            positionOptions += '<option disabled>No positions available</option>';
         }
 
         if (validOptionCount === 0) {
-            positionOptions += '<option disabled>Không có vị trí cao hơn khả dụng</option>';
+            positionOptions += '<option disabled>No higher-level positions available</option>';
         }
 
+        const notEligibleAlert = !currentEmpData.isEligible
+            ? `<div class="alert alert-warning">This employee is not eligible for promotion under the current business rule.</div>`
+            : '';
         const noHigherLevelAlert = validOptionCount === 0
-            ? `<div class="alert alert-warning">Không tìm thấy vị trí đề xuất khả dụng.</div>`
-            : (usedFallbackOptions
-                ? `<div class="alert alert-warning">Không tìm thấy vị trí có cấp bậc cao hơn theo dữ liệu level hiện tại. Hệ thống hiển thị các vị trí khác để bạn chọn, nhưng khi gửi vẫn sẽ kiểm tra điều kiện ở backend.</div>`
-                : '');
-        const submitDisabled = validOptionCount === 0 ? 'disabled' : '';
+            ? `<div class="alert alert-warning">No position with a higher level than the employee's current position was found.</div>`
+            : '';
+        const submitDisabled = (validOptionCount === 0 || !currentEmpData.isEligible) ? 'disabled' : '';
 
         const formHtml = `
             <form id="promotionSubmitForm" method="post" action="/manager/promotion/submit">
@@ -340,34 +323,35 @@
                 <input type="hidden" name="${csrfParamName}" value="${csrfToken}">
                 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Nhân viên:</strong></label>
+                    <label class="form-label"><strong>Employee:</strong></label>
                     <p class="form-control-plaintext">${currentEmpData.empName} (ID: ${currentEmpData.empId})</p>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Vị trí được đề xuất <span class="text-danger">*</span></label>
+                    <label class="form-label">Proposed Position <span class="text-danger">*</span></label>
                     <select class="form-select" name="proposedPositionId" required>
                         ${positionOptions}
                     </select>
                 </div>
+                ${notEligibleAlert}
                 ${noHigherLevelAlert}
 
                 <div class="mb-3">
-                    <label class="form-label">Lý do nâng cấp <span class="text-danger">*</span></label>
-                    <textarea class="form-control" name="reason" rows="5" placeholder="Nhập lý do nâng cấp..." required></textarea>
+                    <label class="form-label">Promotion Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="reason" rows="5" placeholder="Enter the promotion reason..." required></textarea>
                 </div>
                 
                 <div class="alert alert-info">
                     <i class="fa fa-info-circle"></i> 
-                    Đề xuất nâng cấp này sẽ được gửi đến HR để phê duyệt cuối cùng.
+                    This promotion recommendation will be sent to HR for final approval.
                 </div>
                 
                 <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal" onclick="closPromotionForm()">
-                        <i class="fa fa-times"></i> Hủy
+                        <i class="fa fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-success" ${submitDisabled}>
-                        <i class="fa fa-paper-plane"></i> Gửi tới HR
+                        <i class="fa fa-paper-plane"></i> Send to HR
                     </button>
                 </div>
             </form>

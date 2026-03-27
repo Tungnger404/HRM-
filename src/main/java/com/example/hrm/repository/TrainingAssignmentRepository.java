@@ -1,7 +1,7 @@
 package com.example.hrm.repository;
 
-import com.example.hrm.entity.TrainingAssignment;  // ✅ THÊM IMPORT NÀY
-import com.example.hrm.entity.TrainingAssignment.AssignmentStatus;  // ✅ THÊM IMPORT NÀY
+import com.example.hrm.entity.TrainingAssignment;  // Added import
+import com.example.hrm.entity.TrainingAssignment.AssignmentStatus;  // Added import
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +21,10 @@ public interface TrainingAssignmentRepository extends JpaRepository<TrainingAssi
     List<TrainingAssignment> findByStatus(AssignmentStatus status);
 
     List<TrainingAssignment> findByProgramId(Integer programId);
+
+    List<TrainingAssignment> findByEmpIdInOrderByAssignedAtDesc(List<Integer> empIds);
+
+    List<TrainingAssignment> findByAssignedByOrderByAssignedAtDesc(Integer assignedBy);
 
     // COURSE, MENTORING, WORKSHOP
     List<TrainingAssignment> findByTrainingType(String trainingType);

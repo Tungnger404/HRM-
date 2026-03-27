@@ -63,7 +63,7 @@
                                       th:classappend="${assignment.status.name() == 'ASSIGNED' ? 'bg-secondary' : 
                                                       (assignment.status.name() == 'IN_PROGRESS' or assignment.status.name() == 'IN_PROCESS' ? 'bg-primary' :
                                                       (assignment.status.name() == 'PENDING_REVIEW' ? 'bg-warning' :
-                                                      (assignment.status.name() == 'COMPLETED' ? 'bg-success' : 
+                                                      (assignment.status.name() == 'COMPLETED' ? 'bg-success' :
                                                       (assignment.status.name() == 'REJECTED' ? 'bg-danger' : 'bg-secondary'))))}"
                                       th:text="${assignment.status}">ASSIGNED</span>
                             </div>
@@ -115,7 +115,6 @@
 
                             <div class="mb-3">
                                 <label for="completionDate" class="form-label">Completion Date <span class="text-danger">*</span></label>
-<!--           setDate                      <input type="date" id="completionDate" name="completionDate" class="form-control" required>-->
                                 <input type="date" id="completionDate" class="form-control"
                                        th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" readonly disabled>
                                 <small class="text-muted">Completion date is fixed to today.</small>

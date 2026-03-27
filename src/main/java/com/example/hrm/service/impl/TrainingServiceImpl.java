@@ -26,6 +26,7 @@ public class TrainingServiceImpl implements TrainingService {
     @Autowired
     private TrainingAssignmentRepository trainingAssignmentRepository;
 
+    // Legacy dependency: TrainingProgress is kept for backward compatibility APIs only.
     @Autowired
     private TrainingProgressRepository trainingProgressRepository;
 
@@ -87,28 +88,57 @@ public class TrainingServiceImpl implements TrainingService {
     @Transactional
     public TrainingAssignment assignTraining(Integer empId, Integer programId, Integer assignedBy, String objective,
                                             LocalDate startDate, LocalDate endDate) {
-        // Check if program exists
         TrainingProgram program = trainingProgramRepository.findById(programId)
                 .orElseThrow(() -> new RuntimeException("Training program not found"));
+        return createManagerAssignment(
+                empId,
+                programId,
+                program.getProgramName(),
+                program.getCourseUrl(),
+                assignedBy,
+                objective,
+                startDate,
+                endDate,
+                "OFFLINE",
+                null
+        );
+    }
 
+    @Override
+    @Transactional
+    public TrainingAssignment createManagerAssignment(Integer empId,
+                                                      Integer programId,
+                                                      String programName,
+                                                      String courseUrl,
+                                                      Integer assignedBy,
+                                                      String objective,
+                                                      LocalDate startDate,
+                                                      LocalDate endDate,
+                                                      String trainingType,
+                                                      Integer recommendationId) {
         LocalDate effectiveStartDate = startDate != null ? startDate : LocalDate.now();
         if (endDate == null) {
-            throw new RuntimeException("Deadline is required for direct training assignment");
+            throw new RuntimeException("Deadline is required for manager assignment");
         }
         if (endDate.isBefore(effectiveStartDate)) {
             throw new RuntimeException("Deadline must be on or after assigned date");
+        }
+        if (objective == null || objective.trim().isEmpty()) {
+            throw new RuntimeException("Training objective is required");
         }
 
         TrainingAssignment assignment = new TrainingAssignment();
         assignment.setEmpId(empId);
         assignment.setProgramId(programId);
-        assignment.setProgramName(program.getProgramName());
+        assignment.setProgramName(programName);
+        assignment.setCourseUrl(courseUrl);
         assignment.setAssignedBy(assignedBy);
-        assignment.setObjective(objective);
-        assignment.setTrainingType("COURSE");
+        assignment.setObjective(objective.trim());
+        assignment.setTrainingType(trainingType != null ? trainingType : "OFFLINE");
         assignment.setStatus(AssignmentStatus.ASSIGNED);
         assignment.setStartDate(effectiveStartDate);
         assignment.setEndDate(endDate);
+        assignment.setRecommendationId(recommendationId);
         assignment.setAssignedAt(LocalDateTime.now());
         return trainingAssignmentRepository.save(assignment);
     }

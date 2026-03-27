@@ -77,6 +77,24 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     List<Employee> findAllEmployeesOnly();
 
     @Query("""
+        SELECT COUNT(e) > 0 FROM Employee e
+        JOIN UserAccount u ON e.userId = u.id
+        JOIN Role r ON u.role.id = r.id
+        WHERE e.empId = :empId
+          AND r.roleName = 'EMPLOYEE'
+    """)
+    boolean existsEmployeeOnlyByEmpId(@Param("empId") Integer empId);
+
+    @Query("""
+        SELECT e FROM Employee e
+        JOIN UserAccount u ON e.userId = u.id
+        JOIN Role r ON u.role.id = r.id
+        WHERE e.empId = :empId
+          AND r.roleName = 'EMPLOYEE'
+    """)
+    Optional<Employee> findEmployeeOnlyByEmpId(@Param("empId") Integer empId);
+
+    @Query("""
         select e from Employee e
         where upper(coalesce(e.status, '')) in ('PROBATION', 'OFFICIAL')
           and coalesce(e.includeInPayroll, false) = false

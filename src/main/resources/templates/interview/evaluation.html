@@ -27,7 +27,7 @@
             <div class="d-flex align-items-center">
                 <i class="bi bi-exclamation-octagon-fill fs-4 me-2"></i>
                 <div>
-                    <strong>Lỗi thao tác:</strong> <span th:text="${errorMessage}"></span>
+                    <strong>Operation error:</strong> <span th:text="${errorMessage}"></span>
                 </div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -37,7 +37,7 @@
             <div class="d-flex align-items-center">
                 <i class="bi bi-check-circle-fill fs-4 me-2"></i>
                 <div>
-                    <strong>Thành công!</strong> <span th:text="${successMessage}"></span>
+                    <strong>Success!</strong> <span th:text="${successMessage}"></span>
                 </div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -212,7 +212,7 @@
                 if (score < 5) {
                     resultSelect.value = 'FAIL';
                     resultSelect.style.color = '#dc3545';
-                    // Vô hiệu hóa việc chọn PASS nếu điểm < 5
+                    // Disable PASS selection when score < 5
                     resultSelect.options[0].disabled = true;
                 } else {
                     resultSelect.value = 'PASS';

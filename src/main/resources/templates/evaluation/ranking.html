@@ -105,7 +105,7 @@
                                     <td th:text="${empDeptNames[ranking.empId] != null ? empDeptNames[ranking.empId] : '-'}">-</td>
                                     <td th:text="${empPositionNames[ranking.empId] != null ? empPositionNames[ranking.empId] : '-'}">-</td>
                                     <td class="text-end" th:text="${ranking.finalScore != null ? ranking.finalScore : '-'}">-</td>
-                                     <td>
+                                    <td>
                                         <span class="badge"
                                               th:classappend="${ranking.classification == 'A' ? ' bg-success' :
                                                   (ranking.classification == 'B' ? ' bg-primary' :

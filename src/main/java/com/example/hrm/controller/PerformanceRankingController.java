@@ -22,8 +22,8 @@ public class PerformanceRankingController {
 
     /**
      * POST /api/performance-ranking/calculate/{cycleId}
-     * Tự động tính ranking cho tất cả nhân viên trong cycle
-     * Thường gọi sau khi kết thúc cycle đánh giá
+     * Automatically calculate rankings for all employees in the cycle
+     * Typically called after the evaluation cycle ends
      */
     @PostMapping("/calculate/{cycleId}")
     public ResponseEntity<String> calculateRankings(@PathVariable Integer cycleId) {
@@ -38,7 +38,7 @@ public class PerformanceRankingController {
 
     /**
      * GET /api/performance-ranking/cycle/{cycleId}/top?limit=10
-     * Lấy danh sách top performers trong cycle
+     * Get top performers in a cycle
      */
     @GetMapping("/cycle/{cycleId}/top")
     public ResponseEntity<List<PerformanceRanking>> getTopPerformers(
@@ -50,7 +50,7 @@ public class PerformanceRankingController {
 
     /**
      * GET /api/performance-ranking/cycle/{cycleId}/promotion-candidates
-     * Lấy danh sách ứng viên đủ điều kiện thăng chức
+     * Get promotion-eligible candidates
      */
     @GetMapping("/cycle/{cycleId}/promotion-candidates")
     public ResponseEntity<List<PerformanceRanking>> getPromotionCandidates(@PathVariable Integer cycleId) {
@@ -60,7 +60,7 @@ public class PerformanceRankingController {
 
     /**
      * GET /api/performance-ranking/employee/{empId}/cycle/{cycleId}
-     * Lấy ranking của một nhân viên trong cycle
+     * Get ranking for one employee in a cycle
      */
     @GetMapping("/employee/{empId}/cycle/{cycleId}")
     public ResponseEntity<PerformanceRanking> getRankingByEmployee(
@@ -77,14 +77,14 @@ public class PerformanceRankingController {
 
     /**
      * POST /api/performance-ranking/auto-recommend/{evalId}
-     * Tự động tạo training recommendation sau khi evaluation được approve
+     * Automatically create training recommendations after evaluation approval
      * 
      * Flow:
      * - Manager approve evaluation
-     * - Gọi API này để tạo recommendation tự động
-     * - Nếu C/D: priority HIGH, notify Manager
-     * - Nếu B: priority MEDIUM, notify Employee
-     * - Nếu A: không tạo
+     * - Call this API to create recommendations automatically
+     * - If C/D: HIGH priority, notify manager
+     * - If B: MEDIUM priority, notify employee
+     * - If A: do not create
      */
     @PostMapping("/auto-recommend/{evalId}")
     public ResponseEntity<List<TrainingRecommendation>> autoRecommendTraining(@PathVariable Integer evalId) {
@@ -100,7 +100,7 @@ public class PerformanceRankingController {
 
     /**
      * POST /api/performance-ranking/analyze-weak-kpi/{evalId}
-     * Phân tích KPI yếu và đề xuất khóa học phù hợp
+     * Analyze weak KPI areas and suggest suitable courses
      */
     @PostMapping("/analyze-weak-kpi/{evalId}")
     public ResponseEntity<List<TrainingRecommendation>> analyzeWeakKPIs(@PathVariable Integer evalId) {
