@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <title>Training Assignment Detail - HRM System</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Assignment Detail</h2>
+                <p class="text-muted mb-0">Review assignment information and manage assignment status.</p>
+            </div>
+        </div>
+
+        <div class="row mb-3" th:if="${toastSuccess != null and !#strings.isEmpty(toastSuccess)}">
+            <div class="col-12">
+                <script th:inline="javascript">
+                    document.addEventListener("DOMContentLoaded", function () {
+                        showSuccessToast(/*[[${toastSuccess}]]*/ "");
+                    });
+                </script>
+            </div>
+        </div>
+
+        <div class="row mb-3" th:if="${toastError != null and !#strings.isEmpty(toastError)}">
+            <div class="col-12">
+                <script th:inline="javascript">
+                    document.addEventListener("DOMContentLoaded", function () {
+                        showErrorToast(/*[[${toastError}]]*/ "");
+                    });
+                </script>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <strong>Employee Information</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Employee Name:</strong> <span th:text="${employee.fullName}">N/A</span></p>
+                        <p class="mb-2"><strong>Employee ID:</strong> <span th:text="${employee.empId}">N/A</span></p>
+                        <p class="mb-2"><strong>Department:</strong>
+                            <span th:text="${employee.department != null ? employee.department.deptName : 'N/A'}">N/A</span>
+                        </p>
+                        <p class="mb-0"><strong>Position:</strong>
+                            <span th:text="${employee.jobPosition != null ? employee.jobPosition.title : 'N/A'}">N/A</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <strong>Assignment Information</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Assigned By:</strong>
+                            <span th:text="${assignedBy != null ? assignedBy.fullName : (assignment.assignedBy != null ? 'Employee #' + assignment.assignedBy : 'System')}">N/A</span>
+                        </p>
+                        <p class="mb-2"><strong>Assigned Date:</strong>
+                            <span th:text="${assignment.assignedAt != null ? #temporals.format(assignment.assignedAt, 'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                        </p>
+                        <p class="mb-2"><strong>Due Date:</strong>
+                            <span th:text="${assignment.endDate != null ? #temporals.format(assignment.endDate, 'dd/MM/yyyy') : '-'}">-</span>
+                        </p>
+                        <p class="mb-2"><strong>Status:</strong>
+                            <span class="badge bg-secondary" th:text="${assignment.status}">ASSIGNED</span>
+                        </p>
+                        <p class="mb-2"><strong>Source:</strong>
+                            <span th:text="${source}">Manual</span>
+                        </p>
+                        <p class="mb-0"><strong>Training Objective:</strong></p>
+                        <div class="border rounded bg-light p-2 mt-1" th:text="${assignment.objective != null and !#strings.isEmpty(assignment.objective) ? assignment.objective : '-'}">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <strong>Training Program Information</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Program Name:</strong>
+                            <span th:text="${assignment.programName != null and !#strings.isEmpty(assignment.programName) ? assignment.programName : (program != null ? program.programName : 'N/A')}">N/A</span>
+                        </p>
+                        <p class="mb-2"><strong>Category:</strong>
+                            <span th:text="${program != null and program.skillCategory != null ? program.skillCategory : 'N/A'}">N/A</span>
+                        </p>
+                        <p class="mb-2"><strong>Description:</strong></p>
+                        <div class="border rounded bg-light p-2 mb-2"
+                             th:text="${program != null and program.description != null and !#strings.isEmpty(program.description) ? program.description : 'N/A'}">N/A</div>
+                        <p class="mb-2"><strong>Duration:</strong>
+                            <span th:text="${program != null and program.durationHours != null ? program.durationHours + ' hours' : 'N/A'}">N/A</span>
+                        </p>
+                        <p class="mb-0"><strong>Provider:</strong>
+                            <span th:text="${program != null and program.trainingMethod != null ? program.trainingMethod : 'N/A'}">N/A</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <a class="btn btn-outline-secondary" th:href="@{/manager/training/assign(tab='history')}">
+                    <i class="fa fa-arrow-left"></i> Back to Assignment History
+                </a>
+
+                <form method="post" th:action="@{/manager/training/assignments/{id}/cancel(id=${assignment.assignId})}">
+                    <div th:if="${_csrf != null}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    </div>
+                    <button type="submit" class="btn btn-danger"
+                            th:disabled="${!canCancel}"
+                            onclick="return confirm('Are you sure you want to cancel this assignment?');">
+                        <i class="fa fa-ban"></i> Cancel Assignment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
+
