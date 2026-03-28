@@ -52,7 +52,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
         SELECT e FROM Employee e
         JOIN UserAccount u ON e.userId = u.id
         JOIN Role r ON u.role.id = r.id
-        WHERE r.roleName = 'HR'
+        WHERE r.roleName IN ('HR', 'ADMIN')
         ORDER BY e.empId ASC
     """)
     List<Employee> findHrStaff();

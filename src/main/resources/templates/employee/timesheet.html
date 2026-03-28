@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<head>
+    <style>
+        .page-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        .timesheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 1.5rem;
+        }
+        .timesheet-header h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+        .month-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .month-selector a {
+            color: #64748b;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .month-selector a:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .card-custom {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            height: 100%;
+        }
+
+        .stat-card-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        .stat-card-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+        .val-blue   { color: #2563eb; }
+        .val-orange { color: #f97316; }
+        .val-black  { color: #0f172a; }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #e2e8f0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .calendar-header {
+            background: #f8fafc;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .calendar-cell {
+            background: #ffffff;
+            min-height: 100px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .calendar-cell:hover, .calendar-cell.active {
+            background: #f1f5f9;
+            box-shadow: inset 0 0 0 2px #3b82f6;
+        }
+        .calendar-cell.empty {
+            background: #f8fafc;
+            cursor: default;
+        }
+        .calendar-cell.empty:hover {
+            background: #f8fafc;
+            box-shadow: none;
+        }
+        
+        .date-number {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        .date-number.today {
+            color: #3b82f6;
+        }
+        
+        .weekend-cell {
+            background: #f1f5f9 !important;
+        }
+        .weekend-cell:hover {
+            box-shadow: inset 0 0 0 2px #cbd5e1 !important;
+        }
+        .shift-time {
+            font-size: 0.65rem;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .status-dots {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .dot-present { background: #10b981; }
+        .dot-late { background: #f97316; }
+        .dot-missing { background: #ef4444; }
+        .dot-leave { background: #3b82f6; }
+        .dot-holiday { background: #a855f7; }
+        .dot-not-logged { background: #cbd5e1; }
+        
+        .missing-text {
+            font-size: 0.65rem;
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-view-logs {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            color: #64748b;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .btn-view-logs:hover { color: #1e293b; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-header mb-0">My Personal Timesheet</h1>
+    </div>
+
+    <!-- Controls -->
+    <div class="timesheet-header">
+        <a id="prevMonthBtn" href="#"><i class="fas fa-chevron-left"></i></a>
+        <h3 id="monthYearDisplay">October 2025</h3>
+        <a id="nextMonthBtn" href="#"><i class="fas fa-chevron-right"></i></a>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card-custom text-center">
+                <div class="stat-card-title">Standard Days</div>
+                <div class="stat-card-value val-black" th:text="${standardDays}">22</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-custom text-center">
+                <div class="stat-card-title">Actual Work Days</div>
+                <div class="stat-card-value val-black" th:text="${actualWorkDays}">20</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-custom text-center">
+                <div class="stat-card-title">Approved Leave</div>
+                <div class="stat-card-value val-blue" title="Nghỉ có phép" th:text="${paidLeave}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-custom text-center">
+                <div class="stat-card-title">Unexcused Absence</div>
+                <div class="stat-card-value val-orange" title="Nghỉ không phép" th:text="${unpaidLeave}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row g-4 mb-4" id="timesheetApp">
+        <div class="col-lg-12">
+            <div class="card-custom p-0" style="padding: 16px!important;">
+                <div class="calendar-grid">
+                    <div class="calendar-header">Mon</div>
+                    <div class="calendar-header">Tue</div>
+                    <div class="calendar-header">Wed</div>
+                    <div class="calendar-header">Thu</div>
+                    <div class="calendar-header">Fri</div>
+                    <div class="calendar-header">Sat</div>
+                    <div class="calendar-header">Sun</div>
+                    <!-- JS renders days here -->
+                </div>
+                
+                <div class="legend border-top pt-3 mt-3">
+                    <div class="legend-item"><div class="dot dot-present"></div> Present</div>
+                    <div class="legend-item"><div class="dot dot-late"></div> Late Arrival</div>
+                    <div class="legend-item"><div class="dot dot-missing"></div> Missing Log</div>
+                    <div class="legend-item"><div class="dot dot-leave"></div> Paid Leave</div>
+                    <div class="legend-item"><div class="dot dot-holiday"></div> Holiday</div>
+                    <div class="legend-item"><div class="dot dot-not-logged"></div> Not Logged</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="script">
+<script th:inline="javascript">
+    const currentYear = /*[[${currentYear}]]*/ 2025;
+    const currentMonth = /*[[${currentMonth}]]*/ 10;
+    const logsJson = /*[[${logsJson}]]*/ '[]';
+    const holidaysJson = /*[[${holidaysJson}]]*/ '[]';
+    
+    let attendanceData = [];
+    try { attendanceData = JSON.parse(logsJson || '[]'); } catch(e) {}
+
+    let holidaysData = [];
+    try { holidaysData = JSON.parse(holidaysJson || '[]'); } catch(e) {}
+
+    const logsByDate = {};
+    attendanceData.forEach(l => {
+        logsByDate[l.date] = l;
+    });
+
+    const holidayDates = new Set();
+    holidaysData.forEach(h => {
+        let start = new Date(h.start);
+        let end = new Date(h.end);
+        for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            let ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            holidayDates.add(ds);
+        }
+    });
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    
+    document.getElementById('monthYearDisplay').textContent = `${monthNames[currentMonth - 1]} ${currentYear}`;
+    
+    document.getElementById('prevMonthBtn').href = `/employee/attendance/timesheet?year=${currentMonth === 1 ? currentYear - 1 : currentYear}&month=${currentMonth === 1 ? 12 : currentMonth - 1}`;
+    document.getElementById('nextMonthBtn').href = `/employee/attendance/timesheet?year=${currentMonth === 12 ? currentYear + 1 : currentYear}&month=${currentMonth === 12 ? 1 : currentMonth + 1}`;
+
+    function renderCalendar() {
+        const grid = document.querySelector('.calendar-grid');
+        // Remove existing day cells but keep the 7 headers
+        const headers = Array.from(grid.children).slice(0, 7);
+        grid.innerHTML = '';
+        headers.forEach(h => grid.appendChild(h));
+
+        const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        
+        let startGrid = firstDay === 0 ? 6 : firstDay - 1; 
+
+        // Empty cells before start
+        for (let i = 0; i < startGrid; i++) {
+            let el = document.createElement('div');
+            el.className = 'calendar-cell empty';
+            grid.appendChild(el);
+        }
+
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth - 1;
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            let dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            let log = logsByDate[dateStr];
+            let isHoliday = holidayDates.has(dateStr);
+            
+            let el = document.createElement('div');
+            el.className = 'calendar-cell';
+            if (isCurrentMonth && today.getDate() === i) {
+                el.classList.add('today-cell');
+            }
+            el.dataset.date = dateStr;
+            
+            let curDayW = new Date(currentYear, currentMonth - 1, i).getDay();
+            if (curDayW === 0 || curDayW === 6) {
+                el.classList.add('weekend-cell');
+            }
+            
+            let html = `<div class="date-number ${(isCurrentMonth && today.getDate()===i)?'today':''}">${i}</div>`;
+            
+            if (isHoliday) {
+                html += `<div class="status-dots"><div class="dot dot-holiday"></div> <span class="missing-text" style="color:#a855f7;">Holiday</span></div>`;
+            } else if (log) {
+                let sTime = (log.scheduledStartAt) ? log.scheduledStartAt.substring(0,5) : '08:00';
+                let eTime = (log.scheduledEndAt) ? log.scheduledEndAt.substring(0,5) : '17:30';
+                
+                if (log.scheduledStartAt) {
+                   html += `<div class="shift-time">${sTime} - ${eTime}</div>`;
+                }
+                
+                html += `<div class="status-dots">`;
+                
+                let missingIn = !log.checkIn;
+                let missingOut = !log.checkOut;
+                
+                if (log.status === 'ABSENT') {
+                    html += `<div class="dot dot-missing"></div> <div class="missing-text">Absent</div>`;
+                } else {
+                    if (log.isLate || log.status.includes('LATE')) {
+                         html += `<div class="dot dot-late"></div>`;
+                    } else if (!missingIn) {
+                         html += `<div class="dot dot-present"></div>`;
+                    }
+                    
+                    if (!missingOut && log.checkOut) {
+                         html += `<div class="dot dot-present"></div>`;
+                    }
+                    
+                    if (missingIn || missingOut) {
+                         html += `<br><div class="dot dot-missing"></div> <span class="missing-text">Missing log</span>`;
+                    }
+                }
+                html += `</div>`;
+            } else {
+                html += `<div class="status-dots"><div class="dot dot-not-logged"></div></div>`;
+            }
+            
+            el.innerHTML = html;
+            grid.appendChild(el);
+        }
+    }
+
+
+
+    renderCalendar();
+
+</script>
+</th:block>
+</body>
+</html>

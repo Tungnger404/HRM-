@@ -29,11 +29,13 @@ public class HrHolidayController {
     @PostMapping("/save")
     public String saveHoliday(@RequestParam String title,
                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
                               @RequestParam(required = false) String description,
                               @RequestParam(required = false, defaultValue = "INACTIVE") String status,
                               RedirectAttributes ra) {
         try {
-            Holiday holiday = new Holiday(title, date, description, status);
+            LocalDate finalEndDate = (endDate != null) ? endDate : date;
+            Holiday holiday = new Holiday(title, date, finalEndDate, description, status);
             holidayRepository.save(holiday);
             ra.addFlashAttribute("success", "Holiday saved successfully.");
         } catch (Exception e) {
@@ -46,6 +48,7 @@ public class HrHolidayController {
     public String editHoliday(@PathVariable Long id,
                               @RequestParam String title,
                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
                               @RequestParam(required = false) String description,
                               @RequestParam(required = false, defaultValue = "INACTIVE") String status,
                               RedirectAttributes ra) {
@@ -53,6 +56,7 @@ public class HrHolidayController {
             Holiday holiday = holidayRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid holiday ID: " + id));
             holiday.setTitle(title);
             holiday.setHolidayDate(date);
+            holiday.setEndDate((endDate != null) ? endDate : date);
             holiday.setDescription(description);
             holiday.setStatus(status);
             holidayRepository.save(holiday);

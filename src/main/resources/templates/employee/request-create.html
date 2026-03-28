@@ -10,15 +10,11 @@
         <div class="card border-0 shadow-sm rounded-4 w-100" style="max-width: 850px; overflow: hidden;">
             <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4 d-flex justify-content-between align-items-center">
                 <h4 class="fw-bold mb-0 text-dark">Leave Request</h4>
-                <a th:href="@{/employee/requests/my}" class="btn-close" aria-label="Close"></a>
             </div>
 
             <div class="card-body p-4 pt-2">
 
-                <div th:if="${param.success}" class="alert alert-success border-0 rounded-3 shadow-sm mb-4">
-                    <i class="fas fa-check-circle me-2"></i> Request submitted successfully!
-                </div>
-                <div th:if="${error}" class="alert alert-danger border-0 rounded-3 shadow-sm mb-4" th:text="${error}"></div>
+
 
                 <form th:action="@{/employee/requests/create}"
                       th:object="${request}"
@@ -42,21 +38,43 @@
 
                             <!-- Target Date -->
                             <div class="mb-3">
-                                <label class="form-label fw-bold small text-dark mb-1">Dates <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="date" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{targetWorkDate}" id="targetDate" required onclick="this.showPicker()">
+                                <label class="form-label fw-bold small text-dark mb-1" id="dateLabel">Date <span class="text-danger">*</span></label>
+                                
+                                <div class="d-flex align-items-center gap-3 mb-2" id="leaveToggles" style="display: none !important;">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input mt-1" type="checkbox" role="switch" id="multiDayToggle" style="cursor: pointer;">
+                                        <label class="form-check-label small fw-medium text-secondary" for="multiDayToggle" style="cursor: pointer;">Multi-day Leave</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input mt-1" type="checkbox" role="switch" id="specificTimeToggle" style="cursor: pointer;">
+                                        <label class="form-check-label small fw-medium text-secondary" for="specificTimeToggle" style="cursor: pointer;">Specific Hours</label>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 align-items-center">
+                                    <div class="col" id="fromDateCol">
+                                        <input type="date" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{targetWorkDate}" id="targetDate" required onclick="this.showPicker()">
+                                    </div>
+                                    <div class="col-auto text-muted fw-bold" id="dashSeparator" style="display: none;">-</div>
+                                    <div class="col" id="toDateCol" style="display: none;">
+                                        <input type="date" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" id="toDateUi" onclick="this.showPicker()">
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Start/End Times -->
-                            <div class="row g-3 mb-3" id="timeFields">
+                            <!-- Hidden backing fields for Spring form binding -->
+                            <input type="datetime-local" class="d-none" th:field="*{startTime}" id="startTime">
+                            <input type="datetime-local" class="d-none" th:field="*{endTime}" id="endTime">
+
+                            <!-- Specific Times (Overrides full day) -->
+                            <div class="row g-3 mb-3" id="timeFields" style="display: none;">
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-dark mb-1">Start Time</label>
-                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{startTime}" id="startTime" onclick="this.showPicker()">
+                                    <input type="time" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" id="startTimeUi" value="08:00" onclick="this.showPicker()">
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-dark mb-1">End Time</label>
-                                    <input type="datetime-local" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" th:field="*{endTime}" id="endTime" onclick="this.showPicker()">
+                                    <input type="time" class="form-control fs-6 p-2 rounded-3 border-secondary-subtle" id="endTimeUi" value="17:30" onclick="this.showPicker()">
                                 </div>
                             </div>
 
@@ -122,7 +140,6 @@
 
                     <!-- Footer Buttons -->
                     <div class="d-flex justify-content-end mt-4 pt-4 border-top border-secondary-subtle">
-                        <a th:href="@{/employee/requests/my}" class="btn btn-light fw-bold px-4 py-2 me-3 text-secondary rounded-3" style="background-color: #f1f5f9;">Cancel</a>
                         <button type="submit" class="btn btn-primary fw-bold px-5 py-2 shadow-sm rounded-3" style="background-color: #3b82f6; border-color: #3b82f6;">Request Now</button>
                     </div>
 
@@ -148,10 +165,22 @@
             // Field elements
             const requestType = document.getElementById("requestType");
             const timeFields = document.getElementById("timeFields");
-            const targetDateInput = document.getElementById('targetDate');
-            const startTimeInput = document.getElementById('startTime');
-            const endTimeInput = document.getElementById('endTime');
             
+            const targetDateInput = document.getElementById('targetDate');
+            const toDateUi = document.getElementById('toDateUi');
+            const toDateCol = document.getElementById('toDateCol');
+            const dashSeparator = document.getElementById('dashSeparator');
+            
+            const leaveToggles = document.getElementById('leaveToggles');
+            const multiDayToggle = document.getElementById('multiDayToggle');
+            const specificTimeToggle = document.getElementById('specificTimeToggle');
+            const dateLabel = document.getElementById('dateLabel');
+
+            const startTimeUi = document.getElementById('startTimeUi');
+            const endTimeUi = document.getElementById('endTimeUi');
+            const startTimeHidden = document.getElementById('startTime');
+            const endTimeHidden = document.getElementById('endTime');
+
             // Summary elements
             const summaryDateRow = document.getElementById('summaryDateRow');
             const summaryDateText = document.getElementById('summaryDateText');
@@ -159,21 +188,71 @@
             const emptySummaryMsg = document.getElementById('emptySummaryMsg');
             const totalDaysText = document.getElementById('totalDaysText');
 
-            // 1. Show/Hide time fields based on Request Type
-            function updateTimeFields() {
+            function updateVisibility() {
                 const type = requestType.value;
-                if (type === "LEAVE" || type === "OVERTIME") {
+                if (type === "LEAVE") {
+                    leaveToggles.style.setProperty('display', 'flex', 'important');
+                    if (multiDayToggle.checked) {
+                        toDateCol.style.display = 'block';
+                        dashSeparator.style.display = 'block';
+                        specificTimeToggle.checked = false; 
+                        specificTimeToggle.disabled = true;
+                        timeFields.style.display = "none";
+                        dateLabel.innerHTML = 'Dates <span class="text-danger">*</span>';
+                    } else {
+                        toDateCol.style.display = 'none';
+                        dashSeparator.style.display = 'none';
+                        specificTimeToggle.disabled = false;
+                        if (specificTimeToggle.checked) {
+                            timeFields.style.display = "flex";
+                        } else {
+                            timeFields.style.display = "none";
+                        }
+                        dateLabel.innerHTML = 'Date <span class="text-danger">*</span>';
+                    }
+                } else if (type === "OVERTIME") {
+                    leaveToggles.style.setProperty('display', 'none', 'important');
+                    toDateCol.style.display = 'none';
+                    dashSeparator.style.display = 'none';
                     timeFields.style.display = "flex";
+                    dateLabel.innerHTML = 'Date <span class="text-danger">*</span>';
                 } else {
+                    leaveToggles.style.setProperty('display', 'none', 'important');
+                    toDateCol.style.display = 'none';
+                    dashSeparator.style.display = 'none';
                     timeFields.style.display = "none";
+                    dateLabel.innerHTML = 'Date <span class="text-danger">*</span>';
                 }
+                syncValues();
                 calculateDuration();
             }
 
-            // 2. Dynamic Update of Right Column Summary
+            function syncValues() {
+                const type = requestType.value;
+                if (!targetDateInput.value) return;
+
+                let sDate = targetDateInput.value;
+                let eDate = targetDateInput.value;
+
+                if (type === "LEAVE" && multiDayToggle.checked && toDateUi.value) {
+                    eDate = toDateUi.value;
+                }
+
+                let sTimeStr = "08:00";
+                let eTimeStr = "17:30";
+
+                if (type === "OVERTIME" || (type === "LEAVE" && !multiDayToggle.checked && specificTimeToggle.checked)) {
+                    sTimeStr = startTimeUi.value || "08:00";
+                    eTimeStr = endTimeUi.value || "17:30";
+                }
+
+                startTimeHidden.value = sDate + "T" + sTimeStr;
+                endTimeHidden.value = eDate + "T" + eTimeStr;
+            }
+
             function calculateDuration() {
                 const dVal = targetDateInput.value;
-                if (!dVal) {
+                if (!dVal || (requestType.value === "LEAVE" && multiDayToggle.checked && !toDateUi.value)) {
                     summaryDateRow.style.setProperty('display', 'none', 'important');
                     emptySummaryMsg.style.display = 'block';
                     totalDaysText.textContent = '0 days of Request';
@@ -183,29 +262,37 @@
                 emptySummaryMsg.style.display = 'none';
                 summaryDateRow.style.setProperty('display', 'flex', 'important');
                 
-                // Format date nicely (e.g. Aug 05)
-                const dObj = new Date(dVal);
-                if (!isNaN(dObj)) {
-                    const options = { month: 'short', day: '2-digit' };
-                    summaryDateText.textContent = dObj.toLocaleDateString('en-US', options);
-                } else {
-                    summaryDateText.textContent = dVal;
-                }
-
                 let durationLabel = 'All Day';
                 let totalText = '1 day';
-                
-                if (startTimeInput.value && endTimeInput.value) {
-                    const sTime = new Date(startTimeInput.value);
-                    const eTime = new Date(endTimeInput.value);
-                    if (eTime > sTime) {
-                        const diffMs = eTime - sTime;
-                        const diffHrs = (diffMs / (1000 * 60 * 60)).toFixed(1);
-                        durationLabel = diffHrs + ' hrs';
-                        totalText = diffHrs + ' hours';
-                    } else if (eTime.getTime() === sTime.getTime()) {
-                        durationLabel = '0 hrs';
-                        totalText = '0 hours';
+                const sDateObj = new Date(dVal);
+
+                if (requestType.value === "LEAVE" && multiDayToggle.checked) {
+                    const options = { month: 'short', day: '2-digit' };
+                    let s = sDateObj.toLocaleDateString('en-US', options);
+                    let e = new Date(toDateUi.value).toLocaleDateString('en-US', options);
+                    summaryDateText.textContent = s + ' - ' + e;
+
+                    const diffMs = new Date(toDateUi.value) - sDateObj;
+                    const diffDays = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1);
+                    durationLabel = diffDays + ' Days';
+                    totalText = diffDays + ' days';
+                } else {
+                    const options = { month: 'short', day: '2-digit' };
+                    summaryDateText.textContent = sDateObj.toLocaleDateString('en-US', options);
+                    
+                    if (requestType.value === "OVERTIME" || (requestType.value === "LEAVE" && specificTimeToggle.checked)) {
+                         if (startTimeUi.value && endTimeUi.value) {
+                             const sTime = new Date(dVal + "T" + startTimeUi.value);
+                             const eTime = new Date(dVal + "T" + endTimeUi.value);
+                             if (eTime > sTime) {
+                                 const diffHrs = ((eTime - sTime) / (1000 * 60 * 60)).toFixed(1);
+                                 durationLabel = diffHrs + ' hrs';
+                                 totalText = diffHrs + ' hours';
+                             } else {
+                                 durationLabel = '0 hrs';
+                                 totalText = '0 hours';
+                             }
+                         }
                     }
                 }
                 
@@ -213,6 +300,18 @@
                 summaryDurationText.textContent = durationLabel;
                 totalDaysText.textContent = totalText + ' of ' + typeLabel.replace(/--|Select Type/g, 'Request').trim();
             }
+
+            const inputsToListen = [requestType, targetDateInput, toDateUi, multiDayToggle, specificTimeToggle, startTimeUi, endTimeUi];
+            inputsToListen.forEach(inp => {
+                if (inp) {
+                    inp.addEventListener('change', function() {
+                        if (this === multiDayToggle && this.checked && !toDateUi.value) {
+                            toDateUi.value = targetDateInput.value;
+                        }
+                        updateVisibility();
+                    });
+                }
+            });
 
             // 3. Drag and Drop File Input Logic
             const fileInput = document.getElementById('attachment');
@@ -250,35 +349,40 @@
                 dropArea.classList.remove('dragover');
             });
 
-            // Bind Events
-            requestType.addEventListener("change", function() {
-                updateTimeFields();
-                
-                // Restrict date for Overtime to today only
+            function handleOvertimeConstraints() {
                 const type = requestType.value;
-                const todayStr = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD format in local timezone
+                const todayStr = new Date().toLocaleDateString('en-CA'); 
                 
                 if (type === "OVERTIME") {
                     targetDateInput.setAttribute('min', todayStr);
-                    targetDateInput.removeAttribute('max'); // Allow future dates
+                    targetDateInput.removeAttribute('max');
                     
-                    // If targetDateInput is selected and is in the past, reset it
                     if (targetDateInput.value && targetDateInput.value < todayStr) {
                          targetDateInput.value = todayStr;
-                         calculateDuration();
+                         updateVisibility();
                     }
                 } else {
                     targetDateInput.removeAttribute('min');
                     targetDateInput.removeAttribute('max');
                 }
-            });
-            targetDateInput.addEventListener('change', calculateDuration);
-            startTimeInput.addEventListener('change', calculateDuration);
-            endTimeInput.addEventListener('change', calculateDuration);
+            }
+            requestType.addEventListener("change", handleOvertimeConstraints);
+
+            // Fail-safe Form Submit sync
+            const requestForm = document.querySelector('form');
+            if(requestForm) {
+                requestForm.addEventListener('submit', function(e) {
+                    syncValues();
+                    if (!startTimeHidden.value || !endTimeHidden.value) {
+                        e.preventDefault();
+                        alert("Please select a valid date range.");
+                        return false;
+                    }
+                });
+            }
 
             // Init
-            updateTimeFields();
-            // Trigger change once to initialize date constraints if OVERTIME is pre-selected
+            updateVisibility();
             requestType.dispatchEvent(new Event('change'));
         });
     </script>

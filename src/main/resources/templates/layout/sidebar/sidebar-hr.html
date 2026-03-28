@@ -113,6 +113,17 @@
       </ul>
     </li>
 
+    <li class="nav-title">Attendance</li>
+
+    <li class="nav-item">
+      <a class="nav-link"
+         th:href="@{/hr/team-timesheet}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/team-timesheet')} ? 'active' : ''">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-group"></use></svg>
+        Timesheet
+      </a>
+    </li>
+
     <li class="nav-item">
       <a class="nav-link"
          th:href="@{/hr/view-request}">
@@ -139,7 +150,7 @@
          th:href="@{/hr/shifts}"
          th:classappend="${#strings.startsWith(currentUri, '/hr/shifts')} ? 'active' : ''">
         <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-clock"></use></svg>
-        Shift Templates
+        Attendance Scheduling
       </a>
     </li>
 
@@ -154,10 +165,10 @@
 
     <li class="nav-item">
       <a class="nav-link"
-         th:href="@{/hr/schedules/assignments}"
-         th:classappend="${#strings.startsWith(currentUri, '/hr/schedules/assignments')} ? 'active' : ''">
-        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-calendar-check"></use></svg>
-        Shift Assignments
+         th:href="@{/hr/holidays}"
+         th:classappend="${#strings.startsWith(currentUri, '/hr/holidays')} ? 'active' : ''">
+        <svg class="nav-icon"><use xlink:href="/vendors/@coreui/icons/svg/free.svg#cil-calendar"></use></svg>
+        Holidays
       </a>
     </li>
 

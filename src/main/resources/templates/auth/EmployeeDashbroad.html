@@ -12,17 +12,6 @@
 <main layout:fragment="content">
 
     <!-- Dashboard Content -->
-    <!-- Flash Messages (toast style, floating top right) -->
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-lg position-fixed top-0 end-0 mt-5 me-4" style="z-index: 1050; min-width: 300px; padding-top: 1rem;" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${error}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${message}" class="alert alert-success alert-dismissible fade show shadow-lg position-fixed top-0 end-0 mt-5 me-4" style="z-index: 1050; min-width: 300px; padding-top: 1rem;" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${message}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
 
     <!-- TOP ROW CARDS -->
     <div class="row g-4 mb-4">
@@ -100,6 +89,10 @@
                             </div>
                             <div>
                                 <div class="fw-bold text-dark" style="font-size: 0.95rem; margin-bottom: 2px;" th:text="${h.title}">Holiday Name</div>
+                                <div th:if="${h.endDate != null and h.endDate != h.holidayDate}" class="text-primary fw-semibold mb-1" style="font-size: 0.75rem;">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    <span th:text="${#temporals.format(h.holidayDate, 'dd/MM/yyyy')} + ' - ' + ${#temporals.format(h.endDate, 'dd/MM/yyyy')}"></span>
+                                </div>
                                 <div th:if="${h.description != null and !h.description.isEmpty()}" class="text-muted" style="font-size: 0.8rem; line-height: 1.2;" th:text="${h.description}">Details</div>
                             </div>
                         </div>

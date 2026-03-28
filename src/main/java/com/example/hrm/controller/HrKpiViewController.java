@@ -150,7 +150,7 @@ public class HrKpiViewController {
 
             String storedPath = documentStorageService.store(excelFile);
             List<Employee> targetEmployees;
-            Integer currentHrEmpId = currentEmployeeService.requireCurrentEmpId(principal);
+            Integer currentHrUserId = currentEmployeeService.requireUserId(principal);
 
             switch (applyScope) {
                 case "ALL":
@@ -213,7 +213,7 @@ public class HrKpiViewController {
                         assignment.setHrComment(hrComment);
                         assignment.setStatus(KpiAssignment.AssignmentStatus.ASSIGNED);
                         assignment.setAssignedAt(LocalDateTime.now());
-                        assignment.setAssignedBy(currentHrEmpId);
+                        assignment.setAssignedBy(currentHrUserId);
                         if ("EMPLOYEE".equals(applyScope)) {
                             assignment.setDeptId(null);
                         }
@@ -228,7 +228,7 @@ public class HrKpiViewController {
                         assignment.setHrComment(hrComment);
                         assignment.setStatus(KpiAssignment.AssignmentStatus.ASSIGNED);
                         assignment.setAssignedAt(LocalDateTime.now());
-                        assignment.setAssignedBy(currentHrEmpId);
+                        assignment.setAssignedBy(currentHrUserId);
                     }
 
                     KpiAssignment saved = kpiAssignmentRepository.save(assignment);
@@ -327,7 +327,7 @@ public class HrKpiViewController {
 
             assignment.setStatus(KpiAssignment.AssignmentStatus.HR_VERIFIED);
             assignment.setHrVerifiedAt(LocalDateTime.now());
-            assignment.setHrVerifiedBy(currentEmployeeService.requireCurrentEmpId(principal));
+            assignment.setHrVerifiedBy(currentEmployeeService.requireUserId(principal));
             assignment.setHrVerificationNote(hrNote);
             kpiAssignmentRepository.save(assignment);
 

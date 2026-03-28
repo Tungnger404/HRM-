@@ -29,4 +29,7 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
     List<AttendanceLog> findByEmployee_EmpIdOrderByWorkDateDesc(Integer empId);
 
     List<AttendanceLog> findByEmployee_EmpIdAndWorkDateBetweenOrderByWorkDateAsc(Integer empId, LocalDate start, LocalDate end);
+
+    @Query("SELECT a FROM AttendanceLog a WHERE a.workDate >= :startDate AND a.workDate <= :endDate")
+    List<AttendanceLog> findLogsInDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

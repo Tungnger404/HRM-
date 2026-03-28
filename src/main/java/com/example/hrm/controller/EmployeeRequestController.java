@@ -64,9 +64,9 @@ public class EmployeeRequestController {
                     throw new RuntimeException("Could not create upload directory");
                 }
 
-                String filePath = uploadDir + file.getOriginalFilename();
-                file.transferTo(new File(filePath));
-                request.setAttachmentPath(filePath);
+                File destFile = new File(dir.getAbsolutePath(), file.getOriginalFilename());
+                file.transferTo(destFile);
+                request.setAttachmentPath(uploadDir + file.getOriginalFilename());
             }
 
             request.setStatus(null); // @PrePersist -> PENDING

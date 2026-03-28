@@ -508,7 +508,7 @@
 
 <script th:inline="javascript">
     document.addEventListener("DOMContentLoaded", function () {
-        const successMsg = /*[[${toastSuccess != null ? toastSuccess : (success != null ? success : msg)}]]*/ null;
+        const successMsg = /*[[${toastSuccess != null ? toastSuccess : (success != null ? success : (msg != null ? msg : message))}]]*/ null;
         const errorMsg = /*[[${toastError != null ? toastError : (error != null ? error : err)}]]*/ null;
 
         if (successMsg) {

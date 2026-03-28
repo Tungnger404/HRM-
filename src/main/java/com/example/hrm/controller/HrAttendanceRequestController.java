@@ -12,14 +12,14 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
-@RequestMapping({"/hr/attendance-requests", "/hr/view-request"})
+@RequestMapping({ "/hr/attendance-requests", "/hr/view-request" })
 public class HrAttendanceRequestController {
 
     private final RequestWorkflowService workflowService;
     private final CurrentEmployeeService currentEmployeeService;
 
     public HrAttendanceRequestController(RequestWorkflowService workflowService,
-                                         CurrentEmployeeService currentEmployeeService) {
+            CurrentEmployeeService currentEmployeeService) {
         this.workflowService = workflowService;
         this.currentEmployeeService = currentEmployeeService;
     }
@@ -38,8 +38,8 @@ public class HrAttendanceRequestController {
 
     @PostMapping("/{id}/process")
     public String process(@PathVariable("id") Integer requestId,
-                          Principal principal,
-                          RedirectAttributes ra) {
+            Principal principal,
+            RedirectAttributes ra) {
         try {
             Integer hrEmpId = currentEmployeeService.requireCurrentEmpId(principal);
             workflowService.hrProcess(hrEmpId, requestId);
@@ -52,9 +52,9 @@ public class HrAttendanceRequestController {
 
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable("id") Integer requestId,
-                          @RequestParam(value = "note", required = false) String note,
-                          Principal principal,
-                          RedirectAttributes ra) {
+            @RequestParam(value = "note", required = false) String note,
+            Principal principal,
+            RedirectAttributes ra) {
         try {
             Integer hrEmpId = currentEmployeeService.requireCurrentEmpId(principal);
             workflowService.hrApprove(hrEmpId, requestId, note);
@@ -67,9 +67,9 @@ public class HrAttendanceRequestController {
 
     @PostMapping("/{id}/reject")
     public String reject(@PathVariable("id") Integer requestId,
-                         @RequestParam(value = "note", required = false) String note,
-                         Principal principal,
-                         RedirectAttributes ra) {
+            @RequestParam(value = "note", required = false) String note,
+            Principal principal,
+            RedirectAttributes ra) {
         try {
             Integer hrEmpId = currentEmployeeService.requireCurrentEmpId(principal);
             workflowService.hrReject(hrEmpId, requestId, note);

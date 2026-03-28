@@ -70,10 +70,7 @@ public class HrPromotionController {
             String username = auth.getName();
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            Employee hrEmployee = employeeRepository.findByUserId(user.getUserId())
-                    .orElseThrow(() -> new RuntimeException("HR employee not found"));
-            
-            promotionService.approvePromotionRequest(requestId, hrEmployee.getEmpId(), hrComment);
+            promotionService.approvePromotionRequest(requestId, user.getUserId(), hrComment);
             
             ra.addFlashAttribute("msg", "Promotion request approved successfully");
             return "redirect:/hr/promotions/pending";
@@ -95,10 +92,7 @@ public class HrPromotionController {
             String username = auth.getName();
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            Employee hrEmployee = employeeRepository.findByUserId(user.getUserId())
-                    .orElseThrow(() -> new RuntimeException("HR employee not found"));
-            
-            promotionService.rejectPromotionRequest(requestId, hrEmployee.getEmpId(), hrComment);
+            promotionService.rejectPromotionRequest(requestId, user.getUserId(), hrComment);
             
             ra.addFlashAttribute("msg", "Promotion request rejected");
             return "redirect:/hr/promotions/pending";

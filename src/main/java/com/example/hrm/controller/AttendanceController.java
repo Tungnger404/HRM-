@@ -17,15 +17,18 @@ public class AttendanceController {
     private final AttendanceAutoService attendanceAutoService;
     private final com.example.hrm.repository.EmployeeRepository employeeRepository;
     private final com.example.hrm.repository.UserRepository userRepository;
+    private final com.example.hrm.repository.HolidayRepository holidayRepository;
 
     public AttendanceController(AttendanceService attendanceService,
                                 AttendanceAutoService attendanceAutoService,
                                 com.example.hrm.repository.EmployeeRepository employeeRepository,
-                                com.example.hrm.repository.UserRepository userRepository) {
+                                com.example.hrm.repository.UserRepository userRepository,
+                                com.example.hrm.repository.HolidayRepository holidayRepository) {
         this.attendanceService = attendanceService;
         this.attendanceAutoService = attendanceAutoService;
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
+        this.holidayRepository = holidayRepository;
     }
     @GetMapping
     public String attendancePage(Model model, Authentication auth) {
@@ -116,6 +119,95 @@ public class AttendanceController {
         return "redirect:" + (referer != null ? referer : "/employee/attendance");
 
     }
+
+    @GetMapping("/timesheet")
+    public String timesheetPage(@org.springframework.web.bind.annotation.RequestParam(required = false) Integer year,
+                                @org.springframework.web.bind.annotation.RequestParam(required = false) Integer month,
+                                Model model, Authentication auth) {
+        Integer empId = attendanceService.getEmpIdFromSecurity();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int targetYear = (year != null) ? year : today.getYear();
+        int targetMonth = (month != null) ? month : today.getMonthValue();
+        
+        java.time.YearMonth ym = java.time.YearMonth.of(targetYear, targetMonth);
+
+        java.util.List<com.example.hrm.entity.AttendanceLog> allLogs = attendanceService.getHistory(empId);
+        
+        java.util.List<com.example.hrm.entity.AttendanceLog> monthLogs = allLogs.stream()
+            .filter(log -> log.getWorkDate() != null && log.getWorkDate().getYear() == targetYear && log.getWorkDate().getMonthValue() == targetMonth)
+            .collect(java.util.stream.Collectors.toList());
+
+        int standardDays = 0;
+        for (int i = 1; i <= ym.lengthOfMonth(); i++) {
+            java.time.DayOfWeek dow = ym.atDay(i).getDayOfWeek();
+            if (dow != java.time.DayOfWeek.SATURDAY && dow != java.time.DayOfWeek.SUNDAY) {
+                standardDays++;
+            }
+        }
+        
+
+        int lateArrivalsMins = monthLogs.stream()
+            .filter(log -> Boolean.TRUE.equals(log.getIsLate()) && log.getLateMinutes() != null)
+            .mapToInt(com.example.hrm.entity.AttendanceLog::getLateMinutes)
+            .sum();
+        
+        int paidLeave = (int) monthLogs.stream()
+            .filter(log -> "LEAVE".equals(log.getStatus()) || "APPROVED_LEAVE".equals(log.getStatus()))
+            .count();
+        
+        int unpaidLeave = (int) monthLogs.stream()
+            .filter(log -> "ABSENT".equals(log.getStatus()))
+            .count();
+        
+        int actualWorkDays = (int) monthLogs.stream()
+            .filter(log -> log.getCheckIn() != null)
+            .count();
+
+        java.util.List<java.util.Map<String, Object>> logList = new java.util.ArrayList<>();
+        for (com.example.hrm.entity.AttendanceLog log : monthLogs) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("date", log.getWorkDate().toString());
+            map.put("status", log.getStatus());
+            map.put("checkIn", log.getCheckIn() != null ? log.getCheckIn().toLocalTime().toString() : null);
+            map.put("checkOut", log.getCheckOut() != null ? log.getCheckOut().toLocalTime().toString() : null);
+            map.put("shiftId", log.getShiftId());
+            map.put("isLate", log.getIsLate());
+            map.put("lateMinutes", log.getLateMinutes());
+            map.put("scheduledStartAt", log.getScheduledStartAt() != null ? log.getScheduledStartAt().toLocalTime().toString() : null);
+            map.put("scheduledEndAt", log.getScheduledEndAt() != null ? log.getScheduledEndAt().toLocalTime().toString() : null);
+            logList.add(map);
+        }
+
+        java.util.List<com.example.hrm.entity.Holiday> activeHolidays = holidayRepository.findAll().stream()
+                .filter(h -> "ACTIVE".equals(h.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+
+        java.util.List<java.util.Map<String, Object>> holidayList = new java.util.ArrayList<>();
+        for (com.example.hrm.entity.Holiday h : activeHolidays) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("title", h.getTitle());
+            map.put("start", h.getHolidayDate().toString());
+            map.put("end", h.getEndDate() != null ? h.getEndDate().toString() : h.getHolidayDate().toString());
+            holidayList.add(map);
+        }
+
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            model.addAttribute("logsJson", mapper.writeValueAsString(logList));
+            model.addAttribute("holidaysJson", mapper.writeValueAsString(holidayList));
+        } catch (Exception e) {}
+
+        model.addAttribute("currentYear", targetYear);
+        model.addAttribute("currentMonth", targetMonth);
+        model.addAttribute("standardDays", standardDays);
+        model.addAttribute("actualWorkDays", actualWorkDays);
+        model.addAttribute("lateArrivalsMins", lateArrivalsMins);
+        model.addAttribute("paidLeave", paidLeave);
+        model.addAttribute("unpaidLeave", unpaidLeave);
+
+        return "employee/timesheet";
+    }
+
     @PostMapping("/dev/mark-absent-now")
     public String markAbsentNow(RedirectAttributes ra) {
         try {

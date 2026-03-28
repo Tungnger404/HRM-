@@ -18,6 +18,9 @@ public class Holiday {
     @Column(nullable = false, name = "holiday_date")
     private LocalDate holidayDate;
 
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
     @org.hibernate.annotations.Nationalized
     @Column(columnDefinition = "nvarchar(max)")
     private String description;
@@ -28,9 +31,10 @@ public class Holiday {
     public Holiday() {
     }
 
-    public Holiday(String title, LocalDate holidayDate, String description, String status) {
+    public Holiday(String title, LocalDate holidayDate, LocalDate endDate, String description, String status) {
         this.title = title;
         this.holidayDate = holidayDate;
+        this.endDate = endDate;
         this.description = description;
         this.status = status;
     }
@@ -57,6 +61,14 @@ public class Holiday {
 
     public void setHolidayDate(LocalDate holidayDate) {
         this.holidayDate = holidayDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
     }
 
     public String getDescription() {

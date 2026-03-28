@@ -3,45 +3,314 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/layout}">
+<head>
+    <style>
+        .premium-bg {
+            background-color: #f4f7f6;
+            padding: 24px 0;
+            min-height: calc(100vh - 72px);
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 24px;
+        }
+        .premium-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: none;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        .premium-card-header {
+            padding: 24px 24px 16px 24px;
+            background: transparent;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .premium-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+        .search-wrapper {
+            position: relative;
+            width: 300px;
+        }
+        .search-wrapper input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: #f9fafb;
+        }
+        .search-wrapper input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        .premium-table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .premium-table th {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+            padding: 16px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            background: transparent;
+            cursor: pointer;
+        }
+        .premium-table th:hover {
+            color: #111827;
+        }
+        .premium-table td {
+            padding: 16px 24px;
+            font-size: 14px;
+            color: #374151;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        .premium-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .premium-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        .type-text {
+            font-weight: 500;
+            color: #111827;
+        }
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-APPROVED {
+            color: #16a34a;
+            background-color: #dcfce7;
+        }
+        .status-REJECTED {
+            color: #dc2626;
+            background-color: #fee2e2;
+        }
+        .status-PENDING {
+            color: #d97706;
+            background-color: #fef3c7;
+        }
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<div layout:fragment="content" class="premium-bg">
+    <h2 class="page-title">My Attendance Requests</h2>
 
-<div layout:fragment="content">
-    <div class="card">
-        <div class="card-header">
-            <h5>My Attendance Requests</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Type</th>
-                        <th>Target Date</th>
-                        <th>Reason</th>
-                        <th>Status</th>
-                        <th>Manager Note</th>
-                        <th>Manager Decided</th>
-                        <th>HR Processed At</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="r : ${requests}">
-                        <td th:text="${r.requestId}"></td>
-                        <td th:text="${r.requestType}"></td>
-                        <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate, 'dd/MM/yyyy') : '-'}"></td>
-                        <td th:text="${r.reason}"></td>
-                        <td th:text="${r.status}"></td>
-                        <td th:text="${r.approverNote != null ? r.approverNote : '-'}"></td>
-                        <td th:text="${r.managerDecidedAt != null ? #temporals.format(r.managerDecidedAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
-                        <td th:text="${r.processedAt != null ? #temporals.format(r.processedAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(requests)}">
-                        <td colspan="8" class="text-center text-muted">No requests found.</td>
-                    </tr>
-                    </tbody>
-                </table>
+    <div class="card premium-card">
+        <div class="premium-card-header">
+            <h5 class="premium-card-title">All Requests <span class="text-muted ms-2" style="font-size:14px; font-weight: 400;">(Sorted by Newest)</span></h5>
+            <div class="d-flex align-items-center gap-3">
+                <select id="timeFilter" class="form-select" style="width: auto; border-radius: 8px; font-size: 14px; border: 1px solid #e5e7eb; background-color: #f9fafb; cursor: pointer;">
+                    <option value="all">All Time</option>
+                    <option value="last30">Last 30 Days</option>
+                </select>
+                <select id="statusFilter" class="form-select" style="width: auto; border-radius: 8px; font-size: 14px; border: 1px solid #e5e7eb; background-color: #f9fafb; cursor: pointer;">
+                    <option value="all">All Status</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                </select>
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search requests...">
+                </div>
+                <button type="button" id="searchBtn" class="btn btn-primary" style="background-color: #6366f1; border-color: #6366f1; border-radius: 8px; font-size: 14px; font-weight: 600; padding: 10px 20px;">
+                    Search
+                </button>
             </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table premium-table" id="requestTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Created At</th>
+                    <th>Target Date</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${requests}">
+                    <td th:text="${r.requestId}"></td>
+                    <td class="type-text" th:text="${r.requestType}"></td>
+                    <td th:text="${r.createdAt != null ? #temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+                    <td th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate, 'dd/MM/yyyy') : '-'}"></td>
+                    <td class="text-truncate text-secondary" style="max-width: 200px;" th:title="${r.reason}" th:text="${r.reason}"></td>
+                    <td>
+                        <span th:class="'status-badge status-' + ${r.status}" th:text="${r.status}"></span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm text-primary bg-primary bg-opacity-10 rounded-pill px-3 fw-bold border-0 transition-opacity" data-coreui-toggle="modal" th:attr="data-coreui-target='#viewModal' + ${r.requestId}">
+                            <i class="fas fa-eye me-1"></i> View
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" th:id="'viewModal' + ${r.requestId}" tabindex="-1" aria-hidden="true" style="text-align: left;">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4">
+                                    <div class="modal-header border-0 bg-light pb-3 pt-4 px-4 rounded-top-4">
+                                        <h5 class="modal-title fw-bold text-dark"><i class="fas fa-file-alt text-primary me-2"></i> Request Details</h5>
+                                        <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-4 text-start" style="white-space: normal;">
+                                        <div class="d-flex align-items-center justify-content-between mb-4">
+                                            <div>
+                                                <span class="text-muted d-block small fw-bold text-uppercase mb-1">Status</span>
+                                                <span th:class="'badge rounded-pill px-3 py-2 fs-6 status-' + ${r.status}" th:text="${r.status}"></span>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="text-muted d-block small fw-bold text-uppercase mb-1">Type</span>
+                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill px-3 py-2 fs-6" th:text="${r.requestType}"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-4">
+                                            <div class="col-12 mb-3">
+                                                <div class="p-3 bg-light rounded-3 border-start border-4 border-primary">
+                                                    <span class="text-muted d-block small fw-bold text-uppercase mb-2"><i class="far fa-calendar-alt me-1"></i> Requested Time / Date</span>
+                                                    <div class="text-dark fw-medium mb-1">Date: <span th:text="${r.targetWorkDate != null ? #temporals.format(r.targetWorkDate,'dd/MM/yyyy') : '-'}"></span></div>
+                                                    <div class="text-dark fw-medium small" th:if="${r.startTime != null && r.endTime != null}">
+                                                        Time Range: <span class="badge bg-dark rounded-2 ms-1"><span th:text="${#temporals.format(r.startTime,'HH:mm')}"></span> - <span th:text="${#temporals.format(r.endTime,'HH:mm')}"></span></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <span class="text-muted d-block small fw-bold text-uppercase mb-2"><i class="fas fa-comment-dots me-1"></i> Your Reason</span>
+                                            <div class="p-3 bg-white border rounded-3 text-dark" style="min-height: 80px; white-space: pre-wrap;" th:text="${r.reason}"></div>
+                                        </div>
+
+                                        <div class="mb-4 text-center" th:if="${r.attachmentPath != null}">
+                                            <a th:href="@{${r.attachmentPath}}" target="_blank" class="btn btn-outline-secondary rounded-pill fw-medium px-4 shadow-sm"><i class="fas fa-paperclip me-1"></i> View Associated File Document</a>
+                                        </div>
+
+                                        <div class="border-top pt-4" th:if="${r.approverNote != null and !#strings.isEmpty(r.approverNote)}">
+                                            <span class="text-dark d-block fw-bold mb-3 fs-6">HR / Manager Response Note</span>
+                                            <div class="p-3 bg-light border-start border-4 border-info rounded-3 text-dark" style="white-space: pre-wrap;" th:text="${r.approverNote}"></div>
+                                            <div class="text-muted small mt-2" th:if="${r.managerDecidedAt != null}">
+                                                Responded on: <span th:text="${#temporals.format(r.managerDecidedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(requests)}" id="noResultsRow">
+                    <td colspan="7" class="empty-state">No requests found.</td>
+                </tr>
+                <tr id="searchEmptyState" style="display:none;">
+                    <td colspan="7" class="empty-state">No requests match your search.</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const timeFilter = document.getElementById('timeFilter');
+            const table = document.getElementById('requestTable');
+            const rows = table.querySelectorAll('tbody tr:not(#noResultsRow):not(#searchEmptyState)');
+            const searchEmptyState = document.getElementById('searchEmptyState');
+            const noResultsRow = document.getElementById('noResultsRow');
+
+            function filterTable() {
+                const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+                const selectedStatus = statusFilter ? statusFilter.value : 'all';
+                const selectedTime = timeFilter ? timeFilter.value : 'all';
+                let hasVisibleRows = false;
+                
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    const statusElem = row.querySelector('.status-badge');
+                    const statusText = statusElem ? statusElem.textContent.trim().toUpperCase() : '';
+                    
+                    const dateElem = row.querySelector('td:nth-child(3)'); // Created At is 3rd column
+                    let rowDate = null;
+                    if (dateElem && dateElem.textContent.trim() !== '-') {
+                        const dateParts = dateElem.textContent.trim().split(' ')[0].split('/');
+                        if (dateParts.length === 3) {
+                            rowDate = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
+                        }
+                    }
+
+                    let matchesSearch = text.includes(searchTerm);
+                    let matchesStatus = selectedStatus === 'all' || statusText === selectedStatus;
+                    let matchesTime = selectedTime === 'all';
+                    
+                    if (selectedTime === 'last30' && rowDate) {
+                        matchesTime = rowDate >= thirtyDaysAgo;
+                    }
+
+                    if (matchesSearch && matchesStatus && matchesTime) {
+                        row.style.display = '';
+                        hasVisibleRows = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                if (!noResultsRow) {
+                    if (!hasVisibleRows && (searchTerm !== '' || selectedStatus !== 'all' || selectedTime !== 'all')) {
+                        searchEmptyState.style.display = '';
+                    } else {
+                        searchEmptyState.style.display = 'none';
+                    }
+                }
+            }
+
+            const searchBtn = document.getElementById('searchBtn');
+
+            if (searchInput) searchInput.addEventListener('keyup', filterTable);
+            if (searchBtn) searchBtn.addEventListener('click', filterTable);
+            if (statusFilter) statusFilter.addEventListener('change', filterTable);
+            if (timeFilter) timeFilter.addEventListener('change', filterTable);
+        });
+    </script>
+</th:block>
 </html>
