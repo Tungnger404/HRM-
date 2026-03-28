@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     private static final int ELIGIBLE_MIN_EVALUATION_COUNT = 2;
     private static final int ELIGIBLE_MIN_A_CLASSIFICATION_COUNT = 2;
+    private static final DateTimeFormatter PROMOTION_EFFECTIVE_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
@@ -233,6 +235,21 @@ public class PromotionServiceImpl implements PromotionService {
         employeeRepository.save(employee);
 
         PromotionRequest saved = promotionRequestRepository.save(request);
+
+        String promotedPositionTitle = resolvePositionTitle(request.getProposedPositionId());
+        String effectiveDate = request.getReviewedAt() != null
+                ? request.getReviewedAt().format(PROMOTION_EFFECTIVE_DATE_FORMAT)
+                : LocalDateTime.now().format(PROMOTION_EFFECTIVE_DATE_FORMAT);
+
+        notificationService.create(
+                request.getEmpId(),
+                "PROMOTION_APPROVED_EMPLOYEE",
+                "Promotion Approved",
+                "Congratulations! You have been promoted to " + promotedPositionTitle
+                        + " effective from " + effectiveDate
+                        + ". Please check your profile to see your Current Position",
+                "/employee/profile"
+        );
 
         notificationService.create(
                 request.getRequestedBy(),
